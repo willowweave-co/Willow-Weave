@@ -1,0 +1,702 @@
+{
+  "2-piece": [
+    {
+      "id": 7658402480205,
+      "handle": "silk-marina-suit-in-crimson",
+      "position": 0
+    },
+    {
+      "id": 7569736794189,
+      "handle": "soft-chiffon-grip-striped-shirt-with-boot-cut-plain-trousers",
+      "position": 1
+    },
+    {
+      "id": 7569730666573,
+      "handle": "ice-blue-co-ord-set",
+      "position": 2
+    },
+    {
+      "id": 7827773653069,
+      "handle": "royal-blue-2-piece-suit-with-embroidered-kurta-trousers",
+      "position": 3
+    },
+    {
+      "id": 7827739181133,
+      "handle": "3-piece-suit-prussian-blue-cotton-kurta-set-with-tie-dye-dupatta",
+      "position": 4
+    },
+    {
+      "id": 7806679285837,
+      "handle": "pure-lawn-pastel-blossom-lawn-2-piece-suit",
+      "position": 5
+    },
+    {
+      "id": 7806674042957,
+      "handle": "mustard-lawn-printed-suit-with-embroidery",
+      "position": 6
+    },
+    {
+      "id": 7717289721933,
+      "handle": "slate-blue-georgette-short-kurti-with-white-silk-sharara",
+      "position": 7
+    },
+    {
+      "id": 7700761509965,
+      "handle": "azure-ombre-silk-tunic",
+      "position": 8
+    },
+    {
+      "id": 7658403692621,
+      "handle": "self-embossed-jacquard-suit",
+      "position": 9
+    },
+    {
+      "id": 7658401562701,
+      "handle": "semi-pure-silk-suit",
+      "position": 10
+    },
+    {
+      "id": 7658397827149,
+      "handle": "silk-marina-suit",
+      "position": 11
+    },
+    {
+      "id": 7569734467661,
+      "handle": "mauve-co-ord-set",
+      "position": 12
+    },
+    {
+      "id": 7569735385165,
+      "handle": "long-tunic-shirt-suit-finest-weave-with-crinkle-texture-and-roll-up-sleeves",
+      "position": 13
+    },
+    {
+      "id": 7569731846221,
+      "handle": "midnight-blue-co-ord-set",
+      "position": 14
+    },
+    {
+      "id": 7569694490701,
+      "handle": "dobby-weave-textured-royal-blue-willow-shirt-with-white-boot-cut-trousers",
+      "position": 15
+    }
+  ],
+  "3-piece": [
+    {
+      "id": 7807001919565,
+      "handle": "crimson-vineyard-pure-lawn-3-pece-suit",
+      "position": 0
+    },
+    {
+      "id": 7670616883277,
+      "handle": "black-velvet-dress-with-sequence-work-in-purple-and-bottle-green",
+      "position": 1
+    },
+    {
+      "id": 7569721229389,
+      "handle": "satin-silk-suit-with-net-capelet",
+      "position": 2
+    },
+    {
+      "id": 7839330566221,
+      "handle": "tea-pink-embroidered-3-piece-set",
+      "position": 3
+    },
+    {
+      "id": 7827743572045,
+      "handle": "tobacco-brown-3-piece-suit-with-embroidered-kurta-straight-pants-and-dupatta",
+      "position": 4
+    },
+    {
+      "id": 7827732660301,
+      "handle": "mustard-vintage-floral-print-kurta-set",
+      "position": 5
+    },
+    {
+      "id": 7806997004365,
+      "handle": "midnight-sapphire-pure-lawn-3-piece-suit",
+      "position": 6
+    },
+    {
+      "id": 7806991171661,
+      "handle": "royal-purple-embroidered-lawn-3-piece-suit",
+      "position": 7
+    },
+    {
+      "id": 7717284610125,
+      "handle": "hibiscus-pink-satin-silk-outfit-with-chiffon-dupatta-and-boot-cut-trousers",
+      "position": 8
+    },
+    {
+      "id": 7717276713037,
+      "handle": "olive-green-tilla-embroidered-cotton-net-3-piece-suit-with-farshi-shalwar",
+      "position": 9
+    },
+    {
+      "id": 7717274058829,
+      "handle": "ivory-3-piece-suit-with-chikankari-shirt-grip-trousers",
+      "position": 10
+    },
+    {
+      "id": 7717269045325,
+      "handle": "traditional-leaf-green-block-print-3-piece-outfit",
+      "position": 11
+    },
+    {
+      "id": 7717261541453,
+      "handle": "fuchsia-pink-cotton-net-suit-with-block-printing",
+      "position": 12
+    },
+    {
+      "id": 7700815446093,
+      "handle": "3-piece-co-ord-set-with-gown-4",
+      "position": 13
+    },
+    {
+      "id": 7700744798285,
+      "handle": "3-piece-co-ord-set-with-gown-3",
+      "position": 14
+    },
+    {
+      "id": 7700738211917,
+      "handle": "3-piece-co-ord-set-with-gown-2",
+      "position": 15
+    },
+    {
+      "id": 7700700790861,
+      "handle": "3-piece-co-ord-set-with-gown-1",
+      "position": 16
+    },
+    {
+      "id": 7677437116493,
+      "handle": "embroidered-3-piece-marina-suit",
+      "position": 17
+    },
+    {
+      "id": 7675397800013,
+      "handle": "marina-3-piece-suit-with-motifs-in-self",
+      "position": 18
+    },
+    {
+      "id": 7670941515853,
+      "handle": "midnight-mosaic-hand-block-printed-3-piece-suit",
+      "position": 19
+    },
+    {
+      "id": 7670938304589,
+      "handle": "jade-navy-hand-block-printed-3-piece-artisan-suite",
+      "position": 20
+    },
+    {
+      "id": 7670906191949,
+      "handle": "apricot-saffron-bloom-hand-block-printed-3-piece-suite",
+      "position": 21
+    },
+    {
+      "id": 7670630056013,
+      "handle": "velvet-sharara-set-with-cotton-net-dupatta",
+      "position": 22
+    },
+    {
+      "id": 7658393796685,
+      "handle": "3-piece-co-ord-set-with-gown",
+      "position": 23
+    },
+    {
+      "id": 7569712971853,
+      "handle": "sophisticated-white-sharara-suite",
+      "position": 24
+    }
+  ],
+  "chiffon": [
+    {
+      "id": 7569736794189,
+      "handle": "soft-chiffon-grip-striped-shirt-with-boot-cut-plain-trousers",
+      "position": 0
+    },
+    {
+      "id": 7700815446093,
+      "handle": "3-piece-co-ord-set-with-gown-4",
+      "position": 1
+    },
+    {
+      "id": 7700744798285,
+      "handle": "3-piece-co-ord-set-with-gown-3",
+      "position": 2
+    },
+    {
+      "id": 7700738211917,
+      "handle": "3-piece-co-ord-set-with-gown-2",
+      "position": 3
+    },
+    {
+      "id": 7700700790861,
+      "handle": "3-piece-co-ord-set-with-gown-1",
+      "position": 4
+    },
+    {
+      "id": 7658393796685,
+      "handle": "3-piece-co-ord-set-with-gown",
+      "position": 5
+    }
+  ],
+  "chiffon-grip": [
+    {
+      "id": 7569736794189,
+      "handle": "soft-chiffon-grip-striped-shirt-with-boot-cut-plain-trousers",
+      "position": 0
+    }
+  ],
+  "crinkle-gauze": [
+    {
+      "id": 7569735385165,
+      "handle": "long-tunic-shirt-suit-finest-weave-with-crinkle-texture-and-roll-up-sleeves",
+      "position": 0
+    }
+  ],
+  "dobby-silk": [
+    {
+      "id": 7569694490701,
+      "handle": "dobby-weave-textured-royal-blue-willow-shirt-with-white-boot-cut-trousers",
+      "position": 0
+    }
+  ],
+  "eid-ul-adha-2026": [
+    {
+      "id": 7839330566221,
+      "handle": "tea-pink-embroidered-3-piece-set",
+      "position": 0
+    },
+    {
+      "id": 7827773653069,
+      "handle": "royal-blue-2-piece-suit-with-embroidered-kurta-trousers",
+      "position": 1
+    },
+    {
+      "id": 7827743572045,
+      "handle": "tobacco-brown-3-piece-suit-with-embroidered-kurta-straight-pants-and-dupatta",
+      "position": 2
+    },
+    {
+      "id": 7827739181133,
+      "handle": "3-piece-suit-prussian-blue-cotton-kurta-set-with-tie-dye-dupatta",
+      "position": 3
+    },
+    {
+      "id": 7827732660301,
+      "handle": "mustard-vintage-floral-print-kurta-set",
+      "position": 4
+    }
+  ],
+  "eid-ul-fitr-2026": [
+    {
+      "id": 7717284610125,
+      "handle": "hibiscus-pink-satin-silk-outfit-with-chiffon-dupatta-and-boot-cut-trousers",
+      "position": 0
+    },
+    {
+      "id": 7717276713037,
+      "handle": "olive-green-tilla-embroidered-cotton-net-3-piece-suit-with-farshi-shalwar",
+      "position": 1
+    },
+    {
+      "id": 7717274058829,
+      "handle": "ivory-3-piece-suit-with-chikankari-shirt-grip-trousers",
+      "position": 2
+    },
+    {
+      "id": 7717269045325,
+      "handle": "traditional-leaf-green-block-print-3-piece-outfit",
+      "position": 3
+    },
+    {
+      "id": 7717261541453,
+      "handle": "fuchsia-pink-cotton-net-suit-with-block-printing",
+      "position": 4
+    }
+  ],
+  "elastane-fabric": [
+    {
+      "id": 7569738727501,
+      "handle": "the-willow-maxi-dress",
+      "position": 0
+    }
+  ],
+  "gerogette": [
+    {
+      "id": 7569697538125,
+      "handle": "deep-maroon-georgette-willow-maxi",
+      "position": 0
+    },
+    {
+      "id": 7569727782989,
+      "handle": "long-open-georgette-front-open-trendy-willow-shirt",
+      "position": 1
+    },
+    {
+      "id": 7717289721933,
+      "handle": "slate-blue-georgette-short-kurti-with-white-silk-sharara",
+      "position": 2
+    }
+  ],
+  "karandi": [
+    {
+      "id": 7569734467661,
+      "handle": "mauve-co-ord-set",
+      "position": 0
+    }
+  ],
+  "lycra-fabric": [
+    {
+      "id": 7569730666573,
+      "handle": "ice-blue-co-ord-set",
+      "position": 0
+    },
+    {
+      "id": 7569731846221,
+      "handle": "midnight-blue-co-ord-set",
+      "position": 1
+    }
+  ],
+  "satin-silk": [
+    {
+      "id": 7569721229389,
+      "handle": "satin-silk-suit-with-net-capelet",
+      "position": 0
+    },
+    {
+      "id": 7717289721933,
+      "handle": "slate-blue-georgette-short-kurti-with-white-silk-sharara",
+      "position": 1
+    },
+    {
+      "id": 7717284610125,
+      "handle": "hibiscus-pink-satin-silk-outfit-with-chiffon-dupatta-and-boot-cut-trousers",
+      "position": 2
+    },
+    {
+      "id": 7569712971853,
+      "handle": "sophisticated-white-sharara-suite",
+      "position": 3
+    }
+  ],
+  "short-silk": [
+    {
+      "id": 7700761509965,
+      "handle": "azure-ombre-silk-tunic",
+      "position": 0
+    },
+    {
+      "id": 7700820656205,
+      "handle": "silk-luxe-pocho",
+      "position": 1
+    },
+    {
+      "id": 7700815446093,
+      "handle": "3-piece-co-ord-set-with-gown-4",
+      "position": 2
+    },
+    {
+      "id": 7670575267917,
+      "handle": "silk-sharara-trousers",
+      "position": 3
+    },
+    {
+      "id": 7569720836173,
+      "handle": "modern-asymmetrical-short-silk-shirt",
+      "position": 4
+    },
+    {
+      "id": 7569715757133,
+      "handle": "short-silk-a-line-long-shirt-floral-border-shirt",
+      "position": 5
+    },
+    {
+      "id": 7569679646797,
+      "handle": "deep-gold-tie-back-neck-a-line-couture-shirt-in-short-silk",
+      "position": 6
+    }
+  ],
+  "silk": [],
+  "tops": [
+    {
+      "id": 7569738727501,
+      "handle": "the-willow-maxi-dress",
+      "position": 0
+    },
+    {
+      "id": 7569697538125,
+      "handle": "deep-maroon-georgette-willow-maxi",
+      "position": 1
+    },
+    {
+      "id": 7569727782989,
+      "handle": "long-open-georgette-front-open-trendy-willow-shirt",
+      "position": 2
+    },
+    {
+      "id": 7700671889485,
+      "handle": "silk-luxe-poncho",
+      "position": 3
+    },
+    {
+      "id": 7670949707853,
+      "handle": "honey-mustard-basket-weave-top",
+      "position": 4
+    },
+    {
+      "id": 7569720836173,
+      "handle": "modern-asymmetrical-short-silk-shirt",
+      "position": 5
+    },
+    {
+      "id": 7569715757133,
+      "handle": "short-silk-a-line-long-shirt-floral-border-shirt",
+      "position": 6
+    },
+    {
+      "id": 7569679646797,
+      "handle": "deep-gold-tie-back-neck-a-line-couture-shirt-in-short-silk",
+      "position": 7
+    }
+  ],
+  "trousers": [
+    {
+      "id": 7670575267917,
+      "handle": "silk-sharara-trousers",
+      "position": 0
+    }
+  ],
+  "velvet": [
+    {
+      "id": 7670616883277,
+      "handle": "black-velvet-dress-with-sequence-work-in-purple-and-bottle-green",
+      "position": 0
+    },
+    {
+      "id": 7670630056013,
+      "handle": "velvet-sharara-set-with-cotton-net-dupatta",
+      "position": 1
+    }
+  ],
+  "volume-1": [
+    {
+      "id": 7569738727501,
+      "handle": "the-willow-maxi-dress",
+      "position": 0
+    },
+    {
+      "id": 7569697538125,
+      "handle": "deep-maroon-georgette-willow-maxi",
+      "position": 1
+    },
+    {
+      "id": 7569736794189,
+      "handle": "soft-chiffon-grip-striped-shirt-with-boot-cut-plain-trousers",
+      "position": 2
+    },
+    {
+      "id": 7569730666573,
+      "handle": "ice-blue-co-ord-set",
+      "position": 3
+    },
+    {
+      "id": 7569727782989,
+      "handle": "long-open-georgette-front-open-trendy-willow-shirt",
+      "position": 4
+    },
+    {
+      "id": 7569721229389,
+      "handle": "satin-silk-suit-with-net-capelet",
+      "position": 5
+    },
+    {
+      "id": 7670575267917,
+      "handle": "silk-sharara-trousers",
+      "position": 6
+    },
+    {
+      "id": 7569712971853,
+      "handle": "sophisticated-white-sharara-suite",
+      "position": 7
+    },
+    {
+      "id": 7569734467661,
+      "handle": "mauve-co-ord-set",
+      "position": 8
+    },
+    {
+      "id": 7569731846221,
+      "handle": "midnight-blue-co-ord-set",
+      "position": 9
+    },
+    {
+      "id": 7569720836173,
+      "handle": "modern-asymmetrical-short-silk-shirt",
+      "position": 10
+    },
+    {
+      "id": 7569715757133,
+      "handle": "short-silk-a-line-long-shirt-floral-border-shirt",
+      "position": 11
+    },
+    {
+      "id": 7569694490701,
+      "handle": "dobby-weave-textured-royal-blue-willow-shirt-with-white-boot-cut-trousers",
+      "position": 12
+    },
+    {
+      "id": 7569679646797,
+      "handle": "deep-gold-tie-back-neck-a-line-couture-shirt-in-short-silk",
+      "position": 13
+    }
+  ],
+  "volume-2": [
+    {
+      "id": 7658402480205,
+      "handle": "silk-marina-suit-in-crimson",
+      "position": 0
+    },
+    {
+      "id": 7569735385165,
+      "handle": "long-tunic-shirt-suit-finest-weave-with-crinkle-texture-and-roll-up-sleeves",
+      "position": 1
+    },
+    {
+      "id": 7670575267917,
+      "handle": "silk-sharara-trousers",
+      "position": 2
+    },
+    {
+      "id": 7658403692621,
+      "handle": "self-embossed-jacquard-suit",
+      "position": 3
+    },
+    {
+      "id": 7658397827149,
+      "handle": "silk-marina-suit",
+      "position": 4
+    },
+    {
+      "id": 7658393796685,
+      "handle": "3-piece-co-ord-set-with-gown",
+      "position": 5
+    }
+  ],
+  "winter-whispers": [
+    {
+      "id": 7670616883277,
+      "handle": "black-velvet-dress-with-sequence-work-in-purple-and-bottle-green",
+      "position": 0
+    },
+    {
+      "id": 7677437116493,
+      "handle": "embroidered-3-piece-marina-suit",
+      "position": 1
+    },
+    {
+      "id": 7675397800013,
+      "handle": "marina-3-piece-suit-with-motifs-in-self",
+      "position": 2
+    },
+    {
+      "id": 7670949707853,
+      "handle": "honey-mustard-basket-weave-top",
+      "position": 3
+    },
+    {
+      "id": 7670941515853,
+      "handle": "midnight-mosaic-hand-block-printed-3-piece-suit",
+      "position": 4
+    },
+    {
+      "id": 7670938304589,
+      "handle": "jade-navy-hand-block-printed-3-piece-artisan-suite",
+      "position": 5
+    },
+    {
+      "id": 7670906191949,
+      "handle": "apricot-saffron-bloom-hand-block-printed-3-piece-suite",
+      "position": 6
+    },
+    {
+      "id": 7670630056013,
+      "handle": "velvet-sharara-set-with-cotton-net-dupatta",
+      "position": 7
+    }
+  ],
+  "volume-4-in-full-bloom": [
+    {
+      "id": 7717289721933,
+      "handle": "slate-blue-georgette-short-kurti-with-white-silk-sharara",
+      "position": 0
+    },
+    {
+      "id": 7658401562701,
+      "handle": "semi-pure-silk-suit",
+      "position": 1
+    },
+    {
+      "id": 7700820656205,
+      "handle": "silk-luxe-pocho",
+      "position": 2
+    },
+    {
+      "id": 7700815446093,
+      "handle": "3-piece-co-ord-set-with-gown-4",
+      "position": 3
+    },
+    {
+      "id": 7700761509965,
+      "handle": "azure-ombre-silk-tunic",
+      "position": 4
+    },
+    {
+      "id": 7700744798285,
+      "handle": "3-piece-co-ord-set-with-gown-3",
+      "position": 5
+    },
+    {
+      "id": 7700738211917,
+      "handle": "3-piece-co-ord-set-with-gown-2",
+      "position": 6
+    },
+    {
+      "id": 7700700790861,
+      "handle": "3-piece-co-ord-set-with-gown-1",
+      "position": 7
+    },
+    {
+      "id": 7700671889485,
+      "handle": "silk-luxe-poncho",
+      "position": 8
+    }
+  ],
+  "volume-5-sun-kisses-threads": [
+    {
+      "id": 7807001919565,
+      "handle": "crimson-vineyard-pure-lawn-3-pece-suit",
+      "position": 0
+    },
+    {
+      "id": 7806991171661,
+      "handle": "royal-purple-embroidered-lawn-3-piece-suit",
+      "position": 1
+    },
+    {
+      "id": 7806679285837,
+      "handle": "pure-lawn-pastel-blossom-lawn-2-piece-suit",
+      "position": 2
+    },
+    {
+      "id": 7806674042957,
+      "handle": "mustard-lawn-printed-suit-with-embroidery",
+      "position": 3
+    },
+    {
+      "id": 7806997004365,
+      "handle": "midnight-sapphire-pure-lawn-3-piece-suit",
+      "position": 4
+    }
+  ]
+}

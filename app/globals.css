@@ -1,0 +1,102 @@
+@import "tailwindcss";
+
+@theme {
+  /* ── Willow Weave palette — warm, earthy, editorial ── */
+  --color-ivory: #faf6ef;
+  --color-parchment: #f4ede0;
+  --color-linen: #ece3d2;
+  --color-sand: #ddd0b8;
+  --color-ink: #29211a;
+  --color-bark: #4a3b2e;
+  --color-umber: #6e5c4b;
+  --color-clay: #8c6d4f;
+  --color-walnut: #6b4a2f;
+  --color-walnut-dark: #52381f;
+  --color-gold: #c2a16b;
+  --color-madder: #a23e2e;
+  --color-moss: #5f6b4f;
+  --color-blush: #e9d5c5;
+  --color-line: #e5daca;
+
+  --font-display: var(--font-fraunces), "Georgia", serif;
+  --font-sans: var(--font-jost), system-ui, sans-serif;
+
+  --animate-fade-up: fade-up 0.5s ease-out both;
+  --animate-fade-in: fade-in 0.35s ease-out both;
+  --animate-shimmer: shimmer 1.6s linear infinite;
+
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes shimmer {
+    from { background-position: 200% 0; }
+    to { background-position: -200% 0; }
+  }
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-ivory text-ink font-sans antialiased;
+  }
+  ::selection {
+    @apply bg-walnut text-ivory;
+  }
+}
+
+@layer components {
+  .container-site {
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+  .heading-display {
+    font-family: var(--font-display);
+    @apply tracking-tight;
+  }
+  .skeleton {
+    @apply animate-shimmer rounded-md bg-linen;
+    background-image: linear-gradient(
+      100deg,
+      var(--color-linen) 40%,
+      var(--color-parchment) 50%,
+      var(--color-linen) 60%
+    );
+    background-size: 200% 100%;
+  }
+  /* Rich text from the store (product descriptions, policies, pages) */
+  .rte {
+    @apply text-[0.95rem] leading-relaxed text-bark;
+  }
+  .rte p { @apply my-3; }
+  .rte h1, .rte h2, .rte h3, .rte h4 {
+    font-family: var(--font-display);
+    @apply mt-6 mb-2 text-ink;
+  }
+  .rte h1 { @apply text-2xl; }
+  .rte h2 { @apply text-xl; }
+  .rte h3 { @apply text-lg; }
+  .rte ul { @apply my-3 list-disc pl-5; }
+  .rte ol { @apply my-3 list-decimal pl-5; }
+  .rte li { @apply my-1; }
+  .rte a { @apply text-walnut underline underline-offset-2 hover:text-walnut-dark; }
+  .rte strong { @apply font-semibold text-ink; }
+  .rte em { @apply italic; }
+  .rte table { @apply my-4 w-full border-collapse text-sm; }
+  .rte td, .rte th { @apply border border-line px-3 py-2; }
+}
+
+@utility text-balance {
+  text-wrap: balance;
+}
+
+/* Print styles for the admin packing slip */
+@media print {
+  .no-print { display: none !important; }
+  body { background: white !important; }
+}

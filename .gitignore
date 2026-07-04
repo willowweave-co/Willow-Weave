@@ -1,0 +1,27 @@
+# dependencies
+/node_modules
+
+# next.js
+/.next/
+/out/
+next-env.d.ts
+
+# production
+/build
+
+# local runtime data (dev order store) — keep scraped archive, ignore runtime writes
+/data/dev/
+
+# misc
+.DS_Store
+*.pem
+npm-debug.log*
+.vercel
+
+# env
+.env
+.env.local
+.env*.local
+
+# typescript
+*.tsbuildinfo

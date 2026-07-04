@@ -1,0 +1,42 @@
+{
+  "name": "willow-weave",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Willow Weave — Pakistani women's fashion store. Next.js storefront + COD checkout + admin dashboard.",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "scrape": "node scripts/scrape.mjs",
+    "images:download": "node scripts/download-images.mjs",
+    "extract": "node scripts/extract-content.mjs",
+    "cloudinary:upload": "node scripts/upload-cloudinary.mjs",
+    "seed": "node scripts/seed.mjs",
+    "verify": "node scripts/verify.mjs"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.12.0",
+    "@supabase/supabase-js": "^2.110.0",
+    "cloudinary": "^2.10.0",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.23.0",
+    "next": "^16.2.10",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "recharts": "^3.9.2",
+    "resend": "^6.17.1",
+    "tailwind-merge": "^3.6.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.2",
+    "@types/node": "^26.1.0",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "cheerio": "^1.2.0",
+    "postcss": "^8.5.16",
+    "tailwindcss": "^4.3.2",
+    "typescript": "^6.0.3"
+  }
+}

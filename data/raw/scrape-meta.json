@@ -1,0 +1,21 @@
+{
+  "scrapedAt": "2026-07-04T14:41:15.647Z",
+  "base": "https://www.willowweave.co",
+  "counts": {
+    "products": 51,
+    "collections": 23,
+    "variants": 209,
+    "productImages": 220
+  },
+  "pageStatus": {
+    "home": 200,
+    "about-us": 200,
+    "philosophy-behind-logo": 200,
+    "policy-privacy": 200,
+    "policy-refund": 200,
+    "policy-terms": 200,
+    "policy-shipping": 200,
+    "policy-contact": 200,
+    "search-page": 200
+  }
+}
