@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -59,8 +60,34 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
 
 export function AdminNav({ mobile }: { role: "owner" | "staff"; mobile?: boolean }) {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   if (!mobile) return <NavLinks />;
+
+  // Portaled to <body>: the admin top bar uses backdrop-blur, which would
+  // otherwise trap this fixed overlay inside the bar (containing-block rule).
+  const drawer = (
+    <div className="fixed inset-0 z-[80]" role="dialog" aria-modal="true" aria-label="Admin menu">
+      <div className="absolute inset-0 bg-ink/45" onClick={() => setOpen(false)} aria-hidden />
+      <div className="absolute inset-y-0 right-0 flex w-72 flex-col bg-ivory shadow-2xl">
+        <div className="flex items-center justify-between border-b border-line px-4 py-3.5">
+          <span className="heading-display font-semibold">Dashboard</span>
+          <button
+            onClick={() => setOpen(false)}
+            aria-label="Close menu"
+            className="rounded-full p-1.5 text-bark hover:bg-linen"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <NavLinks onNavigate={() => setOpen(false)} />
+      </div>
+    </div>
+  );
 
   return (
     <>
@@ -71,24 +98,7 @@ export function AdminNav({ mobile }: { role: "owner" | "staff"; mobile?: boolean
       >
         <Menu className="h-5 w-5" />
       </button>
-      {open && (
-        <div className="fixed inset-0 z-[80]">
-          <div className="absolute inset-0 bg-ink/45" onClick={() => setOpen(false)} aria-hidden />
-          <div className="absolute inset-y-0 right-0 flex w-72 flex-col bg-ivory shadow-2xl">
-            <div className="flex items-center justify-between border-b border-line px-4 py-3.5">
-              <span className="heading-display font-semibold">Dashboard</span>
-              <button
-                onClick={() => setOpen(false)}
-                aria-label="Close menu"
-                className="rounded-full p-1.5 text-bark hover:bg-linen"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <NavLinks onNavigate={() => setOpen(false)} />
-          </div>
-        </div>
-      )}
+      {mounted && open && createPortal(drawer, document.body)}
     </>
   );
 }
