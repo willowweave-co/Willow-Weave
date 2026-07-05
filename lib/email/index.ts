@@ -153,7 +153,12 @@ function shippedEmailHtml(order: OrderLike): string {
   </div>`;
 }
 
-async function deliver(to: string, subject: string, html: string): Promise<void> {
+async function deliver(
+  to: string,
+  subject: string,
+  html: string,
+  replyTo?: string
+): Promise<void> {
   const key = process.env.RESEND_API_KEY;
   if (!key) {
     console.log(
@@ -162,7 +167,14 @@ async function deliver(to: string, subject: string, html: string): Promise<void>
     return;
   }
   const resend = new Resend(key);
-  const { error } = await resend.emails.send({ from: FROM, to, subject, html });
+  const { error } = await resend.emails.send({
+    from: FROM,
+    to,
+    subject,
+    html,
+    // orders@willowweave.co has no mailbox — route replies somewhere real
+    ...(replyTo ? { replyTo } : {}),
+  });
   if (error) console.error(`Resend error for "${subject}" → ${to}:`, error.message);
 }
 
@@ -175,7 +187,9 @@ export async function sendOrderEmails(order: OrderLike, notifyEmail: string): Pr
         deliver(
           notifyEmail,
           `New COD order ${order.orderNumber} — ${formatPKR(order.total)}`,
-          ownerEmailHtml(order)
+          ownerEmailHtml(order),
+          // owner hits Reply to answer the customer directly
+          order.email ?? undefined
         )
       );
     }
@@ -184,7 +198,9 @@ export async function sendOrderEmails(order: OrderLike, notifyEmail: string): Pr
         deliver(
           order.email,
           `Order ${order.orderNumber} confirmed — Willow Weave`,
-          customerEmailHtml(order)
+          customerEmailHtml(order),
+          // customer replies land in the owner's real inbox
+          notifyEmail || undefined
         )
       );
     }
@@ -194,10 +210,19 @@ export async function sendOrderEmails(order: OrderLike, notifyEmail: string): Pr
   }
 }
 
-export async function sendStatusEmail(order: OrderLike, status: OrderStatus): Promise<void> {
+export async function sendStatusEmail(
+  order: OrderLike,
+  status: OrderStatus,
+  replyTo?: string
+): Promise<void> {
   try {
     if (status !== "shipped" || !order.email) return;
-    await deliver(order.email, `Order ${order.orderNumber} shipped — Willow Weave`, shippedEmailHtml(order));
+    await deliver(
+      order.email,
+      `Order ${order.orderNumber} shipped — Willow Weave`,
+      shippedEmailHtml(order),
+      replyTo
+    );
   } catch (e) {
     console.error("sendStatusEmail failed:", e);
   }

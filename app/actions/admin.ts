@@ -52,7 +52,8 @@ export async function updateOrderStatusAction(
     await requireStaff();
     const order = await repo.updateOrderStatus(id, status);
     if (!order) return { ok: false, error: "Order not found." };
-    await sendStatusEmail(order, status);
+    const settings = await repo.getSettings();
+    await sendStatusEmail(order, status, settings.notifyEmail || undefined);
     refresh();
     return { ok: true };
   } catch (e) {
