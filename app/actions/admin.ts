@@ -13,6 +13,7 @@ import type {
 import { requireStaff, requireOwner } from "@/lib/admin-auth";
 import { sendStatusEmail } from "@/lib/email";
 import { createSupabaseAdmin } from "@/lib/supabase/admin";
+import { createSupabaseServer } from "@/lib/supabase/server";
 
 export interface ActionResult {
   ok: boolean;
@@ -230,6 +231,64 @@ export async function saveSettingsAction(settings: StoreSettings): Promise<Actio
       announcement: settings.announcement?.trim() || null,
     });
     refresh();
+    return { ok: true };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+export interface AccountUpdateInput {
+  name: string;
+  email: string;
+  newPassword?: string;
+}
+
+/** Self-serve account settings for the signed-in staff member. */
+export async function updateAccountAction(input: AccountUpdateInput): Promise<ActionResult> {
+  try {
+    const user = await requireStaff();
+    if (user.localMode) {
+      return { ok: false, error: "Account settings need Supabase — connect it first (see SETUP.md)." };
+    }
+
+    const name = input.name.trim();
+    const email = input.email.trim().toLowerCase();
+    if (name.length < 1 || name.length > 80) {
+      return { ok: false, error: "Please enter a display name (up to 80 characters)." };
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return { ok: false, error: "That email address doesn't look right." };
+    }
+    if (input.newPassword && input.newPassword.length < 8) {
+      return { ok: false, error: "The new password needs at least 8 characters." };
+    }
+
+    // password: through the user's own session
+    if (input.newPassword) {
+      const session = await createSupabaseServer();
+      const { error } = await session.auth.updateUser({ password: input.newPassword });
+      if (error) return { ok: false, error: `Couldn't change the password: ${error.message}` };
+    }
+
+    // email: service role applies it instantly (no confirmation round-trip);
+    // safe because requireStaff() gates this action
+    if (email !== user.email.toLowerCase()) {
+      const admin = createSupabaseAdmin();
+      const { error } = await admin.auth.admin.updateUserById(user.id, {
+        email,
+        email_confirm: true,
+      });
+      if (error) return { ok: false, error: `Couldn't change the email: ${error.message}` };
+    }
+
+    // display name (+ keep profile email in sync); service role but pinned to own row
+    {
+      const admin = createSupabaseAdmin();
+      const { error } = await admin.from("profiles").update({ name, email }).eq("id", user.id);
+      if (error) return { ok: false, error: error.message };
+    }
+
+    revalidatePath("/admin", "layout");
     return { ok: true };
   } catch (e) {
     return fail(e);

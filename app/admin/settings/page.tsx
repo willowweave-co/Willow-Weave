@@ -1,6 +1,7 @@
 import { repo, dataMode } from "@/lib/data";
 import { getAdminUser } from "@/lib/admin-auth";
 import { SettingsForm, StaffManager } from "@/components/admin/settings-form";
+import { AccountSettings } from "@/components/admin/account-settings";
 
 export const metadata = { title: "Settings" };
 
@@ -19,6 +20,15 @@ export default async function AdminSettingsPage() {
           Store-wide configuration — delivery charges, notifications and staff access.
         </p>
       </header>
+
+      {user && (
+        <AccountSettings
+          currentName={user.name}
+          currentEmail={user.email}
+          role={user.role}
+          localMode={user.localMode}
+        />
+      )}
 
       <SettingsForm initial={settings} />
 
