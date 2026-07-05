@@ -32,20 +32,23 @@ export default async function AdminCollectionsPage() {
       </header>
 
       <div className="overflow-x-auto rounded-2xl border border-line bg-white/60">
-        <table className="w-full min-w-[420px] text-sm md:min-w-[620px]">
+        <table className="w-full text-sm md:min-w-[620px]">
           <thead>
             <tr className="border-b border-line text-left text-xs tracking-wide text-umber uppercase">
-              <th className="px-4 py-3.5 font-medium sm:px-5">Collection</th>
+              <th className="px-3 py-3.5 font-medium sm:px-5">Collection</th>
               <th className="hidden px-4 py-3.5 font-medium md:table-cell">Group</th>
-              <th className="px-4 py-3.5 font-medium">Products</th>
+              <th className="px-2 py-3.5 font-medium sm:px-4">
+                <span className="sm:hidden">#</span>
+                <span className="hidden sm:inline">Products</span>
+              </th>
               <th className="hidden px-4 py-3.5 font-medium md:table-cell">Featured</th>
-              <th className="px-4 py-3.5 font-medium">Status</th>
+              <th className="px-2 py-3.5 font-medium sm:px-4">Status</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-line">
             {collections.map((c) => (
               <tr key={c.id} className="group relative transition-colors hover:bg-linen/50">
-                <td className="px-4 py-3 sm:px-5">
+                <td className="px-3 py-3 sm:px-5">
                   <div className="flex items-center gap-3">
                     {c.image ? (
                       <Image
@@ -76,11 +79,11 @@ export default async function AdminCollectionsPage() {
                 <td className="hidden px-4 py-3 text-bark md:table-cell">
                   {GROUP_LABEL[c.group] ?? c.group}
                 </td>
-                <td className="px-4 py-3 text-bark">{c.productIds.length}</td>
+                <td className="px-2 py-3 text-bark sm:px-4">{c.productIds.length}</td>
                 <td className="hidden px-4 py-3 md:table-cell">
                   {c.featured ? <Badge tone="gold">Featured</Badge> : "—"}
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-2 py-3 sm:px-4">
                   {c.published ? <Badge tone="success">Live</Badge> : <Badge>Hidden</Badge>}
                 </td>
               </tr>

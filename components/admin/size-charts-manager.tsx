@@ -119,9 +119,12 @@ export function SizeChartsManager({ charts }: { charts: SizeChart[] }) {
         </Button>
       </header>
 
+      {/* min-w-0 on the children: grid items refuse to shrink below their
+          content by default, so the wide editor table would otherwise drag
+          the whole page into horizontal scroll on phones */}
       <div className="grid gap-6 lg:grid-cols-[240px_1fr]">
         {/* chart list */}
-        <aside className="space-y-1.5">
+        <aside className="min-w-0 space-y-1.5">
           {charts.map((c) => (
             <button
               key={c.id}
@@ -148,7 +151,7 @@ export function SizeChartsManager({ charts }: { charts: SizeChart[] }) {
 
         {/* editor */}
         {draft && (
-          <section className="rounded-2xl border border-line bg-white/60 p-5">
+          <section className="min-w-0 rounded-2xl border border-line bg-white/60 p-4 sm:p-5">
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <Label htmlFor="sc-name">Chart name *</Label>

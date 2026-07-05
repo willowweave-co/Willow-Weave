@@ -107,15 +107,15 @@ export function DiscountsManager({ discounts }: { discounts: DiscountCode[] }) {
 
       {discounts.length ? (
         <div className="overflow-x-auto rounded-2xl border border-line bg-white/60">
-          <table className="w-full min-w-[440px] text-sm md:min-w-[600px]">
+          <table className="w-full text-sm md:min-w-[600px]">
             <thead>
               <tr className="border-b border-line text-left text-xs tracking-wide text-umber uppercase">
-                <th className="px-4 py-3.5 font-medium sm:px-5">Code</th>
-                <th className="px-4 py-3.5 font-medium">Discount</th>
+                <th className="px-3 py-3.5 font-medium sm:px-5">Code</th>
+                <th className="px-2 py-3.5 font-medium sm:px-4">Discount</th>
                 <th className="hidden px-4 py-3.5 font-medium md:table-cell">Window</th>
                 <th className="hidden px-4 py-3.5 font-medium md:table-cell">Used</th>
-                <th className="px-4 py-3.5 font-medium">Status</th>
-                <th className="px-4 py-3.5" />
+                <th className="hidden px-4 py-3.5 font-medium sm:table-cell">Status</th>
+                <th className="px-2 py-3.5 sm:px-4" />
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
@@ -123,12 +123,17 @@ export function DiscountsManager({ discounts }: { discounts: DiscountCode[] }) {
                 const st = statusOf(d);
                 return (
                   <tr key={d.id} className="transition-colors hover:bg-linen/40">
-                    <td className="px-4 py-3 font-mono font-semibold text-ink sm:px-5">{d.code}</td>
-                    <td className="px-4 py-3 text-bark">
+                    <td className="px-3 py-3 font-mono font-semibold break-all text-ink sm:px-5">
+                      {d.code}
+                    </td>
+                    <td className="px-2 py-3 text-bark sm:px-4">
                       {describe(d)}
                       <span className="block text-xs text-umber md:hidden">
                         used {d.timesUsed}
                         {d.usageLimit != null && ` / ${d.usageLimit}`}
+                      </span>
+                      <span className="mt-1 block sm:hidden">
+                        <Badge tone={st.tone}>{st.label}</Badge>
                       </span>
                     </td>
                     <td className="hidden px-4 py-3 text-xs text-umber md:table-cell">
@@ -140,14 +145,14 @@ export function DiscountsManager({ discounts }: { discounts: DiscountCode[] }) {
                       {d.timesUsed}
                       {d.usageLimit != null && ` / ${d.usageLimit}`}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="hidden px-4 py-3 sm:table-cell">
                       <Badge tone={st.tone}>{st.label}</Badge>
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center justify-end gap-1">
+                    <td className="px-2 py-3 sm:px-4">
+                      <div className="flex items-center justify-end gap-0.5 sm:gap-1">
                         <button
                           onClick={() => toggleActive(d)}
-                          className="rounded-full px-2.5 py-1 text-xs font-medium text-bark transition-colors hover:bg-linen"
+                          className="hidden rounded-full px-2.5 py-1 text-xs font-medium text-bark transition-colors hover:bg-linen sm:block"
                           disabled={pending}
                         >
                           {d.active ? "Disable" : "Enable"}

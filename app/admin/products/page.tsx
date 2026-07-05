@@ -51,14 +51,14 @@ export default async function AdminProductsPage({ searchParams }: Props) {
       </header>
 
       <div className="overflow-x-auto rounded-2xl border border-line bg-white/60">
-        <table className="w-full min-w-[520px] text-sm md:min-w-[760px]">
+        <table className="w-full text-sm sm:min-w-[560px] md:min-w-[760px]">
           <thead>
             <tr className="border-b border-line text-left text-xs tracking-wide text-umber uppercase">
-              <th className="px-4 py-3.5 font-medium sm:px-5">Product</th>
+              <th className="px-3 py-3.5 font-medium sm:px-5">Product</th>
               <th className="hidden px-4 py-3.5 font-medium md:table-cell">Type / Fabric</th>
-              <th className="px-4 py-3.5 font-medium">Price</th>
-              <th className="px-4 py-3.5 font-medium">Stock</th>
-              <th className="px-4 py-3.5 font-medium">Status</th>
+              <th className="px-2 py-3.5 font-medium sm:px-4">Price</th>
+              <th className="px-2 py-3.5 font-medium sm:px-4">Stock</th>
+              <th className="hidden px-4 py-3.5 font-medium sm:table-cell">Status</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-line">
@@ -67,8 +67,8 @@ export default async function AdminProductsPage({ searchParams }: Props) {
               const stock = p.variants.reduce((n, v) => n + v.stock, 0);
               return (
                 <tr key={p.id} className="group relative transition-colors hover:bg-linen/50">
-                  <td className="px-4 py-3 sm:px-5">
-                    <div className="flex items-center gap-3">
+                  <td className="px-3 py-3 sm:px-5">
+                    <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
                       {p.images[0] ? (
                         <Image
                           src={p.images[0].src}
@@ -80,12 +80,17 @@ export default async function AdminProductsPage({ searchParams }: Props) {
                       ) : (
                         <span className="block h-14 w-11 shrink-0 rounded-lg bg-parchment" />
                       )}
-                      <Link
-                        href={`/admin/products/${p.id}` as never}
-                        className="line-clamp-2 max-w-72 font-medium text-ink after:absolute after:inset-0"
-                      >
-                        {p.title}
-                      </Link>
+                      <div className="min-w-0">
+                        <Link
+                          href={`/admin/products/${p.id}` as never}
+                          className="line-clamp-2 max-w-72 font-medium text-ink after:absolute after:inset-0"
+                        >
+                          {p.title}
+                        </Link>
+                        {!p.publishedAt && (
+                          <span className="text-xs text-umber sm:hidden">Draft</span>
+                        )}
+                      </div>
                     </div>
                   </td>
                   <td className="hidden px-4 py-3 text-bark md:table-cell">
@@ -94,13 +99,15 @@ export default async function AdminProductsPage({ searchParams }: Props) {
                       <span className="block text-xs text-umber">{p.fabrics.join(", ")}</span>
                     )}
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-2 py-3 whitespace-nowrap sm:px-4">
                     <span className="font-medium text-ink">{formatPKR(min)}</span>
                     {compareAt && (
-                      <s className="ml-1.5 text-xs text-umber">{formatPKR(compareAt)}</s>
+                      <s className="ml-1.5 hidden text-xs text-umber sm:inline">
+                        {formatPKR(compareAt)}
+                      </s>
                     )}
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-2 py-3 sm:px-4">
                     <span
                       className={
                         stock === 0
@@ -112,9 +119,12 @@ export default async function AdminProductsPage({ searchParams }: Props) {
                     >
                       {stock}
                     </span>
-                    <span className="text-xs text-umber"> across {p.variants.length} variants</span>
+                    <span className="hidden text-xs text-umber sm:inline">
+                      {" "}
+                      across {p.variants.length} variants
+                    </span>
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="hidden px-4 py-3 sm:table-cell">
                     {p.publishedAt ? (
                       <Badge tone="success">Live</Badge>
                     ) : (

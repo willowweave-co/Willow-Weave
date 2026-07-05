@@ -209,8 +209,10 @@ export function ProductForm({
         </p>
       )}
 
+      {/* min-w-0: keep the variants table's scroll INSIDE its card instead of
+          letting the grid column (min-width:auto) widen the whole page */}
       <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
-        <div className="space-y-6">
+        <div className="min-w-0 space-y-6">
           {/* basics */}
           <section className="rounded-2xl border border-line bg-white/60 p-5">
             <h2 className="mb-4 font-semibold text-ink">Details</h2>
@@ -509,7 +511,7 @@ export function ProductForm({
         </div>
 
         {/* sidebar */}
-        <div className="space-y-6">
+        <div className="min-w-0 space-y-6">
           <section className="rounded-2xl border border-line bg-white/60 p-5">
             <h2 className="mb-3 font-semibold text-ink">Visibility</h2>
             <Checkbox

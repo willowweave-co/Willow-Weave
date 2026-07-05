@@ -54,7 +54,7 @@ function StockCell({ row }: { row: InventoryRow }) {
         onBlur={commit}
         onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
         className={cn(
-          "h-9 w-20 rounded-lg border bg-white/70 px-2.5 text-center text-sm focus:outline-none",
+          "h-9 w-16 rounded-lg border bg-white/70 px-2 text-center text-sm focus:outline-none sm:w-20 sm:px-2.5",
           Number(value) === 0
             ? "border-madder/50 text-madder"
             : "border-line focus:border-walnut"
@@ -133,19 +133,19 @@ export function InventoryTable({
       </div>
 
       <div className="overflow-x-auto rounded-2xl border border-line bg-white/60">
-        <table className="w-full min-w-[440px] text-sm sm:min-w-[640px]">
+        <table className="w-full text-sm sm:min-w-[640px]">
           <thead>
             <tr className="border-b border-line text-left text-xs tracking-wide text-umber uppercase">
-              <th className="px-4 py-3.5 font-medium sm:px-5">Product</th>
-              <th className="px-4 py-3.5 font-medium">Variant</th>
+              <th className="px-3 py-3.5 font-medium sm:px-5">Product</th>
+              <th className="px-2 py-3.5 font-medium sm:px-4">Variant</th>
               <th className="hidden px-4 py-3.5 font-medium sm:table-cell">Price</th>
-              <th className="px-4 py-3.5 font-medium">Stock</th>
+              <th className="px-2 py-3.5 font-medium sm:px-4">Stock</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-line">
             {filtered.map((r) => (
               <tr key={r.variantId} className="transition-colors hover:bg-linen/40">
-                <td className="px-4 py-2.5 sm:px-5">
+                <td className="px-3 py-2.5 sm:px-5">
                   <div className="flex items-center gap-3">
                     {r.image ? (
                       <Image
@@ -169,9 +169,9 @@ export function InventoryTable({
                     </div>
                   </div>
                 </td>
-                <td className="px-4 py-2.5 text-bark">{r.label}</td>
+                <td className="px-2 py-2.5 text-bark sm:px-4">{r.label}</td>
                 <td className="hidden px-4 py-2.5 text-bark sm:table-cell">{formatPKR(r.price)}</td>
-                <td className="px-4 py-2.5">
+                <td className="px-2 py-2.5 sm:px-4">
                   <StockCell row={r} />
                 </td>
               </tr>

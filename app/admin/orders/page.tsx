@@ -84,8 +84,34 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
       </div>
 
       {orders.length ? (
-        <div className="overflow-x-auto rounded-2xl border border-line bg-white/60">
-          <table className="w-full min-w-[520px] text-sm md:min-w-[720px]">
+        <>
+        {/* phones: card list — a six-column table can't honestly fit 400px */}
+        <ul className="divide-y divide-line rounded-2xl border border-line bg-white/60 sm:hidden">
+          {orders.map((o) => (
+            <li key={o.id}>
+              <Link
+                href={`/admin/orders/${o.id}` as never}
+                className="flex items-start justify-between gap-3 px-4 py-3.5 transition-colors active:bg-linen/60"
+              >
+                <span className="min-w-0">
+                  <span className="block text-sm font-semibold text-ink">{o.orderNumber}</span>
+                  <span className="block truncate text-sm text-bark">{o.customerName}</span>
+                  <span className="block truncate text-xs text-umber">
+                    {o.city} · {formatDateTime(o.createdAt)}
+                  </span>
+                </span>
+                <span className="flex shrink-0 flex-col items-end gap-1">
+                  <OrderStatusBadge status={o.status} />
+                  <span className="text-sm font-semibold text-ink">{formatPKR(o.total)}</span>
+                </span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+
+        {/* sm and up: the full table */}
+        <div className="hidden overflow-x-auto rounded-2xl border border-line bg-white/60 sm:block">
+          <table className="w-full min-w-[560px] text-sm md:min-w-[720px]">
             <thead>
               <tr className="border-b border-line text-left text-xs tracking-wide text-umber uppercase">
                 <th className="px-4 py-3.5 font-medium sm:px-5">Order</th>
@@ -132,6 +158,7 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
             </tbody>
           </table>
         </div>
+        </>
       ) : (
         <div className="rounded-2xl border border-line bg-white/60 py-16 text-center">
           <p className="text-bark">
