@@ -107,13 +107,13 @@ export function DiscountsManager({ discounts }: { discounts: DiscountCode[] }) {
 
       {discounts.length ? (
         <div className="overflow-x-auto rounded-2xl border border-line bg-white/60">
-          <table className="w-full min-w-[600px] text-sm">
+          <table className="w-full min-w-[440px] text-sm md:min-w-[600px]">
             <thead>
               <tr className="border-b border-line text-left text-xs tracking-wide text-umber uppercase">
-                <th className="px-5 py-3.5 font-medium">Code</th>
+                <th className="px-4 py-3.5 font-medium sm:px-5">Code</th>
                 <th className="px-4 py-3.5 font-medium">Discount</th>
-                <th className="px-4 py-3.5 font-medium">Window</th>
-                <th className="px-4 py-3.5 font-medium">Used</th>
+                <th className="hidden px-4 py-3.5 font-medium md:table-cell">Window</th>
+                <th className="hidden px-4 py-3.5 font-medium md:table-cell">Used</th>
                 <th className="px-4 py-3.5 font-medium">Status</th>
                 <th className="px-4 py-3.5" />
               </tr>
@@ -123,14 +123,20 @@ export function DiscountsManager({ discounts }: { discounts: DiscountCode[] }) {
                 const st = statusOf(d);
                 return (
                   <tr key={d.id} className="transition-colors hover:bg-linen/40">
-                    <td className="px-5 py-3 font-mono font-semibold text-ink">{d.code}</td>
-                    <td className="px-4 py-3 text-bark">{describe(d)}</td>
-                    <td className="px-4 py-3 text-xs text-umber">
+                    <td className="px-4 py-3 font-mono font-semibold text-ink sm:px-5">{d.code}</td>
+                    <td className="px-4 py-3 text-bark">
+                      {describe(d)}
+                      <span className="block text-xs text-umber md:hidden">
+                        used {d.timesUsed}
+                        {d.usageLimit != null && ` / ${d.usageLimit}`}
+                      </span>
+                    </td>
+                    <td className="hidden px-4 py-3 text-xs text-umber md:table-cell">
                       {d.startsAt || d.endsAt
                         ? `${d.startsAt ? formatDate(d.startsAt) : "now"} → ${d.endsAt ? formatDate(d.endsAt) : "no end"}`
                         : "Always"}
                     </td>
-                    <td className="px-4 py-3 text-bark">
+                    <td className="hidden px-4 py-3 text-bark md:table-cell">
                       {d.timesUsed}
                       {d.usageLimit != null && ` / ${d.usageLimit}`}
                     </td>

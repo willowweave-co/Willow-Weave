@@ -110,13 +110,13 @@ export function InventoryTable({
       </header>
 
       <div className="mb-5 flex flex-wrap items-center gap-3">
-        <div className="relative">
+        <div className="relative min-w-44 flex-1 sm:flex-none">
           <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-umber" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search product or variant…"
-            className="w-64 rounded-full border border-line bg-white/70 py-2 pr-4 pl-9 text-sm focus:border-walnut focus:outline-none"
+            className="w-full rounded-full border border-line bg-white/70 py-2 pr-4 pl-9 text-sm focus:border-walnut focus:outline-none sm:w-64"
           />
         </div>
         <button
@@ -133,19 +133,19 @@ export function InventoryTable({
       </div>
 
       <div className="overflow-x-auto rounded-2xl border border-line bg-white/60">
-        <table className="w-full min-w-[640px] text-sm">
+        <table className="w-full min-w-[440px] text-sm sm:min-w-[640px]">
           <thead>
             <tr className="border-b border-line text-left text-xs tracking-wide text-umber uppercase">
-              <th className="px-5 py-3.5 font-medium">Product</th>
+              <th className="px-4 py-3.5 font-medium sm:px-5">Product</th>
               <th className="px-4 py-3.5 font-medium">Variant</th>
-              <th className="px-4 py-3.5 font-medium">Price</th>
+              <th className="hidden px-4 py-3.5 font-medium sm:table-cell">Price</th>
               <th className="px-4 py-3.5 font-medium">Stock</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-line">
             {filtered.map((r) => (
               <tr key={r.variantId} className="transition-colors hover:bg-linen/40">
-                <td className="px-5 py-2.5">
+                <td className="px-4 py-2.5 sm:px-5">
                   <div className="flex items-center gap-3">
                     {r.image ? (
                       <Image
@@ -153,15 +153,15 @@ export function InventoryTable({
                         alt=""
                         width={36}
                         height={45}
-                        className="h-11 w-9 shrink-0 rounded-md object-cover"
+                        className="hidden h-11 w-9 shrink-0 rounded-md object-cover sm:block"
                       />
                     ) : (
-                      <span className="block h-11 w-9 shrink-0 rounded-md bg-parchment" />
+                      <span className="hidden h-11 w-9 shrink-0 rounded-md bg-parchment sm:block" />
                     )}
                     <div className="min-w-0">
                       <Link
                         href={`/admin/products/${r.productId}` as never}
-                        className="line-clamp-1 font-medium text-ink hover:underline"
+                        className="line-clamp-2 font-medium text-ink hover:underline sm:line-clamp-1"
                       >
                         {r.productTitle}
                       </Link>
@@ -170,7 +170,7 @@ export function InventoryTable({
                   </div>
                 </td>
                 <td className="px-4 py-2.5 text-bark">{r.label}</td>
-                <td className="px-4 py-2.5 text-bark">{formatPKR(r.price)}</td>
+                <td className="hidden px-4 py-2.5 text-bark sm:table-cell">{formatPKR(r.price)}</td>
                 <td className="px-4 py-2.5">
                   <StockCell row={r} />
                 </td>

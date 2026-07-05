@@ -81,10 +81,13 @@ export default async function AdminOrderDetailPage({ params }: Props) {
                       {[item.color, item.size].filter(Boolean).join(" · ")}
                     </p>
                   </div>
-                  <p className="text-sm text-bark">
+                  <p className="hidden text-sm text-bark sm:block">
                     {formatPKR(item.unitPrice)} × {item.quantity}
                   </p>
-                  <p className="w-24 text-right font-semibold text-ink">
+                  <p className="w-20 shrink-0 text-right font-semibold text-ink sm:w-24">
+                    <span className="block text-xs font-normal text-umber sm:hidden">
+                      × {item.quantity}
+                    </span>
                     {formatPKR(item.unitPrice * item.quantity)}
                   </p>
                 </li>

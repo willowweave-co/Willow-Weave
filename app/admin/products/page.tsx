@@ -34,14 +34,14 @@ export default async function AdminProductsPage({ searchParams }: Props) {
             {all.length} products · add, edit, price and publish.
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <form action="/admin/products" className="relative">
+        <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto">
+          <form action="/admin/products" className="relative min-w-40 flex-1 sm:flex-none">
             <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-umber" />
             <input
               name="q"
               defaultValue={q ?? ""}
               placeholder="Search products…"
-              className="w-56 rounded-full border border-line bg-white/70 py-2 pr-4 pl-9 text-sm focus:border-walnut focus:outline-none"
+              className="w-full rounded-full border border-line bg-white/70 py-2 pr-4 pl-9 text-sm focus:border-walnut focus:outline-none sm:w-56"
             />
           </form>
           <Button href="/admin/products/new">
@@ -51,11 +51,11 @@ export default async function AdminProductsPage({ searchParams }: Props) {
       </header>
 
       <div className="overflow-x-auto rounded-2xl border border-line bg-white/60">
-        <table className="w-full min-w-[760px] text-sm">
+        <table className="w-full min-w-[520px] text-sm md:min-w-[760px]">
           <thead>
             <tr className="border-b border-line text-left text-xs tracking-wide text-umber uppercase">
-              <th className="px-5 py-3.5 font-medium">Product</th>
-              <th className="px-4 py-3.5 font-medium">Type / Fabric</th>
+              <th className="px-4 py-3.5 font-medium sm:px-5">Product</th>
+              <th className="hidden px-4 py-3.5 font-medium md:table-cell">Type / Fabric</th>
               <th className="px-4 py-3.5 font-medium">Price</th>
               <th className="px-4 py-3.5 font-medium">Stock</th>
               <th className="px-4 py-3.5 font-medium">Status</th>
@@ -67,7 +67,7 @@ export default async function AdminProductsPage({ searchParams }: Props) {
               const stock = p.variants.reduce((n, v) => n + v.stock, 0);
               return (
                 <tr key={p.id} className="group relative transition-colors hover:bg-linen/50">
-                  <td className="px-5 py-3">
+                  <td className="px-4 py-3 sm:px-5">
                     <div className="flex items-center gap-3">
                       {p.images[0] ? (
                         <Image
@@ -88,7 +88,7 @@ export default async function AdminProductsPage({ searchParams }: Props) {
                       </Link>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-bark">
+                  <td className="hidden px-4 py-3 text-bark md:table-cell">
                     {p.productType}
                     {p.fabrics.length > 0 && (
                       <span className="block text-xs text-umber">{p.fabrics.join(", ")}</span>

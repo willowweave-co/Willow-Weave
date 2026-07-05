@@ -147,20 +147,22 @@ export default async function AdminOverviewPage() {
                 <li key={o.id}>
                   <Link
                     href={`/admin/orders/${o.id}` as never}
-                    className="flex items-center gap-4 px-5 py-3.5 transition-colors hover:bg-linen/50"
+                    className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3.5 transition-colors hover:bg-linen/50 sm:gap-4 sm:px-5"
                   >
-                    <span className="w-20 shrink-0 text-sm font-semibold text-ink">
+                    <span className="shrink-0 text-sm font-semibold text-ink">
                       {o.orderNumber}
                     </span>
-                    <span className="min-w-0 flex-1">
+                    <span className="order-last w-full min-w-0 sm:order-none sm:w-auto sm:flex-1">
                       <span className="block truncate text-sm text-bark">{o.customerName}</span>
-                      <span className="block text-xs text-umber">
+                      <span className="block truncate text-xs text-umber">
                         {o.city} · {formatDateTime(o.createdAt)}
                       </span>
                     </span>
-                    <OrderStatusBadge status={o.status} />
-                    <span className="w-24 shrink-0 text-right text-sm font-semibold text-ink">
-                      {formatPKR(o.total)}
+                    <span className="ml-auto flex shrink-0 items-center gap-3 sm:ml-0">
+                      <OrderStatusBadge status={o.status} />
+                      <span className="text-right text-sm font-semibold text-ink">
+                        {formatPKR(o.total)}
+                      </span>
                     </span>
                   </Link>
                 </li>

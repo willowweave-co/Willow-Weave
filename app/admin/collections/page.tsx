@@ -32,20 +32,20 @@ export default async function AdminCollectionsPage() {
       </header>
 
       <div className="overflow-x-auto rounded-2xl border border-line bg-white/60">
-        <table className="w-full min-w-[620px] text-sm">
+        <table className="w-full min-w-[420px] text-sm md:min-w-[620px]">
           <thead>
             <tr className="border-b border-line text-left text-xs tracking-wide text-umber uppercase">
-              <th className="px-5 py-3.5 font-medium">Collection</th>
-              <th className="px-4 py-3.5 font-medium">Group</th>
+              <th className="px-4 py-3.5 font-medium sm:px-5">Collection</th>
+              <th className="hidden px-4 py-3.5 font-medium md:table-cell">Group</th>
               <th className="px-4 py-3.5 font-medium">Products</th>
-              <th className="px-4 py-3.5 font-medium">Featured</th>
+              <th className="hidden px-4 py-3.5 font-medium md:table-cell">Featured</th>
               <th className="px-4 py-3.5 font-medium">Status</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-line">
             {collections.map((c) => (
               <tr key={c.id} className="group relative transition-colors hover:bg-linen/50">
-                <td className="px-5 py-3">
+                <td className="px-4 py-3 sm:px-5">
                   <div className="flex items-center gap-3">
                     {c.image ? (
                       <Image
@@ -58,17 +58,28 @@ export default async function AdminCollectionsPage() {
                     ) : (
                       <span className="block h-11 w-11 shrink-0 rounded-lg bg-parchment" />
                     )}
-                    <Link
-                      href={`/admin/collections/${c.id}` as never}
-                      className="font-medium text-ink after:absolute after:inset-0"
-                    >
-                      {c.title}
-                    </Link>
+                    <div className="min-w-0">
+                      <Link
+                        href={`/admin/collections/${c.id}` as never}
+                        className="line-clamp-2 font-medium text-ink after:absolute after:inset-0"
+                      >
+                        {c.title}
+                      </Link>
+                      {/* group hidden on phones — show it inline */}
+                      <span className="block text-xs text-umber md:hidden">
+                        {GROUP_LABEL[c.group] ?? c.group}
+                        {c.featured ? " · Featured" : ""}
+                      </span>
+                    </div>
                   </div>
                 </td>
-                <td className="px-4 py-3 text-bark">{GROUP_LABEL[c.group] ?? c.group}</td>
+                <td className="hidden px-4 py-3 text-bark md:table-cell">
+                  {GROUP_LABEL[c.group] ?? c.group}
+                </td>
                 <td className="px-4 py-3 text-bark">{c.productIds.length}</td>
-                <td className="px-4 py-3">{c.featured ? <Badge tone="gold">Featured</Badge> : "—"}</td>
+                <td className="hidden px-4 py-3 md:table-cell">
+                  {c.featured ? <Badge tone="gold">Featured</Badge> : "—"}
+                </td>
                 <td className="px-4 py-3">
                   {c.published ? <Badge tone="success">Live</Badge> : <Badge>Hidden</Badge>}
                 </td>

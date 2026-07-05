@@ -44,14 +44,14 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
             Track every COD order — contact details, delivery address and status in one place.
           </p>
         </div>
-        <form action="/admin/orders" className="relative">
+        <form action="/admin/orders" className="relative w-full sm:w-auto">
           {activeStatus && <input type="hidden" name="status" value={activeStatus} />}
           <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-umber" />
           <input
             name="q"
             defaultValue={q ?? ""}
             placeholder="Search name, phone, order #…"
-            className="w-64 rounded-full border border-line bg-white/70 py-2 pr-4 pl-9 text-sm focus:border-walnut focus:outline-none"
+            className="w-full rounded-full border border-line bg-white/70 py-2 pr-4 pl-9 text-sm focus:border-walnut focus:outline-none sm:w-64"
           />
         </form>
       </header>
@@ -85,21 +85,21 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
 
       {orders.length ? (
         <div className="overflow-x-auto rounded-2xl border border-line bg-white/60">
-          <table className="w-full min-w-[720px] text-sm">
+          <table className="w-full min-w-[520px] text-sm md:min-w-[720px]">
             <thead>
               <tr className="border-b border-line text-left text-xs tracking-wide text-umber uppercase">
-                <th className="px-5 py-3.5 font-medium">Order</th>
+                <th className="px-4 py-3.5 font-medium sm:px-5">Order</th>
                 <th className="px-4 py-3.5 font-medium">Customer</th>
-                <th className="px-4 py-3.5 font-medium">Delivery</th>
-                <th className="px-4 py-3.5 font-medium">Items</th>
+                <th className="hidden px-4 py-3.5 font-medium md:table-cell">Delivery</th>
+                <th className="hidden px-4 py-3.5 font-medium md:table-cell">Items</th>
                 <th className="px-4 py-3.5 font-medium">Status</th>
-                <th className="px-5 py-3.5 text-right font-medium">Total</th>
+                <th className="px-4 py-3.5 text-right font-medium sm:px-5">Total</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-line">
               {orders.map((o) => (
                 <tr key={o.id} className="group relative transition-colors hover:bg-linen/50">
-                  <td className="px-5 py-3.5">
+                  <td className="px-4 py-3.5 sm:px-5">
                     <Link
                       href={`/admin/orders/${o.id}` as never}
                       className="font-semibold text-ink after:absolute after:inset-0"
@@ -111,18 +111,20 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
                   <td className="px-4 py-3.5">
                     <p className="text-bark">{o.customerName}</p>
                     <p className="text-xs text-umber">{o.phone}</p>
+                    {/* delivery column is hidden on phones — surface the city here */}
+                    <p className="text-xs text-umber md:hidden">{o.city}</p>
                   </td>
-                  <td className="max-w-52 px-4 py-3.5">
+                  <td className="hidden max-w-52 px-4 py-3.5 md:table-cell">
                     <p className="truncate text-bark">{o.city}</p>
                     <p className="truncate text-xs text-umber">{o.address}</p>
                   </td>
-                  <td className="px-4 py-3.5 text-bark">
+                  <td className="hidden px-4 py-3.5 text-bark md:table-cell">
                     {o.items.reduce((n, i) => n + i.quantity, 0)}
                   </td>
                   <td className="px-4 py-3.5">
                     <OrderStatusBadge status={o.status} />
                   </td>
-                  <td className="px-5 py-3.5 text-right font-semibold text-ink">
+                  <td className="px-4 py-3.5 text-right font-semibold text-ink sm:px-5">
                     {formatPKR(o.total)}
                   </td>
                 </tr>

@@ -35,16 +35,16 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
           <div
             key={t.id}
             className={cn(
-              "animate-fade-up pointer-events-auto flex items-center gap-2.5 rounded-full border px-4 py-2.5 text-sm shadow-lg backdrop-blur",
+              "animate-fade-up pointer-events-auto flex max-w-[calc(100vw-2rem)] items-center gap-3 rounded-full border px-5 py-3 text-[0.95rem] font-medium shadow-xl backdrop-blur",
               t.type === "success"
-                ? "border-moss/30 bg-ivory/95 text-ink"
-                : "border-madder/30 bg-ivory/95 text-madder"
+                ? "border-moss/35 bg-ivory/97 text-ink"
+                : "border-madder/35 bg-ivory/97 text-madder"
             )}
           >
             {t.type === "success" ? (
-              <CheckCircle2 className="h-4 w-4 text-moss" aria-hidden />
+              <CheckCircle2 className="h-5 w-5 shrink-0 text-moss" aria-hidden />
             ) : (
-              <XCircle className="h-4 w-4 text-madder" aria-hidden />
+              <XCircle className="h-5 w-5 shrink-0 text-madder" aria-hidden />
             )}
             {t.message}
           </div>
