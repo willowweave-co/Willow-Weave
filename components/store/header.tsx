@@ -93,7 +93,9 @@ export function Header({ nav }: { nav: NavData }) {
             </div>
           </DesktopDropdown>
           <DesktopDropdown label="Fabrics">
-            <div className="grid grid-cols-2 gap-x-8 gap-y-1.5">
+            {/* max-content tracks: fr-based columns collapse inside this
+                shrink-to-fit absolute panel and the nowrap labels overlap */}
+            <div className="grid grid-cols-[repeat(2,max-content)] gap-x-10 gap-y-1.5">
               {nav.fabrics.map((l) => (
                 <Link
                   key={l.href}
