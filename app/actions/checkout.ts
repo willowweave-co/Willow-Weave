@@ -87,7 +87,7 @@ export async function placeOrderAction(raw: CheckoutFormInput): Promise<Checkout
     // Confirmation details travel via a short-lived, httpOnly cookie — the
     // confirmation page never exposes a guessable public order lookup.
     const settings = await repo.getSettings();
-    const order = (await repo.getOrders()).find((o) => o.orderNumber === placed.orderNumber);
+    const order = await repo.getOrderByNumberTrusted(placed.orderNumber);
     if (order) {
       const details: PlacedOrderDetails = {
         orderNumber: order.orderNumber,

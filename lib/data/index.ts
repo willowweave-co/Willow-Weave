@@ -34,6 +34,13 @@ export interface Repo {
   // guessed to read customer addresses)
   previewDiscount(code: string, subtotal: number): Promise<{ valid: boolean; amount?: number; code?: string }>;
   placeOrder(input: CheckoutInput): Promise<PlacedOrder>;
+  /**
+   * Fetch a just-placed order for the confirmation cookie + emails. Bypasses
+   * the shopper session (they're anonymous and RLS hides orders from the
+   * public), so the Supabase adapter uses the service-role client here.
+   * Server-only; never expose the result to the browser wholesale.
+   */
+  getOrderByNumberTrusted(orderNumber: string): Promise<Order | null>;
 
   // admin: orders
   getOrders(): Promise<Order[]>;

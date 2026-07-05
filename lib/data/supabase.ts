@@ -12,6 +12,7 @@ import type {
   StaffMember,
   StoreSettings,
 } from "@/lib/types";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { createSupabaseServer } from "@/lib/supabase/server";
 import { computeStats } from "@/lib/stats";
 
@@ -124,13 +125,38 @@ function rowToOrder(row: Row): Order {
 /** true → keep DB id; false → let identity assign one */
 const isDbId = (id: string) => /^\d+$/.test(id);
 
+/**
+ * Session-scoped client (reads the auth cookie) — REQUIRED for admin reads
+ * (drafts, orders) and every write, because RLS keys off the staff session.
+ * Calling `cookies()` opts the route into dynamic rendering.
+ */
 async function db() {
   return createSupabaseServer();
 }
 
+/**
+ * Cookieless anonymous client for PUBLIC catalog reads. Because it never
+ * touches `cookies()`, the storefront pages that use it stay statically
+ * cacheable (ISR) — fast, and light on the Supabase free tier. RLS still
+ * limits it to the published catalog, which is exactly what shoppers see.
+ */
+// Loosely typed (like the @supabase/ssr client the admin paths use) so the
+// shared row-mapping helpers accept its results without a generated Database type.
+let _publicClient: SupabaseClient | null = null;
+function publicDb(): SupabaseClient {
+  _publicClient ??= createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { auth: { persistSession: false, autoRefreshToken: false } }
+  );
+  return _publicClient;
+}
+
 export const supabaseRepo: Repo = {
   async getCollections(opts) {
-    const client = await db();
+    // Admin (includeUnpublished) needs the session for RLS; storefront uses
+    // the cookieless client so its pages remain statically cacheable.
+    const client = opts?.includeUnpublished ? await db() : publicDb();
     let q = client
       .from("collections")
       .select("*, product_collections(product_id, position)")
@@ -142,18 +168,18 @@ export const supabaseRepo: Repo = {
   },
 
   async getCollectionByHandle(handle) {
-    const client = await db();
-    const { data, error } = await client
+    const { data, error } = await publicDb()
       .from("collections")
       .select("*, product_collections(product_id, position)")
       .eq("handle", handle)
+      .eq("published", true)
       .maybeSingle();
     if (error) throw error;
     return data ? rowToCollection(data) : null;
   },
 
   async getProducts(opts) {
-    const client = await db();
+    const client = opts?.includeUnpublished ? await db() : publicDb();
     let q = client
       .from("products")
       .select("*, product_images(*), product_variants(*)")
@@ -165,7 +191,7 @@ export const supabaseRepo: Repo = {
   },
 
   async getProductByHandle(handle, opts) {
-    const client = await db();
+    const client = opts?.includeUnpublished ? await db() : publicDb();
     const { data, error } = await client
       .from("products")
       .select("*, product_images(*), product_variants(*)")
@@ -179,8 +205,7 @@ export const supabaseRepo: Repo = {
   },
 
   async getSizeCharts() {
-    const client = await db();
-    const { data, error } = await client.from("size_charts").select("*").order("id");
+    const { data, error } = await publicDb().from("size_charts").select("*").order("id");
     if (error) throw error;
     return (data ?? []).map(
       (r: Row): SizeChart => ({
@@ -195,8 +220,11 @@ export const supabaseRepo: Repo = {
   },
 
   async getSettings(): Promise<StoreSettings> {
-    const client = await db();
-    const { data, error } = await client.from("store_settings").select("*").eq("id", 1).single();
+    const { data, error } = await publicDb()
+      .from("store_settings")
+      .select("*")
+      .eq("id", 1)
+      .single();
     if (error) throw error;
     return {
       storeName: data.store_name,
@@ -208,8 +236,7 @@ export const supabaseRepo: Repo = {
   },
 
   async previewDiscount(code, subtotal) {
-    const client = await db();
-    const { data, error } = await client.rpc("preview_discount", {
+    const { data, error } = await publicDb().rpc("preview_discount", {
       p_code: code,
       p_subtotal: subtotal,
     });
@@ -220,7 +247,7 @@ export const supabaseRepo: Repo = {
   },
 
   async placeOrder(input: CheckoutInput): Promise<PlacedOrder> {
-    const client = await db();
+    const client = publicDb();
     const { data, error } = await client.rpc("place_order", {
       p_customer_name: input.customerName,
       p_phone: input.phone,
@@ -251,6 +278,20 @@ export const supabaseRepo: Repo = {
       .from("orders")
       .select("*, order_items(*)")
       .eq("id", Number(id))
+      .maybeSingle();
+    if (error) throw error;
+    return data ? rowToOrder(data) : null;
+  },
+
+  async getOrderByNumberTrusted(orderNumber) {
+    // Anonymous shopper at checkout → use the service-role client so the
+    // confirmation page + order emails can read the order RLS hides from them.
+    const { createSupabaseAdmin } = await import("@/lib/supabase/admin");
+    const admin = createSupabaseAdmin();
+    const { data, error } = await admin
+      .from("orders")
+      .select("*, order_items(*)")
+      .eq("order_number", orderNumber)
       .maybeSingle();
     if (error) throw error;
     return data ? rowToOrder(data) : null;

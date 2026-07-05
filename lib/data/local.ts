@@ -398,6 +398,10 @@ export const localRepo: Repo = {
     return (await loadOrders()).find((o) => o.id === id || o.orderNumber === id) ?? null;
   },
 
+  async getOrderByNumberTrusted(orderNumber) {
+    return (await loadOrders()).find((o) => o.orderNumber === orderNumber) ?? null;
+  },
+
   async updateOrderStatus(id, status: OrderStatus) {
     return withLock(async () => {
       const orders = await loadOrders();
