@@ -32,7 +32,12 @@ export default async function AdminSettingsPage() {
 
       <SettingsForm initial={settings} />
 
-      <StaffManager staff={staff} isOwner={user?.role === "owner"} localMode={dataMode === "local"} />
+      <StaffManager
+        staff={staff}
+        isOwner={user?.role === "owner"}
+        localMode={dataMode === "local"}
+        currentUserId={user?.id ?? ""}
+      />
 
       <section className="rounded-2xl border border-line bg-white/60 p-5">
         <h2 className="font-semibold text-ink">Connection status</h2>

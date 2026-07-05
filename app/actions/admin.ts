@@ -1,5 +1,6 @@
 "use server";
 
+import { randomInt } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { repo, dataMode } from "@/lib/data";
 import type {
@@ -295,34 +296,172 @@ export async function updateAccountAction(input: AccountUpdateInput): Promise<Ac
   }
 }
 
-export async function inviteStaffAction(
+// ── Team management ──────────────────────────────────────────────────────────
+// No email round-trip: Supabase's built-in mailer doesn't reliably deliver
+// invites on the free tier, so the owner creates the account directly and
+// hands over a one-time temporary password. Members change it afterwards in
+// Settings → Your account.
+
+export type StaffActionResult = ActionResult & { tempPassword?: string };
+
+const TEMP_ALPHABET = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789";
+
+function generateTempPassword(): string {
+  const pick = (n: number) =>
+    Array.from({ length: n }, () => TEMP_ALPHABET[randomInt(TEMP_ALPHABET.length)]).join("");
+  return `WW-${pick(4)}-${pick(4)}-${pick(4)}`;
+}
+
+function validEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+/** Owners with a usable count guard — the store must always keep one. */
+async function ownerCount(): Promise<number> {
+  const admin = createSupabaseAdmin();
+  const { count } = await admin
+    .from("profiles")
+    .select("*", { count: "exact", head: true })
+    .eq("role", "owner");
+  return count ?? 0;
+}
+
+export async function createStaffAction(
   email: string,
   name: string,
+  role: "owner" | "staff"
+): Promise<StaffActionResult> {
+  try {
+    await requireOwner();
+    if (dataMode === "local") {
+      return { ok: false, error: "Team accounts need Supabase — connect it first (see SETUP.md)." };
+    }
+    const cleanEmail = email.trim().toLowerCase();
+    if (!validEmail(cleanEmail)) return { ok: false, error: "That email address doesn't look right." };
+
+    const admin = createSupabaseAdmin();
+    const { data: existingProfile } = await admin
+      .from("profiles")
+      .select("id")
+      .eq("email", cleanEmail)
+      .maybeSingle();
+    if (existingProfile) {
+      return {
+        ok: false,
+        error: "Already a team member — use “Reset password” on their row instead.",
+      };
+    }
+
+    const tempPassword = generateTempPassword();
+    const { data, error } = await admin.auth.admin.createUser({
+      email: cleanEmail,
+      password: tempPassword,
+      email_confirm: true,
+    });
+    let userId = data.user?.id;
+    if (error) {
+      // auth user exists without a profile (e.g. a stale invite) — repair it
+      if (/already.*registered/i.test(error.message)) {
+        const { data: list } = await admin.auth.admin.listUsers();
+        const existing = list.users.find((u) => u.email?.toLowerCase() === cleanEmail);
+        if (!existing) return { ok: false, error: error.message };
+        userId = existing.id;
+        const { error: upErr } = await admin.auth.admin.updateUserById(userId, {
+          password: tempPassword,
+          email_confirm: true,
+        });
+        if (upErr) return { ok: false, error: upErr.message };
+      } else {
+        return { ok: false, error: error.message };
+      }
+    }
+    if (!userId) return { ok: false, error: "Account creation failed — please try again." };
+
+    const { error: pErr } = await admin.from("profiles").upsert({
+      id: userId,
+      email: cleanEmail,
+      name: name.trim() || cleanEmail,
+      role,
+    });
+    if (pErr) return { ok: false, error: pErr.message };
+
+    revalidatePath("/admin/settings");
+    return { ok: true, tempPassword };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+export async function resetStaffPasswordAction(userId: string): Promise<StaffActionResult> {
+  try {
+    await requireOwner();
+    if (dataMode === "local") return { ok: false, error: "Needs Supabase." };
+    const admin = createSupabaseAdmin();
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("id")
+      .eq("id", userId)
+      .maybeSingle();
+    if (!profile) return { ok: false, error: "No such team member." };
+
+    const tempPassword = generateTempPassword();
+    const { error } = await admin.auth.admin.updateUserById(userId, {
+      password: tempPassword,
+      email_confirm: true,
+    });
+    if (error) return { ok: false, error: error.message };
+    return { ok: true, tempPassword };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+export async function updateStaffRoleAction(
+  userId: string,
   role: "owner" | "staff"
 ): Promise<ActionResult> {
   try {
     await requireOwner();
-    if (dataMode === "local") {
-      return {
-        ok: false,
-        error: "Staff invites need Supabase — connect it first (see SETUP.md).",
-      };
+    if (dataMode === "local") return { ok: false, error: "Needs Supabase." };
+    const admin = createSupabaseAdmin();
+    const { data: target } = await admin
+      .from("profiles")
+      .select("role")
+      .eq("id", userId)
+      .maybeSingle();
+    if (!target) return { ok: false, error: "No such team member." };
+    if (target.role === "owner" && role === "staff" && (await ownerCount()) <= 1) {
+      return { ok: false, error: "The store needs at least one owner." };
+    }
+    const { error } = await admin.from("profiles").update({ role }).eq("id", userId);
+    if (error) return { ok: false, error: error.message };
+    revalidatePath("/admin/settings");
+    return { ok: true };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+export async function removeStaffAction(userId: string): Promise<ActionResult> {
+  try {
+    const me = await requireOwner();
+    if (dataMode === "local") return { ok: false, error: "Needs Supabase." };
+    if (userId === me.id) {
+      return { ok: false, error: "You can't remove your own account." };
     }
     const admin = createSupabaseAdmin();
-    const { data, error } = await admin.auth.admin.inviteUserByEmail(email.trim(), {
-      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? ""}/admin/login`,
-    });
-    if (error) return { ok: false, error: error.message };
-    const userId = data.user?.id;
-    if (userId) {
-      const { error: pErr } = await admin.from("profiles").upsert({
-        id: userId,
-        email: email.trim(),
-        name: name.trim() || email.trim(),
-        role,
-      });
-      if (pErr) return { ok: false, error: pErr.message };
+    const { data: target } = await admin
+      .from("profiles")
+      .select("role")
+      .eq("id", userId)
+      .maybeSingle();
+    if (!target) return { ok: false, error: "No such team member." };
+    if (target.role === "owner" && (await ownerCount()) <= 1) {
+      return { ok: false, error: "The store needs at least one owner." };
     }
+    // deleting the auth user cascades to the profile row
+    const { error } = await admin.auth.admin.deleteUser(userId);
+    if (error) return { ok: false, error: error.message };
     revalidatePath("/admin/settings");
     return { ok: true };
   } catch (e) {
