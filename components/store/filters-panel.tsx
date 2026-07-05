@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
+import { createPortal } from "react-dom";
 import { useRouter, useSearchParams } from "next/navigation";
-import { SlidersHorizontal, X, ChevronDown } from "lucide-react";
+import { SlidersHorizontal, X, ChevronDown, ChevronRight } from "lucide-react";
 import type { FacetData } from "@/lib/catalog-filters";
 import { formatPKR } from "@/lib/money";
 import { cn } from "@/lib/utils";
@@ -61,7 +62,19 @@ export function FiltersPanel({ facets, resultCount }: { facets: FacetData; resul
   const router = useRouter();
   const searchParams = useSearchParams();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [, startTransition] = useTransition();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    document.body.style.overflow = mobileOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileOpen]);
 
   const current = useMemo(() => {
     const list = (k: string) => searchParams.get(k)?.split(",").filter(Boolean) ?? [];
@@ -284,60 +297,72 @@ export function FiltersPanel({ facets, resultCount }: { facets: FacetData; resul
         {panel}
       </aside>
 
-      {/* mobile trigger + sheet */}
+      {/* mobile: full-width toolbar bar above the grid (page stacks below lg) */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="flex items-center gap-2 rounded-full border border-line bg-white/70 px-4 py-2 text-sm font-medium text-bark lg:hidden"
+        className="mb-5 flex w-full items-center justify-between gap-2 rounded-xl border border-line bg-white/70 px-4 py-3 text-sm font-medium text-bark transition-colors hover:border-walnut/50 lg:hidden"
       >
-        <SlidersHorizontal className="h-4 w-4" />
-        Filters
-        {activeCount > 0 && (
-          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-walnut text-[0.65rem] text-ivory">
-            {activeCount}
-          </span>
-        )}
+        <span className="flex items-center gap-2">
+          <SlidersHorizontal className="h-4 w-4" />
+          Filter & refine
+          {activeCount > 0 && (
+            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-walnut px-1 text-[0.65rem] text-ivory">
+              {activeCount}
+            </span>
+          )}
+        </span>
+        <ChevronRight className="h-4 w-4 text-umber" />
       </button>
-      <div
-        className={cn(
-          "fixed inset-0 z-[85] lg:hidden",
-          mobileOpen ? "" : "pointer-events-none"
+
+      {/* mobile sheet — portaled to <body> so no ancestor styling can trap it */}
+      {mounted &&
+        createPortal(
+          <div
+            className={cn(
+              "fixed inset-0 z-[85] lg:hidden",
+              mobileOpen ? "" : "pointer-events-none"
+            )}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Product filters"
+          >
+            <div
+              className={cn(
+                "absolute inset-0 bg-ink/45 transition-opacity",
+                mobileOpen ? "opacity-100" : "opacity-0"
+              )}
+              onClick={() => setMobileOpen(false)}
+              aria-hidden
+            />
+            <div
+              className={cn(
+                "absolute inset-y-0 left-0 flex w-[85vw] max-w-sm flex-col bg-ivory shadow-2xl transition-transform duration-300",
+                mobileOpen ? "translate-x-0" : "-translate-x-full"
+              )}
+            >
+              <div className="flex items-center justify-between border-b border-line px-5 py-4">
+                <p className="heading-display text-lg font-semibold">Filters</p>
+                <button
+                  onClick={() => setMobileOpen(false)}
+                  aria-label="Close filters"
+                  className="rounded-full p-1.5 text-bark hover:bg-linen"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto px-5 py-3">{panel}</div>
+              <div className="border-t border-line p-4">
+                <button
+                  onClick={() => setMobileOpen(false)}
+                  className="w-full rounded-full bg-walnut py-3 text-sm font-medium text-ivory"
+                >
+                  Show {resultCount} {resultCount === 1 ? "result" : "results"}
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body
         )}
-      >
-        <div
-          className={cn(
-            "absolute inset-0 bg-ink/45 transition-opacity",
-            mobileOpen ? "opacity-100" : "opacity-0"
-          )}
-          onClick={() => setMobileOpen(false)}
-          aria-hidden
-        />
-        <div
-          className={cn(
-            "absolute inset-y-0 left-0 flex w-[85vw] max-w-sm flex-col bg-ivory shadow-2xl transition-transform duration-300",
-            mobileOpen ? "translate-x-0" : "-translate-x-full"
-          )}
-        >
-          <div className="flex items-center justify-between border-b border-line px-5 py-4">
-            <p className="heading-display text-lg font-semibold">Filters</p>
-            <button
-              onClick={() => setMobileOpen(false)}
-              aria-label="Close filters"
-              className="rounded-full p-1.5 text-bark hover:bg-linen"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-          <div className="flex-1 overflow-y-auto px-5 py-3">{panel}</div>
-          <div className="border-t border-line p-4">
-            <button
-              onClick={() => setMobileOpen(false)}
-              className="w-full rounded-full bg-walnut py-3 text-sm font-medium text-ivory"
-            >
-              Show {resultCount} {resultCount === 1 ? "result" : "results"}
-            </button>
-          </div>
-        </div>
-      </div>
     </>
   );
 }

@@ -45,7 +45,8 @@ export default async function ProductsPage({ searchParams }: Props) {
         </p>
       </header>
 
-      <div className="flex gap-8">
+      {/* stacked on mobile (filters bar above grid); sidebar row on lg+ */}
+      <div className="lg:flex lg:gap-8">
         <FiltersPanel facets={facets} resultCount={filtered.length} />
 
         <div className="min-w-0 flex-1">
