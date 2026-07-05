@@ -1,6 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // page copy/policies (content.json) and friends are read from disk at
+  // runtime — make sure they ship inside the serverless bundle on Vercel
+  outputFileTracingIncludes: {
+    "/**": ["./data/*.json"],
+  },
   images: {
     // Custom loader: Shopify CDN + Cloudinary do the resizing/format work,
     // so Vercel's image-optimization quota is never consumed.

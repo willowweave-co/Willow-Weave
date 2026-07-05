@@ -12,6 +12,10 @@ next-env.d.ts
 # local runtime data (dev order store) — keep scraped archive, ignore runtime writes
 /data/dev/
 
+# image archive stays local-only: too heavy for git/Vercel, and the live site
+# serves product images from Cloudinary (see data/cloudinary-map.json)
+/data/images/
+
 # misc
 .DS_Store
 *.pem

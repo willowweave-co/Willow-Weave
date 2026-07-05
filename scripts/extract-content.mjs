@@ -205,11 +205,11 @@ async function extractAccordions() {
   return accordions;
 }
 
-// ── Theme asset download (archived in data/, served from public/theme/) ─────
+// ── Theme asset download (archived in data/images/theme/ ONLY) ──────────────
+// public/theme/ is a small curated set, hand-optimized with sharp — do NOT
+// copy the raw downloads there (they're large and bloat git/Vercel).
 async function downloadThemeAssets(urls) {
-  const PUB = path.join(process.cwd(), "public", "theme");
   await mkdir(THEME_IMG, { recursive: true });
-  await mkdir(PUB, { recursive: true });
   const saved = {};
   for (const url of urls) {
     const name = path.basename(new URL(url).pathname).replace(/[^a-zA-Z0-9._-]/g, "_");
@@ -235,8 +235,7 @@ async function downloadThemeAssets(urls) {
       }
     }
     if (!ok) { console.warn(`  SKIPPED ${name}`); continue; }
-    await writeFile(path.join(PUB, name), await readFile(dest));
-    saved[name] = { url, local: `data/images/theme/${name}`, public: `/theme/${name}` };
+    saved[name] = { url, local: `data/images/theme/${name}` };
   }
   return saved;
 }
