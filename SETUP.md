@@ -52,6 +52,11 @@ npm run dev        →  http://localhost:3000        (the store)
    but stops if you ever close the Shopify store. Cloudinary also powers
    drag-and-drop uploads in the product editor.)
 
+> ⚠️ **Do this BEFORE editing anything in the dashboard.** `npm run seed`
+> restores the original scraped catalog — it overwrites stock counts,
+> product edits and settings changes you've made since. Once you start
+> managing the store in the dashboard, don't re-run the seed.
+
 ## 3 · Resend (order emails) — recommended
 
 1. Free account at [resend.com](https://resend.com) → **API Keys** → create one → `RESEND_API_KEY` in `.env.local`.
