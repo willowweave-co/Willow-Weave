@@ -23,19 +23,24 @@ export interface InventoryRow {
 
 function StockCell({ row }: { row: InventoryRow }) {
   const [value, setValue] = useState(String(row.stock));
-  const [saved, setSaved] = useState(true);
+  const [dirty, setDirty] = useState(false);
+  // the check is a momentary "saved!" confirmation, not a permanent state —
+  // an always-on indicator reads as noise
+  const [justSaved, setJustSaved] = useState(false);
   const [pending, startTransition] = useTransition();
   const { toast } = useToast();
 
   const commit = () => {
     const n = Math.max(0, Math.floor(Number(value) || 0));
     setValue(String(n));
-    if (n === row.stock && saved) return;
+    if (n === row.stock && !dirty) return;
     startTransition(async () => {
       const res = await setStockAction(row.productId, row.variantId, n);
       if (res.ok) {
-        setSaved(true);
         row.stock = n;
+        setDirty(false);
+        setJustSaved(true);
+        setTimeout(() => setJustSaved(false), 2200);
       } else {
         toast(res.error ?? "Couldn't update stock.", "error");
       }
@@ -49,7 +54,7 @@ function StockCell({ row }: { row: InventoryRow }) {
         value={value}
         onChange={(e) => {
           setValue(e.target.value.replace(/\D/g, ""));
-          setSaved(false);
+          setDirty(true);
         }}
         onBlur={commit}
         onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
@@ -61,11 +66,19 @@ function StockCell({ row }: { row: InventoryRow }) {
         )}
         aria-label={`Stock for ${row.productTitle} ${row.label}`}
       />
-      <span className="w-4">
+      <span className="w-4" aria-live="polite">
         {pending ? (
-          <span className="block h-3.5 w-3.5 animate-spin rounded-full border-2 border-line border-t-walnut" />
-        ) : saved ? (
-          <Check className="h-3.5 w-3.5 text-moss" />
+          <span
+            className="block h-3.5 w-3.5 animate-spin rounded-full border-2 border-line border-t-walnut"
+            aria-label="Saving"
+          />
+        ) : justSaved ? (
+          <Check className="h-3.5 w-3.5 text-moss" aria-label="Saved" />
+        ) : dirty ? (
+          <span
+            className="mx-auto block h-1.5 w-1.5 rounded-full bg-gold"
+            title="Unsaved — press Enter"
+          />
         ) : null}
       </span>
     </span>
