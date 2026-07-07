@@ -78,7 +78,7 @@ export default async function AdminOverviewPage() {
 
       <div className="mt-4 grid gap-4 sm:mt-6 sm:gap-6 lg:grid-cols-[1.7fr_1fr]">
         {/* revenue chart */}
-        <section className="rounded-2xl border border-line bg-white/60 p-4 sm:p-5">
+        <section className="flex flex-col rounded-2xl border border-line bg-white/60 p-4 sm:p-5">
           <div className="mb-3 flex items-center justify-between sm:mb-4">
             <h2 className="font-semibold text-ink">Revenue — last 30 days</h2>
             <Link href="/admin/orders" className="text-xs font-medium text-walnut hover:underline">
