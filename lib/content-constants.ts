@@ -18,14 +18,19 @@ export const HOME = {
 } as const;
 
 /**
- * Curated theme images in public/theme/ — optimized with sharp from the
- * originals archived in data/images/theme/ (kept out of git for size).
+ * Curated theme images. Heroes live on Cloudinary (uploaded from the
+ * originals archived in data/images/theme/ via scripts/upload-theme-images.mjs)
+ * so lib/image-loader.ts serves them as responsive AVIF/WebP. Logo and size
+ * charts are small and stay in public/theme/.
  */
 export const THEME_IMAGES = {
   logo: "/theme/logo-opt.png",
-  heroNewArrivals: "/theme/hero-new-arrivals.jpg",
-  heroBestsellers: "/theme/hero-bestsellers.jpg",
-  heroFeatured: "/theme/hero-featured.jpg",
+  heroNewArrivals:
+    "https://res.cloudinary.com/mgxsgjfs/image/upload/v1783434448/willow-weave/theme/hero-new-arrivals.jpg",
+  heroBestsellers:
+    "https://res.cloudinary.com/mgxsgjfs/image/upload/v1783434452/willow-weave/theme/hero-bestsellers.png",
+  heroFeatured:
+    "https://res.cloudinary.com/mgxsgjfs/image/upload/v1783434457/willow-weave/theme/hero-featured.png",
   sizeCharts: "/theme/size-charts.png",
 } as const;
 

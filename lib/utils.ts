@@ -28,6 +28,16 @@ export function truncate(s: string, n: number): string {
   return s.length > n ? s.slice(0, n - 1).trimEnd() + "…" : s;
 }
 
+/**
+ * Social-share (og:image) version of a Cloudinary URL: capped at 1200px and
+ * auto-compressed, but kept as JPEG since some scrapers (WhatsApp, older
+ * Facebook) don't handle WebP/AVIF. Non-Cloudinary URLs pass through as-is.
+ */
+export function ogImage(src: string): string {
+  if (!src.startsWith("https://res.cloudinary.com")) return src;
+  return src.replace("/image/upload/", "/image/upload/w_1200,c_limit,q_auto:good/");
+}
+
 /** yyyy-mm-dd in local time (Karachi for the store; server TZ in practice). */
 export function dateKey(d: Date): string {
   return d.toISOString().slice(0, 10);

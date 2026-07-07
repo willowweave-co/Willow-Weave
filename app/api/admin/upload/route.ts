@@ -42,7 +42,14 @@ export async function POST(request: NextRequest) {
       const uploaded = await new Promise<{ secure_url: string }>((resolve, reject) => {
         cloudinary.uploader
           .upload_stream(
-            { folder: "willow-weave/uploads", resource_type: "image" },
+            {
+              folder: "willow-weave/uploads",
+              resource_type: "image",
+              // Incoming transformation: re-encode the stored original so huge
+              // phone photos don't pile up. Delivery still applies f_auto,q_auto
+              // per-size via lib/image-loader.ts.
+              transformation: [{ width: 2000, height: 2000, crop: "limit", quality: "auto:good" }],
+            },
             (err, result) => (err || !result ? reject(err) : resolve(result))
           )
           .end(buffer);

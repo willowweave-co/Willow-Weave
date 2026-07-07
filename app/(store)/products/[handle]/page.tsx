@@ -11,7 +11,7 @@ import { AccordionItem } from "@/components/ui/accordion";
 import { ProductGrid, productPriceRange } from "@/components/store/product-card";
 import { Badge } from "@/components/ui/badge";
 import { discountPercent } from "@/lib/money";
-import { stripHtml, truncate } from "@/lib/utils";
+import { ogImage, stripHtml, truncate } from "@/lib/utils";
 
 export const revalidate = 600;
 
@@ -35,7 +35,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title: product.title,
       description,
-      images: product.images[0] ? [product.images[0].src] : [],
+      images: product.images[0] ? [ogImage(product.images[0].src)] : [],
     },
   };
 }

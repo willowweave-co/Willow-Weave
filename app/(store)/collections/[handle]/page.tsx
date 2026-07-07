@@ -7,7 +7,7 @@ import { repo } from "@/lib/data";
 import { ProductGrid } from "@/components/store/product-card";
 import { SortSelect } from "@/components/store/sort-select";
 import { sortProducts, type SortKey } from "@/lib/catalog-filters";
-import { stripHtml } from "@/lib/utils";
+import { ogImage, stripHtml } from "@/lib/utils";
 
 export const revalidate = 600;
 
@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: collection.title,
     description: desc || `Shop the ${collection.title} collection at Willow Weave.`,
-    openGraph: collection.image ? { images: [collection.image] } : undefined,
+    openGraph: collection.image ? { images: [ogImage(collection.image)] } : undefined,
   };
 }
 
