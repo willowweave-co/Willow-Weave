@@ -5,6 +5,7 @@ import { getAdminUser } from "@/lib/admin-auth";
 import { THEME_IMAGES } from "@/lib/content";
 import { AdminNav, AdminSignOut } from "@/components/admin/admin-nav";
 import { OrderWatcher } from "@/components/admin/order-watcher";
+import { IdleLogout } from "@/components/admin/idle-logout";
 import { FlaskConical } from "lucide-react";
 
 export const metadata: Metadata = {
@@ -27,6 +28,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <div className="flex min-h-dvh bg-ivory">
       {/* live "new order" toasts + auto-refresh on every dashboard page */}
       <OrderWatcher />
+      {/* auto sign-out after 30 min of inactivity (real auth only) */}
+      {!user.localMode && <IdleLogout />}
       {/* sidebar */}
       <aside className="no-print sticky top-0 hidden h-dvh w-60 shrink-0 flex-col border-r border-line bg-parchment/40 md:flex">
         <Link href="/admin" className="flex items-center gap-2.5 border-b border-line px-5 py-4">

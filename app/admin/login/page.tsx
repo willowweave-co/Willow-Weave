@@ -17,6 +17,7 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
 
   const supabaseConfigured = !!process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const timedOut = searchParams.get("timeout") === "1";
 
   const signIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,6 +68,11 @@ function LoginForm() {
           </div>
         ) : (
           <form onSubmit={signIn} className="rounded-2xl border border-line bg-white/60 p-6">
+            {timedOut && !error && (
+              <p className="mb-4 rounded-lg border border-gold/50 bg-gold/15 px-3 py-2 text-sm text-walnut-dark">
+                You were signed out after 30 minutes of inactivity. Sign in again to continue.
+              </p>
+            )}
             {error && (
               <p className="mb-4 rounded-lg border border-madder/30 bg-madder/8 px-3 py-2 text-sm text-madder">
                 {error}
