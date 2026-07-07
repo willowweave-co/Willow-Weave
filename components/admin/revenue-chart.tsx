@@ -64,7 +64,7 @@ export function RevenueChart({ data }: { data: Point[] }) {
   const hasAny = data.some((d) => d.revenue > 0 || d.orders > 0);
 
   return (
-    <div className="h-64 w-full" role="img" aria-label="Revenue over the last 30 days">
+    <div className="h-48 w-full sm:h-64" role="img" aria-label="Revenue over the last 30 days">
       {hasAny ? (
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
