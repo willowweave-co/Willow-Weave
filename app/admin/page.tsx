@@ -48,7 +48,7 @@ export default async function AdminOverviewPage() {
       </header>
 
       {/* stat tiles */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         {tiles.map((t) => {
           const inner = (
             <>
@@ -56,7 +56,7 @@ export default async function AdminOverviewPage() {
                 <p className="text-xs font-medium tracking-wide text-umber uppercase">{t.label}</p>
                 <t.icon className="h-4 w-4 text-umber/60" />
               </div>
-              <p className="heading-display mt-2 text-2xl font-semibold text-ink">{t.value}</p>
+              <p className="heading-display mt-2 text-xl font-semibold text-ink sm:text-2xl">{t.value}</p>
               <p className="mt-0.5 text-xs text-umber">{t.sub}</p>
             </>
           );
@@ -64,12 +64,12 @@ export default async function AdminOverviewPage() {
             <Link
               key={t.label}
               href={t.href as never}
-              className="rounded-2xl border border-line bg-white/60 p-5 transition-shadow hover:shadow-md"
+              className="rounded-2xl border border-line bg-white/60 p-4 transition-shadow hover:shadow-md sm:p-5"
             >
               {inner}
             </Link>
           ) : (
-            <div key={t.label} className="rounded-2xl border border-line bg-white/60 p-5">
+            <div key={t.label} className="rounded-2xl border border-line bg-white/60 p-4 sm:p-5">
               {inner}
             </div>
           );
