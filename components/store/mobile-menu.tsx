@@ -2,11 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X, ChevronDown } from "lucide-react";
 import type { NavData, NavLink } from "./nav-data";
 import { ABOUT_LINKS } from "./nav-data";
+import { THEME_IMAGES } from "@/lib/content-constants";
 import { cn } from "@/lib/utils";
 
 function Section({ label, links }: { label: string; links: NavLink[] }) {
@@ -72,7 +74,13 @@ export function MobileMenu({ nav }: { nav: NavData }) {
         )}
       >
         <div className="flex items-center justify-between border-b border-line px-5 py-4">
-          <span className="heading-display text-lg font-semibold text-ink">Willow Weave</span>
+          <Image
+            src={THEME_IMAGES.logo}
+            alt="Willow Weave"
+            width={44}
+            height={44}
+            className="h-11 w-11 object-contain"
+          />
           <button
             onClick={() => setOpen(false)}
             aria-label="Close menu"

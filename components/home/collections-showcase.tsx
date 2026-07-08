@@ -16,15 +16,21 @@ function CollectionTile({
   return (
     <Link
       href={`/collections/${collection.handle}`}
-      className={cn("group relative block overflow-hidden rounded-xl bg-linen", className)}
+      className={cn("group relative block h-full overflow-hidden rounded-xl bg-linen", className)}
     >
-      <div className={cn("relative", wide ? "aspect-[16/9]" : "aspect-[4/5]")}>
+      {/* on lg the wide tiles share a row with 4:5 tiles, which are taller —
+          stretch to the full grid cell there instead of the 16:9 ratio */}
+      <div className={cn("relative", wide ? "aspect-[16/9] lg:aspect-auto lg:h-full" : "aspect-[4/5]")}>
         {collection.image && (
           <Image
             src={collection.image}
             alt={collection.title}
             fill
-            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            sizes={
+              wide
+                ? "(max-width: 1024px) 100vw, 50vw"
+                : "(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            }
             className="object-cover transition duration-500 group-hover:scale-[1.05]"
           />
         )}

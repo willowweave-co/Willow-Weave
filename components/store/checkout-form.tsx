@@ -235,7 +235,9 @@ export function CheckoutForm({
           <h2 className="heading-display text-lg font-semibold text-ink">
             Your order ({items.length})
           </h2>
-          <ul className="mt-4 max-h-72 space-y-3.5 overflow-y-auto pr-1">
+          {/* pt trades margin for padding so the first row's quantity badge
+              (which overhangs the thumbnail) isn't clipped by overflow-y */}
+          <ul className="mt-2.5 max-h-72 space-y-3.5 overflow-y-auto pt-1.5 pr-1">
             {items.map((item) => (
               <li key={item.variantId} className="flex items-center gap-3">
                 {item.image ? (

@@ -2,6 +2,7 @@ import type {
   CheckoutInput,
   Collection,
   DiscountCode,
+  HeroSlide,
   Order,
   OrderStatus,
   PlacedOrder,
@@ -28,6 +29,7 @@ export interface Repo {
   getProductByHandle(handle: string, opts?: { includeUnpublished?: boolean }): Promise<Product | null>;
   getSizeCharts(): Promise<SizeChart[]>;
   getSettings(): Promise<StoreSettings>;
+  getHeroSlides(): Promise<HeroSlide[]>;
 
   // checkout — confirmation details travel via a short-lived cookie set by the
   // checkout action (never a public order lookup, so order numbers can't be
@@ -61,6 +63,7 @@ export interface Repo {
   saveDiscount(d: DiscountCode): Promise<void>;
   deleteDiscount(id: string): Promise<void>;
   saveSettings(s: StoreSettings): Promise<void>;
+  saveHeroSlides(slides: HeroSlide[]): Promise<void>;
   getStaff(): Promise<StaffMember[]>;
 }
 

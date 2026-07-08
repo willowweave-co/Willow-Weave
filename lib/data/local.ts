@@ -5,6 +5,7 @@ import type {
   CheckoutInput,
   Collection,
   DiscountCode,
+  HeroSlide,
   Order,
   OrderStatus,
   PlacedOrder,
@@ -16,6 +17,7 @@ import type {
 } from "@/lib/types";
 import { computeStats } from "@/lib/stats";
 import { validateDiscount, MAX_ITEM_QTY } from "@/lib/discounts";
+import { DEFAULT_HERO_SLIDES } from "./hero-defaults";
 
 /**
  * Local-mode adapter: the full store running against data/*.json.
@@ -59,6 +61,8 @@ interface Overlay {
   sizeCharts: SizeChart[] | null;
   discounts: DiscountCode[];
   settings: StoreSettings | null;
+  /** null/absent = seed defaults (older store.json files predate the key) */
+  heroSlides?: HeroSlide[] | null;
 }
 
 const EMPTY_OVERLAY: Overlay = {
@@ -69,6 +73,7 @@ const EMPTY_OVERLAY: Overlay = {
   sizeCharts: null,
   discounts: [],
   settings: null,
+  heroSlides: null,
 };
 
 const DEFAULT_SETTINGS: StoreSettings = {
@@ -275,6 +280,11 @@ export const localRepo: Repo = {
   async getSettings() {
     const overlay = await loadOverlay();
     return overlay.settings ?? DEFAULT_SETTINGS;
+  },
+
+  async getHeroSlides() {
+    const overlay = await loadOverlay();
+    return overlay.heroSlides ?? DEFAULT_HERO_SLIDES;
   },
 
   async previewDiscount(code, subtotal) {
@@ -600,6 +610,14 @@ export const localRepo: Repo = {
     await withLock(async () => {
       const overlay = await loadOverlay();
       overlay.settings = s;
+      await saveOverlay(overlay);
+    });
+  },
+
+  async saveHeroSlides(slides: HeroSlide[]) {
+    await withLock(async () => {
+      const overlay = await loadOverlay();
+      overlay.heroSlides = slides;
       await saveOverlay(overlay);
     });
   },

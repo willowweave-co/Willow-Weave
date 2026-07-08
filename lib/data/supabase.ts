@@ -3,6 +3,7 @@ import type {
   CheckoutInput,
   Collection,
   DiscountCode,
+  HeroSlide,
   Order,
   OrderItem,
   OrderStatus,
@@ -15,6 +16,7 @@ import type {
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { createSupabaseServer } from "@/lib/supabase/server";
 import { computeStats } from "@/lib/stats";
+import { DEFAULT_HERO_SLIDES } from "./hero-defaults";
 
 /**
  * Supabase adapter (production). Reads/writes run under the caller's session:
@@ -233,6 +235,20 @@ export const supabaseRepo: Repo = {
       notifyEmail: data.notify_email ?? "",
       announcement: data.announcement,
     };
+  },
+
+  async getHeroSlides(): Promise<HeroSlide[]> {
+    const { data, error } = await publicDb()
+      .from("store_settings")
+      .select("hero_slides")
+      .eq("id", 1)
+      .single();
+    // 42703 = column doesn't exist yet (migration 0003 not applied) — the
+    // storefront must still render, so fall back to the seed slides.
+    if (error?.code === "42703") return DEFAULT_HERO_SLIDES;
+    if (error) throw error;
+    // null until the owner first saves
+    return (data.hero_slides as HeroSlide[] | null) ?? DEFAULT_HERO_SLIDES;
   },
 
   async previewDiscount(code, subtotal) {
@@ -574,6 +590,15 @@ export const supabaseRepo: Repo = {
         notify_email: s.notifyEmail,
         announcement: s.announcement,
       })
+      .eq("id", 1);
+    if (error) throw error;
+  },
+
+  async saveHeroSlides(slides: HeroSlide[]) {
+    const client = await db();
+    const { error } = await client
+      .from("store_settings")
+      .update({ hero_slides: slides })
       .eq("id", 1);
     if (error) throw error;
   },

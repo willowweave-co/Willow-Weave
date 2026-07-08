@@ -17,6 +17,8 @@ npm run dev        →  http://localhost:3000        (the store)
 1. Create a free project at [supabase.com](https://supabase.com) (pick Singapore region — closest to Pakistan).
 2. In the project: **SQL Editor → New query**, paste the whole of
    [supabase/migrations/0001_init.sql](supabase/migrations/0001_init.sql) and **Run**.
+   Then do the same for every later file in `supabase/migrations/` in order
+   (0002, 0003, …) — already-applied ones are safe to re-run.
 3. **Settings → API**: copy three values into `.env.local`
    (copy `.env.example` → `.env.local` first):
    - `NEXT_PUBLIC_SUPABASE_URL`
@@ -130,6 +132,7 @@ data/raw/            untouched Shopify JSON + page HTML (permanent archive)
 data/images/         every original product/collection/theme image
 data/catalog.json    normalized catalog (what local mode + seeding use)
 data/content.json    page copy, policies, socials, accordions
-supabase/migrations/ the entire database schema (one file, re-runnable)
+supabase/migrations/ the database schema — paste each file into the SQL editor
+                     in order (0001, 0002, 0003…); all are re-runnable
 scripts/             scrape · extract · images · cloudinary · seed · verify
 ```

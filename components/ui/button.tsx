@@ -36,6 +36,7 @@ export function Button({
   children,
   disabled,
   type,
+  onClick,
   ...props
 }: ButtonProps) {
   const classes = cn(
@@ -49,7 +50,13 @@ export function Button({
 
   if (href && !disabled) {
     return (
-      <Link href={href} className={classes}>
+      <Link
+        href={href}
+        className={classes}
+        // callers rely on onClick for side effects alongside navigation
+        // (e.g. the cart drawer closing itself before going to /checkout)
+        onClick={onClick as React.MouseEventHandler<HTMLAnchorElement> | undefined}
+      >
         {children}
       </Link>
     );
@@ -60,6 +67,7 @@ export function Button({
       type={type ?? "button"}
       className={classes}
       disabled={disabled || loading}
+      onClick={onClick}
       {...props}
     >
       {loading && <Loader2 className="h-4 w-4 animate-spin" aria-hidden />}

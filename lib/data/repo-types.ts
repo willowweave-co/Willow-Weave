@@ -2,6 +2,7 @@ export type {
   CheckoutInput,
   Collection,
   DiscountCode,
+  HeroSlide,
   Order,
   OrderItem,
   OrderStatus,

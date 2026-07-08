@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
 import { useCart } from "@/lib/cart/cart-context";
 import { Dialog } from "@/components/ui/dialog";
@@ -14,6 +16,14 @@ export function CartDrawer({
   freeShippingThreshold: number | null;
 }) {
   const { items, subtotal, isOpen, closeCart, updateQuantity, removeItem } = useCart();
+  const pathname = usePathname();
+
+  // Safety net: whatever triggers a navigation (checkout button, back button,
+  // a link we forgot onClick on), the drawer must not stay covering the page.
+  useEffect(() => {
+    closeCart();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- close on route change only
+  }, [pathname]);
 
   const remaining =
     freeShippingThreshold != null ? Math.max(0, freeShippingThreshold - subtotal) : null;

@@ -6,6 +6,7 @@ import { repo, dataMode } from "@/lib/data";
 import type {
   Collection,
   DiscountCode,
+  HeroSlide,
   OrderStatus,
   Product,
   SizeChart,
@@ -234,6 +235,54 @@ export async function saveSettingsAction(settings: StoreSettings): Promise<Actio
     refresh();
     return { ok: true };
   } catch (e) {
+    return fail(e);
+  }
+}
+
+const MAX_HERO_SLIDES = 8;
+
+export async function saveHeroSlidesAction(slides: HeroSlide[]): Promise<ActionResult> {
+  try {
+    await requireStaff();
+    if (!Array.isArray(slides)) return { ok: false, error: "Invalid slides payload." };
+    if (slides.length > MAX_HERO_SLIDES) {
+      return { ok: false, error: `Keep it to ${MAX_HERO_SLIDES} slides or fewer.` };
+    }
+    const clean: HeroSlide[] = [];
+    for (const [i, s] of slides.entries()) {
+      const heading = s.heading?.trim() ?? "";
+      const mediaUrl = s.mediaUrl?.trim() ?? "";
+      const href = s.href?.trim() ?? "";
+      if (!mediaUrl) return { ok: false, error: `Slide ${i + 1} is missing its image/video.` };
+      if (!heading) return { ok: false, error: `Slide ${i + 1} needs a heading.` };
+      if (!/^(\/|https?:\/\/)/.test(href)) {
+        return {
+          ok: false,
+          error: `Slide ${i + 1} needs a link (e.g. /products or /collections/…).`,
+        };
+      }
+      clean.push({
+        id: s.id || `slide-${Date.now()}-${i}`,
+        mediaType: s.mediaType === "video" ? "video" : "image",
+        mediaUrl,
+        eyebrow: s.eyebrow?.trim() ?? "",
+        heading,
+        href,
+        ctaLabel: s.ctaLabel?.trim() ?? "",
+        enabled: !!s.enabled,
+      });
+    }
+    await repo.saveHeroSlides(clean);
+    refresh();
+    return { ok: true };
+  } catch (e) {
+    if ((e as { code?: string })?.code === "42703") {
+      return {
+        ok: false,
+        error:
+          "The database needs a one-time update: run supabase/migrations/0003_hero_slides.sql in the Supabase SQL editor, then save again.",
+      };
+    }
     return fail(e);
   }
 }

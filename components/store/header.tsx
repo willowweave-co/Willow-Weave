@@ -16,7 +16,7 @@ function DesktopDropdown({
 }) {
   return (
     <div className="group relative">
-      <button className="flex items-center gap-1 px-3 py-2 text-sm font-medium tracking-wide text-bark transition-colors hover:text-walnut">
+      <button className="heading-display flex items-center gap-1.5 px-3.5 py-2 text-base font-medium text-bark transition-colors hover:text-walnut">
         {label}
         <ChevronDown className="h-3.5 w-3.5 transition-transform duration-200 group-hover:rotate-180" />
       </button>
@@ -54,30 +54,27 @@ function LinkColumn({ heading, links }: { heading: string; links: NavLink[] }) {
 
 export function Header({ nav }: { nav: NavData }) {
   return (
-    <header className="sticky top-0 z-50 border-b border-line bg-ivory/90 backdrop-blur-md">
-      <div className="container-site flex h-16 items-center justify-between gap-3 md:h-[4.5rem]">
+    <header className="sticky top-0 z-50 border-b border-line/50 bg-ivory/75 backdrop-blur-md">
+      <div className="container-site flex h-14 items-center justify-between gap-3 md:h-16">
         {/* mobile menu */}
         <div className="flex flex-1 items-center md:hidden">
           <MobileMenu nav={nav} />
         </div>
 
-        {/* brand */}
+        {/* brand — logo only, the mark carries the name */}
         <Link
           href="/"
-          className="flex shrink-0 items-center gap-2.5"
+          className="flex shrink-0 items-center"
           aria-label="Willow Weave — home"
         >
           <Image
             src={THEME_IMAGES.logo}
-            alt=""
-            width={44}
-            height={44}
-            className="h-10 w-10 object-contain md:h-11 md:w-11"
+            alt="Willow Weave"
+            width={64}
+            height={64}
+            className="h-14 w-14 object-contain md:h-16 md:w-16"
             priority
           />
-          <span className="heading-display text-xl leading-none font-semibold tracking-tight text-ink md:text-[1.35rem]">
-            Willow Weave
-          </span>
         </Link>
 
         {/* desktop nav */}
@@ -109,13 +106,13 @@ export function Header({ nav }: { nav: NavData }) {
           </DesktopDropdown>
           <Link
             href="/products"
-            className="px-3 py-2 text-sm font-medium tracking-wide text-bark transition-colors hover:text-walnut"
+            className="heading-display px-3.5 py-2 text-base font-medium text-bark transition-colors hover:text-walnut"
           >
             Shop All
           </Link>
           <Link
             href="/size-guide"
-            className="px-3 py-2 text-sm font-medium tracking-wide text-bark transition-colors hover:text-walnut"
+            className="heading-display px-3.5 py-2 text-base font-medium text-bark transition-colors hover:text-walnut"
           >
             Size Guide
           </Link>

@@ -126,6 +126,21 @@ export interface StoreSettings {
   announcement: string | null;
 }
 
+/** One slide of the homepage hero slideshow (admin-managed). */
+export interface HeroSlide {
+  id: string;
+  mediaType: "image" | "video";
+  mediaUrl: string;
+  /** Small label above the heading, e.g. "Volume 5". Empty = hidden. */
+  eyebrow: string;
+  heading: string;
+  /** Where the slide links to, e.g. /collections/eid-ul-adha-2026 */
+  href: string;
+  /** Button text; empty = hide the button (whole slide stays clickable). */
+  ctaLabel: string;
+  enabled: boolean;
+}
+
 export interface StaffMember {
   id: string;
   email: string;
