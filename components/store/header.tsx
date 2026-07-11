@@ -1,33 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronDown } from "lucide-react";
 import type { NavData, NavLink } from "./nav-data";
 import { ABOUT_LINKS } from "./nav-data";
 import { THEME_IMAGES } from "@/lib/content";
+import { DesktopDropdown } from "./desktop-dropdown";
 import { HeaderActions } from "./header-actions";
 import { MobileMenu } from "./mobile-menu";
-
-function DesktopDropdown({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="group relative">
-      <button className="heading-display flex items-center gap-1.5 px-3.5 py-2 text-base font-medium text-bark transition-colors hover:text-walnut">
-        {label}
-        <ChevronDown className="h-3.5 w-3.5 transition-transform duration-200 group-hover:rotate-180" />
-      </button>
-      <div className="invisible absolute top-full left-1/2 z-50 -translate-x-1/2 pt-2 opacity-0 transition-all duration-200 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
-        <div className="rounded-2xl border border-line bg-ivory p-5 shadow-xl shadow-ink/10">
-          {children}
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function LinkColumn({ heading, links }: { heading: string; links: NavLink[] }) {
   if (!links.length) return null;
@@ -77,8 +55,9 @@ export function Header({ nav }: { nav: NavData }) {
           />
         </Link>
 
-        {/* desktop nav */}
-        <nav className="hidden flex-1 items-center justify-center md:flex" aria-label="Main">
+        {/* desktop nav — self-stretch so dropdown shelves anchor to the bar's
+            bottom edge and hover stays unbroken from trigger to panel */}
+        <nav className="hidden flex-1 items-center justify-center self-stretch md:flex" aria-label="Main">
           <DesktopDropdown label="Collections">
             <div className="flex gap-8">
               <LinkColumn heading="Volumes" links={nav.volumes} />

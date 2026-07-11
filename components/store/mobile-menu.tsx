@@ -15,14 +15,15 @@ function Section({ label, links }: { label: string; links: NavLink[] }) {
   if (!links.length) return null;
   return (
     <details className="group border-b border-line">
-      <summary className="flex cursor-pointer list-none items-center justify-between py-3.5 text-[0.95rem] font-medium text-ink select-none [&::-webkit-details-marker]:hidden">
+      <summary className="flex cursor-pointer list-none items-center justify-between py-4 text-[0.95rem] font-medium text-ink select-none [&::-webkit-details-marker]:hidden">
         {label}
-        <ChevronDown className="h-4 w-4 text-umber transition-transform group-open:rotate-180" />
+        {/* -m/p: grow the chevron's touch area without shifting the layout */}
+        <ChevronDown className="-m-2 box-content h-4 w-4 p-2 text-umber transition-transform group-open:rotate-180" />
       </summary>
-      <ul className="space-y-2.5 pb-4 pl-2">
+      <ul className="pb-3 pl-2">
         {links.map((l) => (
           <li key={l.href}>
-            <Link href={l.href} className="block text-sm text-bark hover:text-walnut">
+            <Link href={l.href} className="block py-2 text-sm text-bark hover:text-walnut">
               {l.title}
             </Link>
           </li>
@@ -84,15 +85,15 @@ export function MobileMenu({ nav }: { nav: NavData }) {
           <button
             onClick={() => setOpen(false)}
             aria-label="Close menu"
-            className="rounded-full p-1.5 text-bark hover:bg-linen"
+            className="rounded-full p-2.5 text-bark hover:bg-linen"
           >
-            <X className="h-5 w-5" />
+            <X className="h-6 w-6" />
           </button>
         </div>
         <nav className="flex-1 overflow-y-auto px-5 pb-8" aria-label="Mobile">
           <Link
             href="/products"
-            className="block border-b border-line py-3.5 text-[0.95rem] font-medium text-ink"
+            className="block border-b border-line py-4 text-[0.95rem] font-medium text-ink"
           >
             Shop All Products
           </Link>
@@ -102,13 +103,13 @@ export function MobileMenu({ nav }: { nav: NavData }) {
           <Section label="Fabrics" links={nav.fabrics} />
           <Link
             href="/collections"
-            className="block border-b border-line py-3.5 text-[0.95rem] font-medium text-ink"
+            className="block border-b border-line py-4 text-[0.95rem] font-medium text-ink"
           >
             All Collections
           </Link>
           <Link
             href="/size-guide"
-            className="block border-b border-line py-3.5 text-[0.95rem] font-medium text-ink"
+            className="block border-b border-line py-4 text-[0.95rem] font-medium text-ink"
           >
             Size Guide
           </Link>
@@ -123,9 +124,9 @@ export function MobileMenu({ nav }: { nav: NavData }) {
       <button
         onClick={() => setOpen(true)}
         aria-label="Open menu"
-        className="rounded-full p-2 text-bark hover:bg-linen"
+        className="rounded-full p-2.5 text-bark hover:bg-linen"
       >
-        <Menu className="h-5.5 w-5.5" />
+        <Menu className="h-6 w-6" />
       </button>
       {mounted && createPortal(drawer, document.body)}
     </>
