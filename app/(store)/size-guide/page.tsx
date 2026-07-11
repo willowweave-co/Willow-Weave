@@ -60,7 +60,10 @@ export default async function SizeGuidePage() {
         {charts.map((chart) => (
           <section
             key={chart.id}
-            className="rounded-2xl border border-line bg-white/50 p-6 sm:p-7"
+            // min-w-0: grid items won't shrink below the table's intrinsic
+            // width otherwise, pushing the card off narrow screens instead
+            // of letting the table's own overflow-x scroller engage
+            className="min-w-0 rounded-2xl border border-line bg-white/50 p-6 sm:p-7"
           >
             <h2 className="heading-display text-xl font-semibold text-ink">{chart.name}</h2>
             {chart.appliesTo && <p className="mt-0.5 text-sm text-umber">{chart.appliesTo}</p>}
