@@ -4,6 +4,7 @@ import { Header } from "@/components/store/header";
 import { Footer } from "@/components/store/footer";
 import { CartDrawer } from "@/components/store/cart-drawer";
 import { SearchCommand } from "@/components/store/search-command";
+import { TrafficBeacon } from "@/components/store/traffic-beacon";
 
 export default async function StoreLayout({ children }: { children: React.ReactNode }) {
   const [collections, settings] = await Promise.all([
@@ -24,6 +25,7 @@ export default async function StoreLayout({ children }: { children: React.ReactN
       <Footer />
       <CartDrawer freeShippingThreshold={settings.freeShippingThreshold} />
       <SearchCommand />
+      <TrafficBeacon />
     </div>
   );
 }

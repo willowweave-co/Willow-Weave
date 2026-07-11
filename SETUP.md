@@ -106,6 +106,7 @@ Only when you're happy with the Vercel preview:
 | Task | Where |
 |---|---|
 | See new orders (also emailed to you) | Admin → Orders |
+| Watch live visitors + traffic sources | Admin → Overview → Live traffic (needs migration `0004_traffic.sql` run once in the Supabase SQL editor) |
 | Confirm / ship / deliver / cancel an order | Order page → status buttons (cancel restocks automatically; shipped emails the customer) |
 | Print a packing slip | Order page → Packing slip |
 | Fix stock counts | Admin → Inventory (type, press Enter) |
@@ -115,6 +116,24 @@ Only when you're happy with the Vercel preview:
 | Edit the size charts | Admin → Size Charts |
 | Delivery fee, free-shipping threshold, announcement bar, notification email | Admin → Settings |
 | Invite employees (staff can't manage staff/settings) | Admin → Settings → Staff |
+
+## Tracking your ads
+
+The dashboard counts every visitor automatically (no Google Analytics needed).
+To see **which ad** brought them, add UTM tags to the link you put in the ad:
+
+```
+https://willowweave.co/?utm_source=instagram&utm_campaign=eid-lawn-drop
+https://willowweave.co/collections/new-arrivals?utm_source=facebook&utm_campaign=july-sale
+```
+
+- `utm_source` = where you posted it (instagram, facebook, tiktok, whatsapp…)
+- `utm_campaign` = a name you choose for that specific ad
+
+Visitors from those links show up by name under **Admin → Overview → Traffic
+sources → Ad campaigns**, so you can compare which ads actually bring people.
+Untagged visitors are grouped by the site that referred them (e.g.
+`instagram.com`) or as `direct`.
 
 ## If something looks wrong
 

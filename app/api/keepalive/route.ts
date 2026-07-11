@@ -19,6 +19,10 @@ export async function GET(request: NextRequest) {
     const admin = createSupabaseAdmin();
     const { error } = await admin.from("store_settings").select("id").limit(1);
     if (error) throw error;
+    // housekeeping: traffic rows older than 90 days (best-effort — table may
+    // not exist until migration 0004 is applied)
+    const cutoff = new Date(Date.now() - 90 * 86_400_000).toISOString();
+    await admin.from("page_views").delete().lt("created_at", cutoff);
     return NextResponse.json({ ok: true, pingedAt: new Date().toISOString() });
   } catch (e) {
     console.error("keepalive failed:", e);

@@ -5,6 +5,7 @@ import { repo } from "@/lib/data";
 import { formatPKR } from "@/lib/money";
 import { formatDateTime } from "@/lib/utils";
 import { RevenueChart } from "@/components/admin/revenue-chart";
+import { TrafficMonitor } from "@/components/admin/traffic-monitor";
 import { OrderStatusBadge } from "@/components/ui/badge";
 import { ORDER_STATUSES } from "@/lib/types";
 
@@ -75,6 +76,9 @@ export default async function AdminOverviewPage() {
           );
         })}
       </div>
+
+      {/* live traffic — visitors right now, 24h trend, ad-campaign sources */}
+      <TrafficMonitor />
 
       <div className="mt-4 grid gap-4 sm:mt-6 sm:gap-6 lg:grid-cols-[1.7fr_1fr]">
         {/* revenue chart */}
