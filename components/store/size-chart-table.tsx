@@ -3,16 +3,18 @@ import { cn } from "@/lib/utils";
 
 export function SizeChartTable({ chart, className }: { chart: SizeChart; className?: string }) {
   return (
+    // overflow wrapper stays only as a safety net for very narrow screens —
+    // the compact table is designed to fit a 390px viewport without scrolling
     <div className={cn("overflow-x-auto", className)}>
-      <table className="w-full min-w-96 border-collapse text-sm">
+      <table className="w-full border-collapse text-[0.8rem]">
         <thead>
           <tr className="bg-parchment">
             {chart.columns.map((col, i) => (
               <th
                 key={i}
                 className={cn(
-                  "border border-line px-3.5 py-2.5 text-left font-semibold text-ink",
-                  i === 0 && "min-w-32"
+                  "border border-line px-2 py-2 font-semibold text-ink",
+                  i === 0 ? "text-left" : "text-center"
                 )}
               >
                 {col}
@@ -27,8 +29,8 @@ export function SizeChartTable({ chart, className }: { chart: SizeChart; classNa
                 <td
                   key={ci}
                   className={cn(
-                    "border border-line px-3.5 py-2.5",
-                    ci === 0 ? "font-medium text-ink" : "text-bark"
+                    "border border-line px-2 py-2",
+                    ci === 0 ? "font-medium text-ink" : "text-center text-bark"
                   )}
                 >
                   {cell}
