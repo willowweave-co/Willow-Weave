@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { HeroSlide } from "@/lib/types";
+import { BottomMelt } from "@/components/store/bottom-melt";
 import { cn } from "@/lib/utils";
 
 const AUTOPLAY_MS = 6500;
@@ -169,13 +170,8 @@ export function HeroSlideshow({ slides }: { slides: HeroSlide[] }) {
       </div>
 
       {/* ── edge blending: only the bottom melts into the ivory page ──
-          (the top runs under the translucent header instead of fading).
-          Three masked backdrop-blur layers approximate a progressive blur —
-          sharp → soft — before the colour gradient finishes the melt. */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-36 backdrop-blur-[2px] [mask-image:linear-gradient(to_bottom,transparent,black_55%)] md:h-44" />
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-28 backdrop-blur-[6px] [mask-image:linear-gradient(to_bottom,transparent,black_65%)] md:h-32" />
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-20 backdrop-blur-[12px] [mask-image:linear-gradient(to_bottom,transparent,black_75%)] md:h-24" />
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-36 bg-gradient-to-b from-transparent via-ivory/50 to-ivory md:h-44" />
+          (the top runs under the translucent header instead of fading) */}
+      <BottomMelt />
 
       {/* arrows (desktop) */}
       {count > 1 && (

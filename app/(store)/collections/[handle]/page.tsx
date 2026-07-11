@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChevronRight } from "lucide-react";
 import { repo } from "@/lib/data";
+import { BottomMelt } from "@/components/store/bottom-melt";
 import { ProductGrid } from "@/components/store/product-card";
 import { SortSelect } from "@/components/store/sort-select";
 import { sortProducts, type SortKey } from "@/lib/catalog-filters";
@@ -47,41 +48,42 @@ export default async function CollectionPage({ params, searchParams }: Props) {
 
   return (
     <div>
-      {/* banner */}
-      <section className="container-site pt-4 md:pt-6">
-        <div className="relative overflow-hidden rounded-2xl">
-          <div className="relative flex aspect-[16/6] min-h-44 items-end">
-            {collection.image ? (
-              <Image
-                src={collection.image}
-                alt={collection.title}
-                fill
-                priority
-                sizes="100vw"
-                className="object-cover"
-              />
-            ) : (
-              <div className="absolute inset-0 bg-gradient-to-br from-parchment to-sand" />
-            )}
-            <div className="absolute inset-0 bg-gradient-to-t from-ink/65 via-ink/15 to-transparent" />
-            <div className="relative p-6 sm:p-10">
-              <nav aria-label="Breadcrumb" className="mb-2 flex items-center gap-1 text-xs text-ivory/75">
-                <Link href="/" className="hover:text-ivory">Home</Link>
-                <ChevronRight className="h-3 w-3" />
-                <Link href="/collections" className="hover:text-ivory">Collections</Link>
-              </nav>
-              <h1 className="heading-display text-3xl font-semibold text-ivory sm:text-4xl">
-                {collection.title}
-              </h1>
-              {collection.descriptionHtml && (
-                <p className="mt-2 max-w-xl text-sm leading-relaxed text-ivory/85">
-                  {stripHtml(collection.descriptionHtml)}
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
+      {/* banner — full-bleed like the homepage hero: runs under the
+          translucent header and melts into the page. Deliberately shorter
+          so the products keep the focus. */}
+      <section className="relative -mt-14 h-64 w-full overflow-hidden sm:h-72 md:-mt-16 md:h-80">
+        {collection.image ? (
+          <Image
+            src={collection.image}
+            alt={collection.title}
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover"
+          />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-parchment to-sand" />
+        )}
+        <BottomMelt />
       </section>
+
+      {/* title block sits in the melt zone below the image — in normal flow,
+          so it can never cover the banner or get clipped on small screens */}
+      <div className="container-site relative z-20 -mt-16 sm:-mt-20 md:-mt-24">
+        <nav aria-label="Breadcrumb" className="mb-2 flex items-center gap-1 text-xs text-umber">
+          <Link href="/" className="hover:text-ink">Home</Link>
+          <ChevronRight className="h-3 w-3" />
+          <Link href="/collections" className="hover:text-ink">Collections</Link>
+        </nav>
+        <h1 className="heading-display text-3xl font-semibold text-ink sm:text-4xl">
+          {collection.title}
+        </h1>
+        {collection.descriptionHtml && (
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-bark">
+            {stripHtml(collection.descriptionHtml)}
+          </p>
+        )}
+      </div>
 
       <section className="container-site py-8">
         <div className="mb-6 flex items-center justify-between gap-3">
