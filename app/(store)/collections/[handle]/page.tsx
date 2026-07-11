@@ -64,7 +64,8 @@ export default async function CollectionPage({ params, searchParams }: Props) {
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-parchment to-sand" />
         )}
-        <BottomMelt />
+        {/* shorter melt to match the shorter banner */}
+        <BottomMelt className="h-40 md:h-48" />
       </section>
 
       {/* title block sits in the melt zone below the image — in normal flow,
