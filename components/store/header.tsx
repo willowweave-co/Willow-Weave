@@ -32,7 +32,11 @@ function LinkColumn({ heading, links }: { heading: string; links: NavLink[] }) {
 
 export function Header({ nav }: { nav: NavData }) {
   return (
-    <header className="sticky top-0 z-50 border-b border-line/50 bg-ivory/75 backdrop-blur-md">
+    // The bar's frost lives on a ::before layer, NOT on <header> itself:
+    // backdrop-filter is disabled on any element whose ancestor also has
+    // one, so blur directly on the header would kill the dropdown shelves'
+    // matching frost. As siblings, both layers blur the page behind them.
+    <header className="sticky top-0 z-50 border-b border-line/50 before:absolute before:inset-0 before:-z-10 before:bg-ivory/75 before:backdrop-blur-md before:content-['']">
       <div className="container-site flex h-14 items-center justify-between gap-3 md:h-16">
         {/* mobile menu */}
         <div className="flex flex-1 items-center md:hidden">
