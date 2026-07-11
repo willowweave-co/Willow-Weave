@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { Ruler, ArrowRight } from "lucide-react";
 import { repo } from "@/lib/data";
-import { getContent, THEME_IMAGES } from "@/lib/content";
+import { getContent } from "@/lib/content";
 import { SizeChartTable } from "@/components/store/size-chart-table";
 
 export const revalidate = 600;
@@ -42,57 +41,49 @@ export default async function SizeGuidePage() {
 
   return (
     <div className="container-site py-10 md:py-14">
-      <header className="max-w-2xl">
-        <p className="flex items-center gap-2 text-xs font-medium tracking-[0.2em] text-umber uppercase">
-          <Ruler className="h-4 w-4" /> Fit & measurements
-        </p>
-        <h1 className="heading-display mt-1 text-3xl font-semibold text-ink sm:text-4xl">
-          Size Guide
-        </h1>
-        <div
-          className="rte mt-4"
-          dangerouslySetInnerHTML={{ __html: content.home.sizeChartSection.bodyHtml }}
-        />
-      </header>
+      {/* intro left, charts stacked on the right — reclaims the dead space
+          beside the intro copy on desktop; stacks naturally on mobile */}
+      <div className="grid gap-10 lg:grid-cols-[1fr_1.1fr] lg:gap-14">
+        <header>
+          <p className="flex items-center gap-2 text-xs font-medium tracking-[0.2em] text-umber uppercase">
+            <Ruler className="h-4 w-4" /> Fit & measurements
+          </p>
+          <h1 className="heading-display mt-1 text-3xl font-semibold text-ink sm:text-4xl">
+            Size Guide
+          </h1>
+          <div
+            className="rte mt-4"
+            dangerouslySetInnerHTML={{ __html: content.home.sizeChartSection.bodyHtml }}
+          />
+        </header>
 
-      {/* charts — no card chrome, the full width goes to the tables
-          (min-w-0: grid items otherwise refuse to shrink to the viewport) */}
-      <div className="mt-10 grid gap-10 lg:grid-cols-2 lg:gap-8">
-        {charts.map((chart) => (
-          <section key={chart.id} className="min-w-0">
-            <h2 className="heading-display text-xl font-semibold text-ink">{chart.name}</h2>
-            {chart.appliesTo && <p className="mt-0.5 text-sm text-umber">{chart.appliesTo}</p>}
-            <SizeChartTable chart={chart} className="mt-4" />
-          </section>
-        ))}
+        {/* min-w-0: grid items otherwise refuse to shrink to the viewport */}
+        <div className="min-w-0 space-y-10">
+          {charts.map((chart) => (
+            <section key={chart.id} className="min-w-0">
+              <h2 className="heading-display text-xl font-semibold text-ink">{chart.name}</h2>
+              {chart.appliesTo && <p className="mt-0.5 text-sm text-umber">{chart.appliesTo}</p>}
+              <SizeChartTable chart={chart} className="mt-4" />
+            </section>
+          ))}
+        </div>
       </div>
 
-      {/* how to measure */}
-      <section className="mt-10 grid gap-8 rounded-2xl border border-line bg-parchment/60 p-6 sm:p-10 md:grid-cols-2">
-        <div>
-          <h2 className="heading-display text-2xl font-semibold text-ink">How to measure</h2>
-          <p className="mt-2 text-sm leading-relaxed text-umber">
-            All measurements are garment measurements in inches, taken with the piece laid flat.
-            Compare them with a well-fitting garment you already own.
-          </p>
-          <dl className="mt-5 space-y-4">
-            {MEASURE_TIPS.map((m) => (
-              <div key={m.term} className="border-l-2 border-gold pl-4">
-                <dt className="text-sm font-semibold text-ink">{m.term}</dt>
-                <dd className="mt-0.5 text-sm leading-relaxed text-bark">{m.tip}</dd>
-              </div>
-            ))}
-          </dl>
-        </div>
-        <div className="self-center overflow-hidden rounded-xl border border-line bg-white">
-          <Image
-            src={THEME_IMAGES.sizeCharts}
-            alt="Original Willow Weave size chart reference"
-            width={860}
-            height={845}
-            className="h-auto w-full object-contain"
-          />
-        </div>
+      {/* how to measure — text only; the real charts now live right above */}
+      <section className="mt-10 rounded-2xl border border-line bg-parchment/60 p-6 sm:p-10">
+        <h2 className="heading-display text-2xl font-semibold text-ink">How to measure</h2>
+        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-umber">
+          All measurements are garment measurements in inches, taken with the piece laid flat.
+          Compare them with a well-fitting garment you already own.
+        </p>
+        <dl className="mt-6 grid gap-x-10 gap-y-4 md:grid-cols-2">
+          {MEASURE_TIPS.map((m) => (
+            <div key={m.term} className="border-l-2 border-gold pl-4">
+              <dt className="text-sm font-semibold text-ink">{m.term}</dt>
+              <dd className="mt-0.5 text-sm leading-relaxed text-bark">{m.tip}</dd>
+            </div>
+          ))}
+        </dl>
       </section>
 
       <div className="mt-10 rounded-2xl border border-line p-6 text-center sm:p-8">

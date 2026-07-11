@@ -1,21 +1,22 @@
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Ruler } from "lucide-react";
 import { repo } from "@/lib/data";
-import { getContent, HOME, THEME_IMAGES } from "@/lib/content";
+import { getContent, HOME } from "@/lib/content";
 import { Button } from "@/components/ui/button";
 import { ProductCard } from "@/components/store/product-card";
+import { SizeChartTable } from "@/components/store/size-chart-table";
 import { HeroSlideshow } from "@/components/home/hero-slideshow";
 import { CollectionsShowcase } from "@/components/home/collections-showcase";
 
 export const revalidate = 600;
 
 export default async function HomePage() {
-  const [products, collections, content, heroSlides] = await Promise.all([
+  const [products, collections, content, heroSlides, sizeCharts] = await Promise.all([
     repo.getProducts(),
     repo.getCollections(),
     getContent(),
     repo.getHeroSlides(),
+    repo.getSizeCharts(),
   ]);
   const byHandle = new Map(products.map((p) => [p.handle, p]));
 
@@ -105,14 +106,14 @@ export default async function HomePage() {
               </Button>
             </div>
           </div>
-          <div className="relative overflow-hidden rounded-xl border border-line bg-white">
-            <Image
-              src={THEME_IMAGES.sizeCharts}
-              alt="Willow Weave size charts for tops and trousers"
-              width={720}
-              height={705}
-              className="h-auto w-full object-contain"
-            />
+          {/* the real charts, not a picture of them */}
+          <div className="min-w-0 space-y-6">
+            {sizeCharts.map((chart) => (
+              <div key={chart.id} className="min-w-0">
+                <p className="mb-2 text-sm font-semibold text-ink">{chart.name}</p>
+                <SizeChartTable chart={chart} />
+              </div>
+            ))}
           </div>
         </div>
       </section>
