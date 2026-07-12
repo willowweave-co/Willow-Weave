@@ -1,15 +1,17 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowDown, ArrowUp, ImagePlus, Trash2, Film } from "lucide-react";
+import { ArrowDown, ArrowUp, Crosshair, ImagePlus, Trash2, Film } from "lucide-react";
 import type { HeroSlide } from "@/lib/types";
 import { saveHeroSlidesAction } from "@/app/actions/admin";
+import { MediaPickerDialog, type MediaItem } from "@/components/admin/media-library";
+import { FocalPointDialog } from "@/components/admin/focal-point-dialog";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Checkbox } from "@/components/ui/fields";
 import { useToast } from "@/components/ui/toast";
+import { focalPosition } from "@/lib/utils";
 
-const ACCEPT = "image/jpeg,image/png,image/webp,image/avif,image/gif,video/mp4,video/webm";
 const MAX_SLIDES = 8;
 
 interface LinkOption {
@@ -22,19 +24,20 @@ function newId() {
 }
 
 function MediaThumb({ slide }: { slide: HeroSlide }) {
+  const style = focalPosition(slide.focalX, slide.focalY);
   return (
     <div className="relative aspect-[16/9] w-full overflow-hidden rounded-lg border border-line bg-linen sm:w-40 sm:shrink-0">
       {slide.mediaType === "video" ? (
         <>
           {/* eslint-disable-next-line jsx-a11y/media-has-caption -- decorative preview */}
-          <video src={slide.mediaUrl} muted playsInline preload="metadata" className="h-full w-full object-cover" />
+          <video src={slide.mediaUrl} muted playsInline preload="metadata" className="h-full w-full object-cover" style={style} />
           <span className="absolute right-1.5 bottom-1.5 flex items-center gap-1 rounded-full bg-ink/70 px-2 py-0.5 text-[0.65rem] font-medium text-ivory">
             <Film className="h-3 w-3" /> Video
           </span>
         </>
       ) : (
         // eslint-disable-next-line @next/next/no-img-element -- tiny admin preview of arbitrary uploads
-        <img src={slide.mediaUrl} alt="" className="h-full w-full object-cover" />
+        <img src={slide.mediaUrl} alt="" className="h-full w-full object-cover" style={style} />
       )}
     </div>
   );
@@ -51,10 +54,10 @@ export function HeroSlidesManager({
   const { toast } = useToast();
   const [pending, startTransition] = useTransition();
   const [slides, setSlides] = useState<HeroSlide[]>(initial);
-  const [uploading, setUploading] = useState(false);
-  const [replacing, setReplacing] = useState<string | null>(null);
-  const addRef = useRef<HTMLInputElement>(null);
-  const replaceRef = useRef<HTMLInputElement>(null);
+  /** "add" = new slide, otherwise the id of the slide whose media to replace */
+  const [pickerFor, setPickerFor] = useState<"add" | string | null>(null);
+  /** id of the slide whose focal point is being adjusted */
+  const [focusFor, setFocusFor] = useState<string | null>(null);
 
   const patch = (id: string, p: Partial<HeroSlide>) =>
     setSlides((ss) => ss.map((s) => (s.id === id ? { ...s, ...p } : s)));
@@ -68,52 +71,33 @@ export function HeroSlidesManager({
       return next;
     });
 
-  const upload = async (file: File): Promise<{ url: string; kind: "image" | "video" } | null> => {
-    setUploading(true);
-    try {
-      const body = new FormData();
-      body.append("file", file);
-      const res = await fetch("/api/admin/upload", { method: "POST", body });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Upload failed");
-      return { url: data.url, kind: data.kind === "video" ? "video" : "image" };
-    } catch (e) {
-      toast(e instanceof Error ? e.message : "Upload failed", "error");
-      return null;
-    } finally {
-      setUploading(false);
+  const onPick = (items: MediaItem[]) => {
+    const m = items[0];
+    if (!m || !pickerFor) return;
+    if (pickerFor === "add") {
+      setSlides((ss) =>
+        ss.length >= MAX_SLIDES
+          ? ss
+          : [
+              ...ss,
+              {
+                id: newId(),
+                mediaType: m.kind,
+                mediaUrl: m.url,
+                focalX: null,
+                focalY: null,
+                eyebrow: "",
+                heading: "",
+                href: "/products",
+                ctaLabel: "Shop Now",
+                enabled: true,
+              },
+            ]
+      );
+    } else {
+      // different media → old focal point no longer applies
+      patch(pickerFor, { mediaUrl: m.url, mediaType: m.kind, focalX: null, focalY: null });
     }
-  };
-
-  const addSlide = async (files: FileList | null) => {
-    const file = files?.[0];
-    if (!file) return;
-    const up = await upload(file);
-    if (addRef.current) addRef.current.value = "";
-    if (!up) return;
-    setSlides((ss) => [
-      ...ss,
-      {
-        id: newId(),
-        mediaType: up.kind,
-        mediaUrl: up.url,
-        eyebrow: "",
-        heading: "",
-        href: "/products",
-        ctaLabel: "Shop Now",
-        enabled: true,
-      },
-    ]);
-  };
-
-  const replaceMedia = async (files: FileList | null) => {
-    const file = files?.[0];
-    const id = replacing;
-    setReplacing(null);
-    if (replaceRef.current) replaceRef.current.value = "";
-    if (!file || !id) return;
-    const up = await upload(file);
-    if (up) patch(id, { mediaUrl: up.url, mediaType: up.kind });
   };
 
   const save = () =>
@@ -149,14 +133,16 @@ export function HeroSlidesManager({
               <div className="space-y-2">
                 <MediaThumb slide={s} />
                 <button
-                  onClick={() => {
-                    setReplacing(s.id);
-                    replaceRef.current?.click();
-                  }}
-                  disabled={uploading}
+                  onClick={() => setPickerFor(s.id)}
                   className="w-full rounded-lg border border-line px-2 py-1.5 text-xs font-medium text-bark transition-colors hover:border-walnut hover:text-walnut sm:w-40"
                 >
                   Replace media
+                </button>
+                <button
+                  onClick={() => setFocusFor(s.id)}
+                  className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-line px-2 py-1.5 text-xs font-medium text-bark transition-colors hover:border-walnut hover:text-walnut sm:w-40"
+                >
+                  <Crosshair className="h-3.5 w-3.5" /> Adjust focus
                 </button>
               </div>
 
@@ -245,28 +231,11 @@ export function HeroSlidesManager({
         ))}
       </datalist>
 
-      {/* hidden input shared by all "Replace media" buttons */}
-      <input
-        ref={replaceRef}
-        type="file"
-        accept={ACCEPT}
-        className="hidden"
-        onChange={(e) => replaceMedia(e.target.files)}
-      />
-
       <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <input
-            ref={addRef}
-            type="file"
-            accept={ACCEPT}
-            className="hidden"
-            onChange={(e) => addSlide(e.target.files)}
-          />
           <Button
             variant="outline"
-            onClick={() => addRef.current?.click()}
-            loading={uploading}
+            onClick={() => setPickerFor("add")}
             disabled={slides.length >= MAX_SLIDES}
           >
             <ImagePlus className="h-4 w-4" /> Add slide (image or video)
@@ -279,6 +248,35 @@ export function HeroSlidesManager({
           Save homepage
         </Button>
       </div>
+
+      <MediaPickerDialog
+        open={pickerFor !== null}
+        onClose={() => setPickerFor(null)}
+        kind="all"
+        onSelect={onPick}
+        title={pickerFor === "add" ? "Add a hero slide" : "Replace slide media"}
+      />
+
+      {(() => {
+        const slide = slides.find((s) => s.id === focusFor);
+        return slide ? (
+          <FocalPointDialog
+            open
+            onClose={() => setFocusFor(null)}
+            src={slide.mediaUrl}
+            mediaType={slide.mediaType}
+            initial={
+              slide.focalX != null || slide.focalY != null
+                ? { x: slide.focalX ?? 50, y: slide.focalY ?? 50 }
+                : null
+            }
+            onSave={(pt) =>
+              patch(slide.id, { focalX: pt?.x ?? null, focalY: pt?.y ?? null })
+            }
+            title="Hero slide focus"
+          />
+        ) : null;
+      })()}
     </section>
   );
 }

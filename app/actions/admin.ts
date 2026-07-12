@@ -35,6 +35,23 @@ function refresh() {
   revalidatePath("/", "layout");
 }
 
+/** Clamp a focal-point coordinate to 0–100%; anything else means "centre" (null). */
+function pct(v: unknown): number | null {
+  return typeof v === "number" && Number.isFinite(v)
+    ? Math.min(100, Math.max(0, Math.round(v)))
+    : null;
+}
+
+/** Postgres "column does not exist" — the focal-point migration hasn't run yet. */
+function missingFocalColumns(e: unknown): ActionResult | null {
+  if ((e as { code?: string })?.code !== "42703") return null;
+  return {
+    ok: false,
+    error:
+      "The database needs a one-time update: run supabase/migrations/0005_focal_points.sql in the Supabase SQL editor, then save again.",
+  };
+}
+
 /** Strip scripts/handlers from owner-entered rich text. */
 function sanitizeHtml(html: string): string {
   return html
@@ -92,11 +109,16 @@ export async function saveProductAction(product: Product): Promise<ActionResult>
       title: product.title.trim(),
       handle: product.handle.trim().toLowerCase(),
       descriptionHtml: sanitizeHtml(product.descriptionHtml),
+      images: product.images.map((img) => ({
+        ...img,
+        focalX: pct(img.focalX),
+        focalY: pct(img.focalY),
+      })),
     });
     refresh();
     return { ok: true };
   } catch (e) {
-    return fail(e);
+    return missingFocalColumns(e) ?? fail(e);
   }
 }
 
@@ -141,11 +163,13 @@ export async function saveCollectionAction(collection: Collection): Promise<Acti
       title: collection.title.trim(),
       handle: collection.handle.trim().toLowerCase(),
       descriptionHtml: sanitizeHtml(collection.descriptionHtml),
+      imageFocalX: pct(collection.imageFocalX),
+      imageFocalY: pct(collection.imageFocalY),
     });
     refresh();
     return { ok: true };
   } catch (e) {
-    return fail(e);
+    return missingFocalColumns(e) ?? fail(e);
   }
 }
 
@@ -265,6 +289,8 @@ export async function saveHeroSlidesAction(slides: HeroSlide[]): Promise<ActionR
         id: s.id || `slide-${Date.now()}-${i}`,
         mediaType: s.mediaType === "video" ? "video" : "image",
         mediaUrl,
+        focalX: pct(s.focalX),
+        focalY: pct(s.focalY),
         eyebrow: s.eyebrow?.trim() ?? "",
         heading,
         href,

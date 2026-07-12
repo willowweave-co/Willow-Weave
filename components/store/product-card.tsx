@@ -4,7 +4,7 @@ import type { Product } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { Price } from "@/components/store/price";
 import { discountPercent } from "@/lib/money";
-import { cn } from "@/lib/utils";
+import { cn, focalPosition } from "@/lib/utils";
 
 export function productPriceRange(p: Product) {
   const prices = p.variants.map((v) => v.price);
@@ -51,6 +51,7 @@ export function ProductCard({
                 "object-cover transition duration-500 group-hover:scale-[1.04]",
                 img2 && "group-hover:opacity-0"
               )}
+              style={focalPosition(img1.focalX, img1.focalY)}
             />
             {img2 && (
               <Image
@@ -59,6 +60,7 @@ export function ProductCard({
                 fill
                 sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                 className="object-cover opacity-0 transition duration-500 group-hover:scale-[1.04] group-hover:opacity-100"
+                style={focalPosition(img2.focalX, img2.focalY)}
               />
             )}
           </>

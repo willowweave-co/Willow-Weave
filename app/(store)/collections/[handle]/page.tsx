@@ -8,7 +8,7 @@ import { BottomMelt } from "@/components/store/bottom-melt";
 import { ProductGrid } from "@/components/store/product-card";
 import { SortSelect } from "@/components/store/sort-select";
 import { sortProducts, type SortKey } from "@/lib/catalog-filters";
-import { ogImage, stripHtml } from "@/lib/utils";
+import { focalPosition, ogImage, stripHtml } from "@/lib/utils";
 
 export const revalidate = 600;
 
@@ -60,6 +60,7 @@ export default async function CollectionPage({ params, searchParams }: Props) {
             priority
             sizes="100vw"
             className="object-cover"
+            style={focalPosition(collection.imageFocalX, collection.imageFocalY)}
           />
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-parchment to-sand" />

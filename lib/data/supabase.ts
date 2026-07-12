@@ -54,6 +54,8 @@ function rowToProduct(row: Row): Product {
       width: i.width,
       height: i.height,
       position: i.position,
+      focalX: i.focal_x ?? null,
+      focalY: i.focal_y ?? null,
     })),
     variants: variants.map((v: Row) => ({
       id: String(v.id),
@@ -77,6 +79,8 @@ function rowToCollection(row: Row): Collection {
     title: row.title,
     descriptionHtml: row.description_html ?? "",
     image: row.image_url,
+    imageFocalX: row.image_focal_x ?? null,
+    imageFocalY: row.image_focal_y ?? null,
     group: row.group,
     position: row.position ?? 0,
     featured: row.featured ?? false,
@@ -435,6 +439,8 @@ export const supabaseRepo: Repo = {
         width: img.width,
         height: img.height,
         position: idx,
+        focal_x: img.focalX ?? null,
+        focal_y: img.focalY ?? null,
       };
       const { error: iErr } = await client.from("product_images").upsert(row, { onConflict: "id" });
       if (iErr) throw iErr;
@@ -479,6 +485,8 @@ export const supabaseRepo: Repo = {
       title: c.title,
       description_html: c.descriptionHtml,
       image_url: c.image,
+      image_focal_x: c.imageFocalX ?? null,
+      image_focal_y: c.imageFocalY ?? null,
       group: c.group,
       position: c.position,
       featured: c.featured,

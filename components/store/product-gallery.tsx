@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { ProductImage } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn, focalPosition } from "@/lib/utils";
 
 const SWIPE_PX = 45;
 
@@ -47,7 +47,10 @@ export function ProductGallery({ images, title }: { images: ProductImage[]; titl
           priority
           sizes="(max-width: 1024px) 100vw, 50vw"
           className="animate-fade-in object-cover transition-transform duration-500 group-hover:scale-[1.6]"
-          style={{ transformOrigin: "var(--zoom-x, 50%) var(--zoom-y, 50%)" }}
+          style={{
+            transformOrigin: "var(--zoom-x, 50%) var(--zoom-y, 50%)",
+            ...focalPosition(current.focalX, current.focalY),
+          }}
           onMouseMove={(e) => {
             const rect = e.currentTarget.getBoundingClientRect();
             e.currentTarget.style.setProperty("--zoom-x", `${((e.clientX - rect.left) / rect.width) * 100}%`);
@@ -88,7 +91,14 @@ export function ProductGallery({ images, title }: { images: ProductImage[]; titl
                 i === active ? "border-walnut" : "border-transparent hover:border-line"
               )}
             >
-              <Image src={img.src} alt="" fill sizes="64px" className="object-cover" />
+              <Image
+                src={img.src}
+                alt=""
+                fill
+                sizes="64px"
+                className="object-cover"
+                style={focalPosition(img.focalX, img.focalY)}
+              />
             </button>
           ))}
         </div>

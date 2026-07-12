@@ -6,7 +6,7 @@ import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { HeroSlide } from "@/lib/types";
 import { BottomMelt } from "@/components/store/bottom-melt";
-import { cn } from "@/lib/utils";
+import { cn, focalPosition } from "@/lib/utils";
 
 const AUTOPLAY_MS = 6500;
 const SWIPE_PX = 45;
@@ -99,6 +99,7 @@ export function HeroSlideshow({ slides }: { slides: HeroSlide[] }) {
                 playsInline
                 preload={i === 0 ? "auto" : "metadata"}
                 className="absolute inset-0 h-full w-full object-cover"
+                style={focalPosition(s.focalX, s.focalY)}
               />
             ) : (
               <Image
@@ -108,6 +109,7 @@ export function HeroSlideshow({ slides }: { slides: HeroSlide[] }) {
                 priority={i === 0}
                 sizes="100vw"
                 className="object-cover"
+                style={focalPosition(s.focalX, s.focalY)}
               />
             )}
 

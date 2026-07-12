@@ -50,26 +50,32 @@ export async function POST(request: NextRequest) {
     const { v2: cloudinary } = await import("cloudinary");
     cloudinary.config({ cloud_name: cloudName, api_key: apiKey, api_secret: apiSecret });
     try {
-      const uploaded = await new Promise<{ secure_url: string }>((resolve, reject) => {
-        cloudinary.uploader
-          .upload_stream(
-            isVideo
-              ? { folder: "willow-weave/uploads", resource_type: "video" }
-              : {
-                  folder: "willow-weave/uploads",
-                  resource_type: "image",
-                  // Incoming transformation: re-encode the stored original so huge
-                  // phone photos don't pile up. Delivery still applies f_auto,q_auto
-                  // per-size via lib/image-loader.ts.
-                  transformation: [
-                    { width: 2000, height: 2000, crop: "limit", quality: "auto:good" },
-                  ],
-                },
-            (err, result) => (err || !result ? reject(err) : resolve(result))
-          )
-          .end(buffer);
+      const uploaded = await new Promise<{ secure_url: string; public_id: string }>(
+        (resolve, reject) => {
+          cloudinary.uploader
+            .upload_stream(
+              isVideo
+                ? { folder: "willow-weave/uploads", resource_type: "video" }
+                : {
+                    folder: "willow-weave/uploads",
+                    resource_type: "image",
+                    // Incoming transformation: re-encode the stored original so huge
+                    // phone photos don't pile up. Delivery still applies f_auto,q_auto
+                    // per-size via lib/image-loader.ts.
+                    transformation: [
+                      { width: 2000, height: 2000, crop: "limit", quality: "auto:good" },
+                    ],
+                  },
+              (err, result) => (err || !result ? reject(err) : resolve(result))
+            )
+            .end(buffer);
+        }
+      );
+      return NextResponse.json({
+        url: uploaded.secure_url,
+        publicId: uploaded.public_id,
+        kind: isVideo ? "video" : "image",
       });
-      return NextResponse.json({ url: uploaded.secure_url, kind: isVideo ? "video" : "image" });
     } catch (e) {
       console.error("Cloudinary upload failed:", e);
       return NextResponse.json({ error: "Cloudinary upload failed" }, { status: 502 });

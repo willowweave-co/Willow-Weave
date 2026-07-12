@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { repo } from "@/lib/data";
 import type { Collection, CollectionGroup } from "@/lib/types";
+import { focalPosition } from "@/lib/utils";
 
 export const revalidate = 600;
 
@@ -36,6 +37,7 @@ function CollectionCard({ c }: { c: Collection }) {
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
             className="object-cover transition duration-500 group-hover:scale-[1.05]"
+            style={focalPosition(c.imageFocalX, c.imageFocalY)}
           />
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-parchment to-sand" />

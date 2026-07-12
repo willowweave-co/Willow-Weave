@@ -4,13 +4,15 @@ import { useMemo, useState, useTransition } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Search, Trash2 } from "lucide-react";
+import { ArrowLeft, Crosshair, ImagePlus, Search, Trash2 } from "lucide-react";
 import type { Collection, CollectionGroup } from "@/lib/types";
 import { saveCollectionAction, deleteCollectionAction } from "@/app/actions/admin";
+import { MediaPickerDialog } from "@/components/admin/media-library";
+import { FocalPointDialog, type FocalPoint } from "@/components/admin/focal-point-dialog";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Textarea, Select, Checkbox } from "@/components/ui/fields";
 import { useToast } from "@/components/ui/toast";
-import { slugify, cn } from "@/lib/utils";
+import { slugify, cn, focalPosition } from "@/lib/utils";
 
 interface ProductOption {
   id: string;
@@ -36,11 +38,18 @@ export function CollectionForm({
   const [handleTouched, setHandleTouched] = useState(!isNew);
   const [description, setDescription] = useState(initial.descriptionHtml);
   const [image, setImage] = useState(initial.image ?? "");
+  const [imageFocal, setImageFocal] = useState<FocalPoint | null>(
+    initial.imageFocalX != null || initial.imageFocalY != null
+      ? { x: initial.imageFocalX ?? 50, y: initial.imageFocalY ?? 50 }
+      : null
+  );
+  const [focusOpen, setFocusOpen] = useState(false);
   const [group, setGroup] = useState<CollectionGroup>(initial.group);
   const [featured, setFeatured] = useState(initial.featured);
   const [published, setPublished] = useState(initial.published);
   const [productIds, setProductIds] = useState<string[]>(initial.productIds);
   const [filter, setFilter] = useState("");
+  const [libraryOpen, setLibraryOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const filteredProducts = useMemo(() => {
@@ -62,6 +71,8 @@ export function CollectionForm({
         handle: handle || slugify(title),
         descriptionHtml: description,
         image: image.trim() || null,
+        imageFocalX: imageFocal?.x ?? null,
+        imageFocalY: imageFocal?.y ?? null,
         group,
         featured,
         published,
@@ -159,16 +170,38 @@ export function CollectionForm({
               />
             </div>
             <div>
-              <Label htmlFor="c-image">Cover image URL</Label>
-              <Input
-                id="c-image"
-                value={image}
-                onChange={(e) => setImage(e.target.value)}
-                placeholder="https://…"
-              />
+              <Label htmlFor="c-image">Cover image</Label>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => setLibraryOpen(true)}>
+                  <ImagePlus className="h-4 w-4" /> Choose from library
+                </Button>
+                <span className="text-xs text-umber">or</span>
+                <Input
+                  id="c-image"
+                  value={image}
+                  onChange={(e) => {
+                    setImage(e.target.value);
+                    setImageFocal(null); // different photo → old focus no longer applies
+                  }}
+                  placeholder="Paste an image URL…"
+                  className="h-9 min-w-0 flex-1"
+                />
+              </div>
               {image && (
-                <div className="relative mt-2.5 h-32 w-24 overflow-hidden rounded-lg border border-line">
-                  <Image src={image} alt="" fill sizes="96px" className="object-cover" />
+                <div className="mt-2.5 flex items-end gap-3">
+                  <div className="relative h-32 w-24 overflow-hidden rounded-lg border border-line">
+                    <Image
+                      src={image}
+                      alt=""
+                      fill
+                      sizes="96px"
+                      className="object-cover"
+                      style={focalPosition(imageFocal?.x, imageFocal?.y)}
+                    />
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => setFocusOpen(true)}>
+                    <Crosshair className="h-4 w-4" /> Adjust focus
+                  </Button>
                 </div>
               )}
             </div>
@@ -258,6 +291,27 @@ export function CollectionForm({
           </ul>
         </section>
       </div>
+
+      <MediaPickerDialog
+        open={libraryOpen}
+        onClose={() => setLibraryOpen(false)}
+        onSelect={(items) => {
+          setImage(items[0]?.url ?? "");
+          setImageFocal(null); // different photo → old focus no longer applies
+        }}
+        title="Choose a cover image"
+      />
+
+      {image && (
+        <FocalPointDialog
+          open={focusOpen}
+          onClose={() => setFocusOpen(false)}
+          src={image}
+          initial={imageFocal}
+          onSave={setImageFocal}
+          title="Cover image focus"
+        />
+      )}
     </div>
   );
 }

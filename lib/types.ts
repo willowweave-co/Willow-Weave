@@ -8,6 +8,9 @@ export interface Collection {
   title: string;
   descriptionHtml: string;
   image: string | null;
+  /** Focal point of the cover image, % from left/top; null/absent = centre. */
+  imageFocalX?: number | null;
+  imageFocalY?: number | null;
   group: CollectionGroup;
   position: number;
   featured: boolean;
@@ -23,6 +26,9 @@ export interface ProductImage {
   width: number | null;
   height: number | null;
   position: number;
+  /** Focal point kept in view when the storefront crops, % from left/top; null/absent = centre. */
+  focalX?: number | null;
+  focalY?: number | null;
 }
 
 export interface ProductVariant {
@@ -131,6 +137,9 @@ export interface HeroSlide {
   id: string;
   mediaType: "image" | "video";
   mediaUrl: string;
+  /** Focal point of the media, % from left/top; null/absent = centre. */
+  focalX?: number | null;
+  focalY?: number | null;
   /** Small label above the heading, e.g. "Volume 5". Empty = hidden. */
   eyebrow: string;
   heading: string;

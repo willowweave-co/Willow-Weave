@@ -8,18 +8,20 @@ import {
   ArrowLeft,
   ArrowDown,
   ArrowUp,
+  Crosshair,
   ImagePlus,
   Link2,
   Plus,
   Trash2,
-  Upload,
 } from "lucide-react";
 import type { Product, ProductImage, ProductVariant } from "@/lib/types";
 import { saveProductAction, deleteProductAction } from "@/app/actions/admin";
+import { MediaPickerDialog, type MediaItem } from "@/components/admin/media-library";
+import { FocalPointDialog } from "@/components/admin/focal-point-dialog";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Textarea, Select, Checkbox, FieldError } from "@/components/ui/fields";
 import { useToast } from "@/components/ui/toast";
-import { slugify, cn } from "@/lib/utils";
+import { slugify, cn, focalPosition } from "@/lib/utils";
 
 interface Props {
   initial: Product;
@@ -46,7 +48,7 @@ export function ProductForm({
   const router = useRouter();
   const { toast } = useToast();
   const [pending, startTransition] = useTransition();
-  const fileRef = useRef<HTMLInputElement>(null);
+  const dragFrom = useRef<number | null>(null);
 
   const [title, setTitle] = useState(initial.title);
   const [handle, setHandle] = useState(initial.handle);
@@ -70,7 +72,8 @@ export function ProductForm({
         ]
   );
   const [imageUrl, setImageUrl] = useState("");
-  const [uploading, setUploading] = useState(false);
+  const [libraryOpen, setLibraryOpen] = useState(false);
+  const [focusIdx, setFocusIdx] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const setVariant = (i: number, patch: Partial<ProductVariant>) =>
@@ -101,26 +104,29 @@ export function ProductForm({
     setImageUrl("");
   };
 
-  const uploadFiles = async (files: FileList | null) => {
-    if (!files?.length) return;
-    setUploading(true);
-    for (const file of Array.from(files)) {
-      const body = new FormData();
-      body.append("file", file);
-      try {
-        const res = await fetch("/api/admin/upload", { method: "POST", body });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error ?? "Upload failed");
-        setImages((imgs) => [
-          ...imgs,
-          { id: newId(), src: data.url, alt: title, width: null, height: null, position: imgs.length },
-        ]);
-      } catch (e) {
-        toast(e instanceof Error ? e.message : "Upload failed", "error");
-      }
-    }
-    setUploading(false);
-    if (fileRef.current) fileRef.current.value = "";
+  const addFromLibrary = (picked: MediaItem[]) =>
+    setImages((imgs) => [
+      ...imgs,
+      ...picked.map((m, k) => ({
+        id: newId(),
+        src: m.url,
+        alt: title,
+        width: m.width,
+        height: m.height,
+        position: imgs.length + k,
+      })),
+    ]);
+
+  const dropImage = (to: number) => {
+    const from = dragFrom.current;
+    dragFrom.current = null;
+    if (from === null || from === to) return;
+    setImages((imgs) => {
+      const next = [...imgs];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      return next.map((img, idx) => ({ ...img, position: idx }));
+    });
   };
 
   const save = () => {
@@ -435,13 +441,34 @@ export function ProductForm({
 
           {/* images */}
           <section className="rounded-2xl border border-line bg-white/60 p-5">
-            <h2 className="mb-4 font-semibold text-ink">Images</h2>
+            <h2 className="mb-1 font-semibold text-ink">Images</h2>
+            <p className="mb-4 text-xs text-umber">
+              Drag to reorder — the first image is the storefront cover.
+            </p>
             {images.length > 0 && (
               <ul className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
                 {images.map((img, i) => (
-                  <li key={img.id} className="group relative overflow-hidden rounded-xl border border-line">
+                  <li
+                    key={img.id}
+                    draggable
+                    onDragStart={() => (dragFrom.current = i)}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      dropImage(i);
+                    }}
+                    onDragEnd={() => (dragFrom.current = null)}
+                    className="group relative cursor-grab overflow-hidden rounded-xl border border-line active:cursor-grabbing"
+                  >
                     <div className="relative aspect-[4/5] bg-parchment">
-                      <Image src={img.src} alt="" fill sizes="150px" className="object-cover" />
+                      <Image
+                        src={img.src}
+                        alt=""
+                        fill
+                        sizes="150px"
+                        className="object-cover"
+                        style={focalPosition(img.focalX, img.focalY)}
+                      />
                     </div>
                     {i === 0 && (
                       <span className="absolute top-1.5 left-1.5 rounded-full bg-walnut px-2 py-0.5 text-[0.6rem] font-semibold text-ivory">
@@ -449,6 +476,14 @@ export function ProductForm({
                       </span>
                     )}
                     <div className="absolute right-1.5 bottom-1.5 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                      <button
+                        onClick={() => setFocusIdx(i)}
+                        aria-label="Set image focus"
+                        title="Set which part stays in view"
+                        className="rounded-full bg-ivory/95 p-1.5 text-bark shadow hover:text-walnut"
+                      >
+                        <Crosshair className="h-3.5 w-3.5" />
+                      </button>
                       <button
                         onClick={() => moveImage(i, -1)}
                         aria-label="Move earlier"
@@ -476,21 +511,8 @@ export function ProductForm({
               </ul>
             )}
             <div className="flex flex-wrap items-center gap-2">
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/*"
-                multiple
-                className="hidden"
-                onChange={(e) => uploadFiles(e.target.files)}
-              />
-              <Button
-                variant="outline"
-                size="sm"
-                loading={uploading}
-                onClick={() => fileRef.current?.click()}
-              >
-                <Upload className="h-4 w-4" /> Upload
+              <Button variant="outline" size="sm" onClick={() => setLibraryOpen(true)}>
+                <ImagePlus className="h-4 w-4" /> Add images
               </Button>
               <span className="text-xs text-umber">or</span>
               <div className="relative min-w-56 flex-1">
@@ -571,6 +593,35 @@ export function ProductForm({
           </Button>
         </div>
       </div>
+
+      <MediaPickerDialog
+        open={libraryOpen}
+        onClose={() => setLibraryOpen(false)}
+        multiple
+        onSelect={addFromLibrary}
+        title="Add product images"
+      />
+
+      {focusIdx !== null && images[focusIdx] && (
+        <FocalPointDialog
+          open
+          onClose={() => setFocusIdx(null)}
+          src={images[focusIdx].src}
+          initial={
+            images[focusIdx].focalX != null || images[focusIdx].focalY != null
+              ? { x: images[focusIdx].focalX ?? 50, y: images[focusIdx].focalY ?? 50 }
+              : null
+          }
+          onSave={(pt) =>
+            setImages((imgs) =>
+              imgs.map((im, idx) =>
+                idx === focusIdx ? { ...im, focalX: pt?.x ?? null, focalY: pt?.y ?? null } : im
+              )
+            )
+          }
+          title="Product image focus"
+        />
+      )}
     </div>
   );
 }

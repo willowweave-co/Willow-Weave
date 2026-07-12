@@ -1,8 +1,22 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import type { CSSProperties } from "react";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
+}
+
+/**
+ * object-position style for an image's focal point (% from left/top).
+ * Returns undefined when no focal point is set, so `object-cover` keeps
+ * its default centre crop.
+ */
+export function focalPosition(
+  x?: number | null,
+  y?: number | null
+): CSSProperties | undefined {
+  if (x == null && y == null) return undefined;
+  return { objectPosition: `${x ?? 50}% ${y ?? 50}%` };
 }
 
 export function slugify(s: string): string {

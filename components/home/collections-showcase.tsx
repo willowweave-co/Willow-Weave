@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import type { Collection } from "@/lib/types";
-import { cn } from "@/lib/utils";
+import { cn, focalPosition } from "@/lib/utils";
 
 function CollectionTile({
   collection,
@@ -32,6 +32,7 @@ function CollectionTile({
                 : "(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             }
             className="object-cover transition duration-500 group-hover:scale-[1.05]"
+            style={focalPosition(collection.imageFocalX, collection.imageFocalY)}
           />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-ink/55 to-transparent" />

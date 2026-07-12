@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Plus } from "lucide-react";
 import { repo } from "@/lib/data";
+import { focalPosition } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
@@ -57,6 +58,7 @@ export default async function AdminCollectionsPage() {
                         width={44}
                         height={44}
                         className="h-11 w-11 shrink-0 rounded-lg object-cover"
+                        style={focalPosition(c.imageFocalX, c.imageFocalY)}
                       />
                     ) : (
                       <span className="block h-11 w-11 shrink-0 rounded-lg bg-parchment" />
