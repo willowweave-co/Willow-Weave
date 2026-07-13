@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { dataMode } from "@/lib/data";
 import { createSupabaseServer } from "@/lib/supabase/server";
 
@@ -14,8 +15,10 @@ export interface AdminUser {
  * Resolves the current admin user, or null when not signed in / not staff.
  * In local mode (no Supabase configured) returns a synthetic owner so the
  * dashboard is fully previewable before any accounts exist.
+ * Wrapped in react cache(): the admin layout, the page and any API guard in
+ * the same request share one auth + profile lookup instead of repeating it.
  */
-export async function getAdminUser(): Promise<AdminUser | null> {
+export const getAdminUser = cache(async (): Promise<AdminUser | null> => {
   if (dataMode === "local") {
     return {
       id: "local-dev",
@@ -43,7 +46,7 @@ export async function getAdminUser(): Promise<AdminUser | null> {
     role: profile.role === "owner" ? "owner" : "staff",
     localMode: false,
   };
-}
+});
 
 /** Throws unless the caller is signed-in staff (used by every admin action). */
 export async function requireStaff(): Promise<AdminUser> {

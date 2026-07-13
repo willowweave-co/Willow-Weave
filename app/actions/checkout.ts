@@ -2,8 +2,8 @@
 
 import { z } from "zod";
 import { cookies } from "next/headers";
-import { revalidatePath } from "next/cache";
-import { repo } from "@/lib/data";
+import { revalidatePath, updateTag } from "next/cache";
+import { repo, DATA_CACHE_TAG } from "@/lib/data";
 import type { PlacedOrderDetails } from "@/lib/data";
 import { sendOrderEmails } from "@/lib/email";
 
@@ -116,8 +116,9 @@ export async function placeOrderAction(raw: CheckoutFormInput): Promise<Checkout
       await sendOrderEmails(order, settings.notifyEmail, settings.contact.phone);
     }
 
-    // stock changed → refresh cached storefront pages
+    // stock changed → refresh cached storefront pages + cached repo reads
     revalidatePath("/", "layout");
+    updateTag(DATA_CACHE_TAG); // stock counts feed "sold out" badges — expire now, not lazily
 
     return { ok: true, orderNumber: placed.orderNumber };
   } catch (e) {

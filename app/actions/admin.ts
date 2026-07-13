@@ -1,8 +1,8 @@
 "use server";
 
 import { randomInt } from "node:crypto";
-import { revalidatePath } from "next/cache";
-import { repo, dataMode } from "@/lib/data";
+import { revalidatePath, updateTag } from "next/cache";
+import { repo, dataMode, DATA_CACHE_TAG } from "@/lib/data";
 import type {
   Collection,
   DiscountCode,
@@ -32,7 +32,8 @@ function fail(e: unknown): ActionResult {
 }
 
 function refresh() {
-  revalidatePath("/", "layout");
+  revalidatePath("/", "layout"); // re-render cached (ISR) storefront pages
+  updateTag(DATA_CACHE_TAG); // expire cached repo reads for request-time routes
 }
 
 /** Clamp a focal-point coordinate to 0–100%; anything else means "centre" (null). */

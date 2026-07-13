@@ -82,7 +82,72 @@ export const dataMode: "supabase" | "local" =
     ? "supabase"
     : "local";
 
+import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import { localRepo } from "./local";
 import { supabaseRepo } from "./supabase";
 
-export const repo: Repo = dataMode === "supabase" ? supabaseRepo : localRepo;
+/**
+ * Cache tag covering every public storefront read below. Admin actions and
+ * checkout call revalidateTag(DATA_CACHE_TAG) after any write, so the cached
+ * reads stay correct while the request-time routes (/products, /search,
+ * sorted collections, checkout) stop re-querying the database per request.
+ */
+export const DATA_CACHE_TAG = "ww-data";
+const CACHE_SECONDS = 600; // matches the storefront pages' ISR window
+
+const baseRepo: Repo = dataMode === "supabase" ? supabaseRepo : localRepo;
+
+/**
+ * unstable_cache: shares the result across requests (keyed by args) until a
+ * write revalidates the tag; react cache(): dedupes repeat calls within one
+ * render pass (layout + page + search often ask for the same data).
+ */
+function cachedRead<A extends unknown[], R>(
+  name: string,
+  fn: (...args: A) => Promise<R>
+): (...args: A) => Promise<R> {
+  return cache(
+    unstable_cache(fn, ["repo", name], { revalidate: CACHE_SECONDS, tags: [DATA_CACHE_TAG] })
+  );
+}
+
+const publicProducts = cachedRead("products", () => baseRepo.getProducts());
+const publicCollections = cachedRead("collections", () => baseRepo.getCollections());
+const publicProductByHandle = cachedRead("product-by-handle", (handle: string) =>
+  baseRepo.getProductByHandle(handle)
+);
+const publicCollectionByHandle = cachedRead("collection-by-handle", (handle: string) =>
+  baseRepo.getCollectionByHandle(handle)
+);
+const publicSizeCharts = cachedRead("size-charts", () => baseRepo.getSizeCharts());
+const publicSettings = cachedRead("settings", () => baseRepo.getSettings());
+const publicHeroSlides = cachedRead("hero-slides", () => baseRepo.getHeroSlides());
+const publicHomepageCollections = cachedRead("homepage-collections", () =>
+  baseRepo.getHomepageCollections()
+);
+const publicSitePages = cachedRead("site-pages", () => baseRepo.getSitePages());
+
+/**
+ * The adapter with its public catalog reads cached. Admin variants
+ * (includeUnpublished) bypass the cache — they're session-bound (RLS) and
+ * must always be fresh. Orders, discounts and every write pass through
+ * untouched.
+ */
+export const repo: Repo = {
+  ...baseRepo,
+  getProducts: (opts) =>
+    opts?.includeUnpublished ? baseRepo.getProducts(opts) : publicProducts(),
+  getCollections: (opts) =>
+    opts?.includeUnpublished ? baseRepo.getCollections(opts) : publicCollections(),
+  getProductByHandle: (handle, opts) =>
+    opts?.includeUnpublished
+      ? baseRepo.getProductByHandle(handle, opts)
+      : publicProductByHandle(handle),
+  getCollectionByHandle: (handle) => publicCollectionByHandle(handle),
+  getSizeCharts: () => publicSizeCharts(),
+  getSettings: () => publicSettings(),
+  getHeroSlides: () => publicHeroSlides(),
+  getHomepageCollections: () => publicHomepageCollections(),
+  getSitePages: () => publicSitePages(),
+};

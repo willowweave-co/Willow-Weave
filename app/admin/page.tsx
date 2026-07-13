@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import { TrendingUp, ShoppingCart, PackageOpen, AlertTriangle } from "lucide-react";
 import { repo } from "@/lib/data";
 import { formatPKR } from "@/lib/money";

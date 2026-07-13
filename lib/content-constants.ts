@@ -20,8 +20,8 @@ export const HOME = {
 /**
  * Curated theme images. Heroes live on Cloudinary (uploaded from the
  * originals archived in data/images/theme/ via scripts/upload-theme-images.mjs)
- * so lib/image-loader.ts serves them as responsive AVIF/WebP. Logo and size
- * charts are small and stay in public/theme/.
+ * so lib/image-loader.ts serves them as responsive AVIF/WebP. The logo is
+ * small and stays in public/theme/.
  */
 export const THEME_IMAGES = {
   logo: "/theme/logo-opt.png",
@@ -31,7 +31,6 @@ export const THEME_IMAGES = {
     "https://res.cloudinary.com/mgxsgjfs/image/upload/v1783434452/willow-weave/theme/hero-bestsellers.png",
   heroFeatured:
     "https://res.cloudinary.com/mgxsgjfs/image/upload/v1783434457/willow-weave/theme/hero-featured.png",
-  sizeCharts: "/theme/size-charts.png",
 } as const;
 
 export const POLICY_SLUGS = [
