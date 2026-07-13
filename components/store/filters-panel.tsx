@@ -7,6 +7,7 @@ import { SlidersHorizontal, X, ChevronDown, ChevronRight } from "lucide-react";
 import type { FacetData } from "@/lib/catalog-filters";
 import { formatPKR } from "@/lib/money";
 import { cn } from "@/lib/utils";
+import { PendingBar } from "@/components/ui/pending-bar";
 
 /**
  * URL-synced filters for /products. Every change is written to the query
@@ -63,7 +64,7 @@ export function FiltersPanel({ facets, resultCount }: { facets: FacetData; resul
   const searchParams = useSearchParams();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [, startTransition] = useTransition();
+  const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
     setMounted(true);
@@ -112,6 +113,7 @@ export function FiltersPanel({ facets, resultCount }: { facets: FacetData; resul
   function commit(mutate: (p: URLSearchParams) => void) {
     const params = new URLSearchParams(searchParams.toString());
     mutate(params);
+    params.delete("page"); // a changed filter starts back at page 1
     startTransition(() => {
       router.replace(`/products?${params.toString()}` as never, { scroll: false });
     });
@@ -292,6 +294,9 @@ export function FiltersPanel({ facets, resultCount }: { facets: FacetData; resul
 
   return (
     <>
+      {/* filter clicks keep the old grid on screen — surface the wait */}
+      <PendingBar active={isPending} />
+
       {/* desktop sidebar */}
       <aside className="sticky top-24 hidden max-h-[calc(100vh-7rem)] w-64 shrink-0 self-start overflow-y-auto pr-2 lg:block">
         {panel}

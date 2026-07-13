@@ -3,10 +3,14 @@ import { repo } from "@/lib/data";
 import { ProductGrid } from "@/components/store/product-card";
 import { FiltersPanel } from "@/components/store/filters-panel";
 import { SortSelect } from "@/components/store/sort-select";
+import { Pagination } from "@/components/store/pagination";
 import { applyFilters, buildFacets, parseFilters } from "@/lib/catalog-filters";
 import { Button } from "@/components/ui/button";
 
 export const revalidate = 600;
+
+/** Products per page — keeps the HTML payload flat as the inventory grows. */
+const PAGE_SIZE = 24;
 
 export const metadata: Metadata = {
   title: "All Products",
@@ -28,6 +32,16 @@ export default async function ProductsPage({ searchParams }: Props) {
   const filters = parseFilters(sp);
   const facets = buildFacets(products, collections);
   const filtered = applyFilters(products, collections, filters);
+
+  const requestedPage = Number(Array.isArray(sp.page) ? sp.page[0] : sp.page);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const page = Math.min(
+    Number.isFinite(requestedPage) && requestedPage >= 1 ? Math.floor(requestedPage) : 1,
+    totalPages
+  );
+  const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const rangeStart = (page - 1) * PAGE_SIZE + 1;
+  const rangeEnd = Math.min(filtered.length, page * PAGE_SIZE);
 
   const activeCollection = filters.collection
     ? collections.find((c) => c.handle === filters.collection)
@@ -52,18 +66,22 @@ export default async function ProductsPage({ searchParams }: Props) {
         <div className="min-w-0 flex-1">
           <div className="mb-5 flex items-center justify-between gap-3">
             <p className="text-sm text-umber">
-              {filtered.length} of {products.length}{" "}
-              {products.length === 1 ? "product" : "products"}
+              {totalPages > 1
+                ? `${rangeStart}–${rangeEnd} of ${filtered.length} products`
+                : `${filtered.length} of ${products.length} ${products.length === 1 ? "product" : "products"}`}
             </p>
             <SortSelect current={filters.sort} />
           </div>
 
           {filtered.length ? (
-            <ProductGrid
-              products={filtered}
-              priorityCount={4}
-              className="lg:grid-cols-3 xl:grid-cols-4"
-            />
+            <>
+              <ProductGrid
+                products={paged}
+                priorityCount={page === 1 ? 4 : 0}
+                className="lg:grid-cols-3 xl:grid-cols-4"
+              />
+              <Pagination currentPage={page} totalPages={totalPages} />
+            </>
           ) : (
             <div className="rounded-2xl border border-line bg-parchment/50 py-20 text-center">
               <p className="heading-display text-xl text-ink">No pieces match those filters</p>
