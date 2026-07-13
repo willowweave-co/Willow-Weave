@@ -11,13 +11,15 @@ import { CollectionsShowcase } from "@/components/home/collections-showcase";
 export const revalidate = 600;
 
 export default async function HomePage() {
-  const [products, collections, content, heroSlides, sizeCharts] = await Promise.all([
-    repo.getProducts(),
-    repo.getCollections(),
-    getContent(),
-    repo.getHeroSlides(),
-    repo.getSizeCharts(),
-  ]);
+  const [products, collections, content, heroSlides, sizeCharts, homepageCollections] =
+    await Promise.all([
+      repo.getProducts(),
+      repo.getCollections(),
+      getContent(),
+      repo.getHeroSlides(),
+      repo.getSizeCharts(),
+      repo.getHomepageCollections(),
+    ]);
   const byHandle = new Map(products.map((p) => [p.handle, p]));
 
   const slides = heroSlides.filter((s) => s.enabled);
@@ -65,7 +67,7 @@ export default async function HomePage() {
       )}
 
       {/* ── Collections showcase ─────────────────────────────────────────── */}
-      <CollectionsShowcase collections={collections} />
+      <CollectionsShowcase collections={collections} curatedIds={homepageCollections} />
 
       {/* ── Catalog preview ──────────────────────────────────────────────── */}
       <section className="container-site mt-14 md:mt-20">

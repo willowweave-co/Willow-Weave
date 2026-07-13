@@ -1,7 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Phone, Mail, Truck, BadgeCheck, MessageCircle } from "lucide-react";
-import { getContent, THEME_IMAGES } from "@/lib/content";
+import { THEME_IMAGES } from "@/lib/content";
+import { repo } from "@/lib/data";
 
 /** lucide-react v1 dropped brand glyphs — tiny inline marks keep the row consistent. */
 function FacebookIcon({ className }: { className?: string }) {
@@ -46,7 +47,7 @@ const VALUE_PROPS = [
 ];
 
 export async function Footer() {
-  const content = await getContent();
+  const { contact } = await repo.getSettings();
   const year = new Date().getFullYear();
 
   return (
@@ -84,9 +85,9 @@ export async function Footer() {
             meticulously crafted women’s wear.
           </p>
           <div className="mt-5 flex items-center gap-2">
-            {content.socials.facebook && (
+            {contact.facebook && (
               <a
-                href={content.socials.facebook}
+                href={contact.facebook}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Willow Weave on Facebook"
@@ -95,9 +96,9 @@ export async function Footer() {
                 <FacebookIcon className="h-4 w-4" />
               </a>
             )}
-            {content.socials.instagram && (
+            {contact.instagram && (
               <a
-                href={content.socials.instagram}
+                href={contact.instagram}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Willow Weave on Instagram"
@@ -106,9 +107,9 @@ export async function Footer() {
                 <InstagramIcon className="h-4 w-4" />
               </a>
             )}
-            {content.socials.tiktok && (
+            {contact.tiktok && (
               <a
-                href={content.socials.tiktok}
+                href={contact.tiktok}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Willow Weave on TikTok"
@@ -118,7 +119,7 @@ export async function Footer() {
               </a>
             )}
             <a
-              href="https://wa.me/923000535503"
+              href={`https://wa.me/${contact.whatsapp}`}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Chat with Willow Weave on WhatsApp"
@@ -169,10 +170,10 @@ export async function Footer() {
           </ul>
           <div className="mt-5 space-y-1.5 text-xs text-umber">
             <p className="flex items-center gap-1.5">
-              <Phone className="h-3.5 w-3.5" /> +92 300 0535503
+              <Phone className="h-3.5 w-3.5" /> {contact.phone}
             </p>
             <p className="flex items-center gap-1.5">
-              <Mail className="h-3.5 w-3.5" /> willowweave.co@gmail.com
+              <Mail className="h-3.5 w-3.5" /> {contact.email}
             </p>
           </div>
         </nav>

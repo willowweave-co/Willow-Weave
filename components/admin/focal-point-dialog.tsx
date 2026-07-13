@@ -10,6 +10,12 @@ export interface FocalPoint {
   y: number;
 }
 
+export interface CropPreview {
+  label: string;
+  /** CSS aspect-ratio value, e.g. "4 / 5" */
+  aspect: string;
+}
+
 interface FocalPointDialogProps {
   open: boolean;
   onClose: () => void;
@@ -20,10 +26,11 @@ interface FocalPointDialogProps {
   /** Called on save; null = reset to centre. */
   onSave: (point: FocalPoint | null) => void;
   title?: string;
+  /** The crops this context actually uses, shown as live previews. */
+  previews?: CropPreview[];
 }
 
-/** The crops the storefront actually uses, as live previews. */
-const PREVIEWS: { label: string; aspect: string }[] = [
+const DEFAULT_PREVIEWS: CropPreview[] = [
   { label: "Product card (4:5)", aspect: "4 / 5" },
   { label: "Square (1:1)", aspect: "1 / 1" },
   { label: "Banner (16:9)", aspect: "16 / 9" },
@@ -37,6 +44,7 @@ export function FocalPointDialog({
   initial,
   onSave,
   title = "Choose the image focus",
+  previews = DEFAULT_PREVIEWS,
 }: FocalPointDialogProps) {
   const [point, setPoint] = useState<FocalPoint | null>(initial);
   const areaRef = useRef<HTMLDivElement>(null);
@@ -142,7 +150,7 @@ export function FocalPointDialog({
               How it will crop
             </p>
             <div className="flex flex-row gap-3 md:flex-col">
-              {PREVIEWS.map((p) => (
+              {previews.map((p) => (
                 <figure key={p.label} className="min-w-0 flex-1 md:flex-none">
                   <div
                     className="w-full overflow-hidden rounded-lg border border-line bg-parchment"

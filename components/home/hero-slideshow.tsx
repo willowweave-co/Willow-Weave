@@ -59,6 +59,9 @@ export function HeroSlideshow({ slides }: { slides: HeroSlide[] }) {
       className="group/hero relative -mt-14 h-[480px] w-full overflow-hidden md:-mt-16 md:h-[540px]"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
+      // a slide advancing mid-tap would swap the link under the finger —
+      // freeze the rotation the instant any pointer touches the hero
+      onPointerDown={() => setPaused(true)}
       onTouchStart={(e) => {
         touchX.current = e.touches[0].clientX;
         setPaused(true);
@@ -162,7 +165,15 @@ export function HeroSlideshow({ slides }: { slides: HeroSlide[] }) {
                 href={s.href as never}
                 tabIndex={i === index ? 0 : -1}
                 aria-hidden={i !== index}
-                className="pointer-events-auto rounded-full bg-ivory/95 px-7 py-2.5 text-sm font-medium text-ink shadow-lg shadow-ink/15 backdrop-blur-sm transition-colors hover:bg-gold"
+                className={cn(
+                  "rounded-full bg-ivory/95 px-7 py-2.5 text-sm font-medium text-ink shadow-lg shadow-ink/15 backdrop-blur-sm transition-colors hover:bg-gold",
+                  // pointer-events-auto on a child DEFEATS the parent's
+                  // pointer-events-none, so every hidden pill (they all stack
+                  // in the same spot) would swallow clicks meant for the
+                  // visible one — the click always landed on the LAST slide's
+                  // link. Only the active slide's pill may be interactive.
+                  i === index ? "pointer-events-auto" : "pointer-events-none"
+                )}
               >
                 {s.ctaLabel}
               </Link>

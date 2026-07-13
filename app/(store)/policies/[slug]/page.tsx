@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getContent, POLICY_SLUGS } from "@/lib/content";
+import { repo } from "@/lib/data";
+import { resolveSitePage } from "@/lib/page-defaults";
 
 export const revalidate = 3600;
 
@@ -15,17 +17,20 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const content = await getContent();
-  const policy = content.policies[slug];
+  const policy = await resolveSitePage(slug);
   if (!policy) return { title: "Policy" };
   return { title: policy.title, description: `Willow Weave — ${policy.title}.` };
 }
 
 export default async function PolicyPage({ params }: Props) {
   const { slug } = await params;
-  const content = await getContent();
-  const policy = content.policies[slug];
-  if (!policy || !(POLICY_SLUGS as readonly string[]).includes(slug)) notFound();
+  if (!(POLICY_SLUGS as readonly string[]).includes(slug)) notFound();
+  const [content, overrides, policy] = await Promise.all([
+    getContent(),
+    repo.getSitePages(),
+    resolveSitePage(slug),
+  ]);
+  if (!policy) notFound();
 
   return (
     <div className="container-site py-10 md:py-14">
@@ -41,7 +46,7 @@ export default async function PolicyPage({ params }: Props) {
                   : "text-umber transition-colors hover:text-walnut"
               }
             >
-              {content.policies[s]?.title ?? s}
+              {overrides[s]?.title ?? content.policies[s]?.title ?? s}
             </Link>
           ))}
         </nav>

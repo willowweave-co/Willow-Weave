@@ -10,7 +10,8 @@ import { saveCollectionAction, deleteCollectionAction } from "@/app/actions/admi
 import { MediaPickerDialog } from "@/components/admin/media-library";
 import { FocalPointDialog, type FocalPoint } from "@/components/admin/focal-point-dialog";
 import { Button } from "@/components/ui/button";
-import { Input, Label, Textarea, Select, Checkbox } from "@/components/ui/fields";
+import { Input, Label, Select, Checkbox } from "@/components/ui/fields";
+import { RichTextEditor } from "@/components/ui/rich-text";
 import { useToast } from "@/components/ui/toast";
 import { slugify, cn, focalPosition } from "@/lib/utils";
 
@@ -43,7 +44,12 @@ export function CollectionForm({
       ? { x: initial.imageFocalX ?? 50, y: initial.imageFocalY ?? 50 }
       : null
   );
-  const [focusOpen, setFocusOpen] = useState(false);
+  const [bannerFocal, setBannerFocal] = useState<FocalPoint | null>(
+    initial.bannerFocalX != null || initial.bannerFocalY != null
+      ? { x: initial.bannerFocalX ?? 50, y: initial.bannerFocalY ?? 50 }
+      : null
+  );
+  const [focusOpen, setFocusOpen] = useState<"tile" | "banner" | null>(null);
   const [group, setGroup] = useState<CollectionGroup>(initial.group);
   const [featured, setFeatured] = useState(initial.featured);
   const [published, setPublished] = useState(initial.published);
@@ -73,6 +79,8 @@ export function CollectionForm({
         image: image.trim() || null,
         imageFocalX: imageFocal?.x ?? null,
         imageFocalY: imageFocal?.y ?? null,
+        bannerFocalX: bannerFocal?.x ?? null,
+        bannerFocalY: bannerFocal?.y ?? null,
         group,
         featured,
         published,
@@ -162,11 +170,11 @@ export function CollectionForm({
             </div>
             <div>
               <Label htmlFor="c-desc">Description</Label>
-              <Textarea
+              <RichTextEditor
                 id="c-desc"
-                rows={3}
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={setDescription}
+                placeholder="A few lines about this collection…"
               />
             </div>
             <div>
@@ -182,27 +190,60 @@ export function CollectionForm({
                   onChange={(e) => {
                     setImage(e.target.value);
                     setImageFocal(null); // different photo → old focus no longer applies
+                    setBannerFocal(null);
                   }}
                   placeholder="Paste an image URL…"
                   className="h-9 min-w-0 flex-1"
                 />
               </div>
               {image && (
-                <div className="mt-2.5 flex items-end gap-3">
-                  <div className="relative h-32 w-24 overflow-hidden rounded-lg border border-line">
-                    <Image
-                      src={image}
-                      alt=""
-                      fill
-                      sizes="96px"
-                      className="object-cover"
-                      style={focalPosition(imageFocal?.x, imageFocal?.y)}
-                    />
+                <div className="mt-2.5 flex flex-wrap items-end gap-4">
+                  {/* the two crops this cover is shown in, each with its own focus */}
+                  <div>
+                    <div className="relative h-32 w-24 overflow-hidden rounded-lg border border-line">
+                      <Image
+                        src={image}
+                        alt=""
+                        fill
+                        sizes="96px"
+                        className="object-cover"
+                        style={focalPosition(imageFocal?.x, imageFocal?.y)}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setFocusOpen("tile")}
+                      className="mt-1.5 flex w-24 items-center justify-center gap-1 rounded-lg border border-line px-1.5 py-1 text-[0.65rem] font-medium text-bark transition-colors hover:border-walnut hover:text-walnut"
+                    >
+                      <Crosshair className="h-3 w-3" /> Tile focus
+                    </button>
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => setFocusOpen(true)}>
-                    <Crosshair className="h-4 w-4" /> Adjust focus
-                  </Button>
+                  <div className="min-w-0 flex-1">
+                    <div className="relative h-20 max-w-72 overflow-hidden rounded-lg border border-line">
+                      <Image
+                        src={image}
+                        alt=""
+                        fill
+                        sizes="288px"
+                        className="object-cover"
+                        style={focalPosition(bannerFocal?.x, bannerFocal?.y)}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setFocusOpen("banner")}
+                      className="mt-1.5 flex w-full max-w-72 items-center justify-center gap-1 rounded-lg border border-line px-1.5 py-1 text-[0.65rem] font-medium text-bark transition-colors hover:border-walnut hover:text-walnut"
+                    >
+                      <Crosshair className="h-3 w-3" /> Banner focus
+                    </button>
+                  </div>
                 </div>
+              )}
+              {image && (
+                <p className="mt-1.5 text-xs text-umber">
+                  Tile = homepage & collection-list cards · Banner = the wide header on this
+                  collection&rsquo;s own page.
+                </p>
               )}
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -298,18 +339,37 @@ export function CollectionForm({
         onSelect={(items) => {
           setImage(items[0]?.url ?? "");
           setImageFocal(null); // different photo → old focus no longer applies
+          setBannerFocal(null);
         }}
         title="Choose a cover image"
       />
 
-      {image && (
+      {image && focusOpen === "tile" && (
         <FocalPointDialog
-          open={focusOpen}
-          onClose={() => setFocusOpen(false)}
+          open
+          onClose={() => setFocusOpen(null)}
           src={image}
           initial={imageFocal}
           onSave={setImageFocal}
-          title="Cover image focus"
+          title="Tile focus — homepage & collection cards"
+          previews={[
+            { label: "Card (4:5)", aspect: "4 / 5" },
+            { label: "Wide tile (16:9)", aspect: "16 / 9" },
+          ]}
+        />
+      )}
+      {image && focusOpen === "banner" && (
+        <FocalPointDialog
+          open
+          onClose={() => setFocusOpen(null)}
+          src={image}
+          initial={bannerFocal}
+          onSave={setBannerFocal}
+          title="Banner focus — this collection's page header"
+          previews={[
+            { label: "Desktop banner", aspect: "9 / 2" },
+            { label: "Phone banner", aspect: "3 / 2" },
+          ]}
         />
       )}
     </div>

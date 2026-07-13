@@ -19,7 +19,8 @@ import { saveProductAction, deleteProductAction } from "@/app/actions/admin";
 import { MediaPickerDialog, type MediaItem } from "@/components/admin/media-library";
 import { FocalPointDialog } from "@/components/admin/focal-point-dialog";
 import { Button } from "@/components/ui/button";
-import { Input, Label, Textarea, Select, Checkbox, FieldError } from "@/components/ui/fields";
+import { Input, Label, Select, Checkbox, FieldError } from "@/components/ui/fields";
+import { RichTextEditor } from "@/components/ui/rich-text";
 import { useToast } from "@/components/ui/toast";
 import { slugify, cn, focalPosition } from "@/lib/utils";
 
@@ -249,13 +250,13 @@ export function ProductForm({
                 <p className="mt-1 text-xs text-umber">/products/{handle || "…"}</p>
               </div>
               <div>
-                <Label htmlFor="p-desc">Description (HTML allowed)</Label>
-                <Textarea
+                <Label htmlFor="p-desc">Description</Label>
+                <RichTextEditor
                   id="p-desc"
-                  rows={7}
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="<p>Crafted from breathable premium lawn…</p>"
+                  onChange={setDescription}
+                  placeholder="Crafted from breathable premium lawn…"
+                  className="[&>div:last-child]:min-h-40"
                 />
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
@@ -620,6 +621,10 @@ export function ProductForm({
             )
           }
           title="Product image focus"
+          previews={[
+            { label: "Product card & gallery (4:5)", aspect: "4 / 5" },
+            { label: "Small thumbnails (1:1)", aspect: "1 / 1" },
+          ]}
         />
       )}
     </div>

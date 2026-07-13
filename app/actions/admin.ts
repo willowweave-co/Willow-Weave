@@ -42,13 +42,18 @@ function pct(v: unknown): number | null {
     : null;
 }
 
-/** Postgres "column does not exist" — the focal-point migration hasn't run yet. */
-function missingFocalColumns(e: unknown): ActionResult | null {
-  if ((e as { code?: string })?.code !== "42703") return null;
+/**
+ * "Column/table does not exist" — a recent migration hasn't been run yet.
+ * Postgres reports 42703/42P01; PostgREST reports PGRST204/PGRST205 when the
+ * column/table is missing from its schema cache.
+ */
+function missingColumns(e: unknown): ActionResult | null {
+  const code = (e as { code?: string })?.code;
+  if (!["42703", "42P01", "PGRST204", "PGRST205"].includes(code ?? "")) return null;
   return {
     ok: false,
     error:
-      "The database needs a one-time update: run supabase/migrations/0005_focal_points.sql in the Supabase SQL editor, then save again.",
+      "The database needs a one-time update: run the newest files in supabase/migrations/ (0005–0007) in the Supabase SQL editor, then save again.",
   };
 }
 
@@ -92,6 +97,18 @@ export async function setOrderNotesAction(id: string, notes: string): Promise<Ac
   }
 }
 
+/** Permanently removes an order (fake/bogus entries). Stock is NOT restocked. */
+export async function deleteOrderAction(id: string): Promise<ActionResult> {
+  try {
+    await requireStaff();
+    await repo.deleteOrder(id);
+    revalidatePath("/admin", "layout");
+    return { ok: true };
+  } catch (e) {
+    return fail(e);
+  }
+}
+
 // ── Products / inventory ─────────────────────────────────────────────────────
 
 export async function saveProductAction(product: Product): Promise<ActionResult> {
@@ -118,7 +135,7 @@ export async function saveProductAction(product: Product): Promise<ActionResult>
     refresh();
     return { ok: true };
   } catch (e) {
-    return missingFocalColumns(e) ?? fail(e);
+    return missingColumns(e) ?? fail(e);
   }
 }
 
@@ -165,11 +182,13 @@ export async function saveCollectionAction(collection: Collection): Promise<Acti
       descriptionHtml: sanitizeHtml(collection.descriptionHtml),
       imageFocalX: pct(collection.imageFocalX),
       imageFocalY: pct(collection.imageFocalY),
+      bannerFocalX: pct(collection.bannerFocalX),
+      bannerFocalY: pct(collection.bannerFocalY),
     });
     refresh();
     return { ok: true };
   } catch (e) {
-    return missingFocalColumns(e) ?? fail(e);
+    return missingColumns(e) ?? fail(e);
   }
 }
 
@@ -250,16 +269,26 @@ export async function saveSettingsAction(settings: StoreSettings): Promise<Actio
   try {
     await requireStaff();
     if (settings.shippingFee < 0) return { ok: false, error: "Shipping fee can't be negative." };
+    const c = settings.contact;
     await repo.saveSettings({
       ...settings,
       storeName: settings.storeName.trim() || "Willow Weave",
       notifyEmail: settings.notifyEmail.trim(),
       announcement: settings.announcement?.trim() || null,
+      contact: {
+        phone: c.phone.trim(),
+        whatsapp: c.whatsapp.replace(/\D/g, ""),
+        email: c.email.trim(),
+        processingNote: c.processingNote.trim(),
+        facebook: c.facebook.trim(),
+        instagram: c.instagram.trim(),
+        tiktok: c.tiktok.trim(),
+      },
     });
     refresh();
     return { ok: true };
   } catch (e) {
-    return fail(e);
+    return missingColumns(e) ?? fail(e);
   }
 }
 
@@ -310,6 +339,68 @@ export async function saveHeroSlidesAction(slides: HeroSlide[]): Promise<ActionR
       };
     }
     return fail(e);
+  }
+}
+
+/** Adjust just the tile focal point of a collection (from the homepage manager). */
+export async function setCollectionTileFocusAction(
+  id: string,
+  x: number | null,
+  y: number | null
+): Promise<ActionResult> {
+  try {
+    await requireStaff();
+    await repo.setCollectionTileFocus(id, pct(x), pct(y));
+    refresh();
+    return { ok: true };
+  } catch (e) {
+    return missingColumns(e) ?? fail(e);
+  }
+}
+
+// ── Site pages ───────────────────────────────────────────────────────────────
+
+export async function saveSitePageAction(
+  handle: string,
+  title: string,
+  bodyHtml: string
+): Promise<ActionResult> {
+  try {
+    await requireStaff();
+    const { isEditablePage } = await import("@/lib/site-pages");
+    if (!isEditablePage(handle)) return { ok: false, error: "Unknown page." };
+    if (!title.trim()) return { ok: false, error: "The page needs a title." };
+    await repo.saveSitePage({
+      handle,
+      title: title.trim(),
+      bodyHtml: sanitizeHtml(bodyHtml),
+    });
+    refresh();
+    return { ok: true };
+  } catch (e) {
+    return missingColumns(e) ?? fail(e);
+  }
+}
+
+const MAX_HOMEPAGE_COLLECTIONS = 6;
+
+/** Curated homepage "The Collections" slots; pass [] to return to automatic picks. */
+export async function saveHomepageCollectionsAction(ids: string[]): Promise<ActionResult> {
+  try {
+    await requireStaff();
+    if (!Array.isArray(ids)) return { ok: false, error: "Invalid payload." };
+    const clean = ids.map((id) => String(id).trim()).filter(Boolean);
+    if (clean.length > MAX_HOMEPAGE_COLLECTIONS) {
+      return { ok: false, error: `Pick at most ${MAX_HOMEPAGE_COLLECTIONS} collections.` };
+    }
+    if (new Set(clean).size !== clean.length) {
+      return { ok: false, error: "The same collection is picked twice — each slot needs a different one." };
+    }
+    await repo.saveHomepageCollections(clean.length ? clean : null);
+    refresh();
+    return { ok: true };
+  } catch (e) {
+    return missingColumns(e) ?? fail(e);
   }
 }
 

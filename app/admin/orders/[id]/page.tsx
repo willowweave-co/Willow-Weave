@@ -6,7 +6,11 @@ import { repo } from "@/lib/data";
 import { formatPKR } from "@/lib/money";
 import { formatDateTime } from "@/lib/utils";
 import { OrderStatusBadge } from "@/components/ui/badge";
-import { OrderStatusControls, OrderNotesForm } from "@/components/admin/order-controls";
+import {
+  OrderStatusControls,
+  OrderNotesForm,
+  DeleteOrderButton,
+} from "@/components/admin/order-controls";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -37,12 +41,15 @@ export default async function AdminOrderDetailPage({ params }: Props) {
             Placed {formatDateTime(order.createdAt)} · Cash on Delivery
           </p>
         </div>
-        <Link
-          href={`/admin/orders/${order.id}/packing-slip` as never}
-          className="no-print inline-flex items-center gap-2 rounded-full border border-line bg-white/70 px-4 py-2 text-sm font-medium text-bark transition-colors hover:border-walnut hover:text-walnut"
-        >
-          <Printer className="h-4 w-4" /> Packing slip
-        </Link>
+        <div className="no-print flex items-center gap-2">
+          <Link
+            href={`/admin/orders/${order.id}/packing-slip` as never}
+            className="inline-flex items-center gap-2 rounded-full border border-line bg-white/70 px-4 py-2 text-sm font-medium text-bark transition-colors hover:border-walnut hover:text-walnut"
+          >
+            <Printer className="h-4 w-4" /> Packing slip
+          </Link>
+          <DeleteOrderButton orderId={order.id} orderNumber={order.orderNumber} />
+        </div>
       </header>
 
       <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">

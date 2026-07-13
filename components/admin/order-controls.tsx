@@ -2,8 +2,13 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { Trash2 } from "lucide-react";
 import { ORDER_STATUSES, type OrderStatus } from "@/lib/types";
-import { updateOrderStatusAction, setOrderNotesAction } from "@/app/actions/admin";
+import {
+  updateOrderStatusAction,
+  setOrderNotesAction,
+  deleteOrderAction,
+} from "@/app/actions/admin";
 import { useToast } from "@/components/ui/toast";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/fields";
@@ -75,6 +80,43 @@ export function OrderStatusControls({
         </button>
       ))}
     </div>
+  );
+}
+
+export function DeleteOrderButton({
+  orderId,
+  orderNumber,
+}: {
+  orderId: string;
+  orderNumber: string;
+}) {
+  const [pending, startTransition] = useTransition();
+  const { toast } = useToast();
+  const router = useRouter();
+
+  const remove = () => {
+    if (
+      !confirm(
+        `Delete ${orderNumber} permanently?\n\nUse this for fake or bogus orders. The order disappears from every list and its stock is NOT returned — cancel the order first if you want the stock back. This can't be undone.`
+      )
+    )
+      return;
+    startTransition(async () => {
+      const res = await deleteOrderAction(orderId);
+      if (res.ok) {
+        toast(`${orderNumber} deleted.`);
+        router.push("/admin/orders");
+        router.refresh();
+      } else {
+        toast(res.error ?? "Couldn't delete the order.", "error");
+      }
+    });
+  };
+
+  return (
+    <Button variant="danger" size="sm" onClick={remove} loading={pending}>
+      <Trash2 className="h-4 w-4" /> Delete order
+    </Button>
   );
 }
 

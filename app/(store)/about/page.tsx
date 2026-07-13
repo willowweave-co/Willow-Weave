@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import { getContent, THEME_IMAGES } from "@/lib/content";
+import { THEME_IMAGES } from "@/lib/content";
+import { resolveSitePage } from "@/lib/page-defaults";
 import { Button } from "@/components/ui/button";
 
 export const revalidate = 3600;
@@ -12,19 +13,16 @@ export const metadata: Metadata = {
 };
 
 export default async function AboutPage() {
-  const content = await getContent();
+  const page = await resolveSitePage("about");
   return (
     <div className="container-site py-10 md:py-14">
       <div className="grid items-start gap-10 lg:grid-cols-[1.4fr_1fr]">
         <div className="max-w-2xl">
           <p className="text-xs font-medium tracking-[0.2em] text-umber uppercase">Our story</p>
           <h1 className="heading-display mt-1 text-3xl font-semibold text-ink sm:text-4xl">
-            {content.pages.about.title || "About Us"}
+            {page?.title || "About Us"}
           </h1>
-          <div
-            className="rte mt-6"
-            dangerouslySetInnerHTML={{ __html: content.pages.about.bodyHtml }}
-          />
+          <div className="rte mt-6" dangerouslySetInnerHTML={{ __html: page?.bodyHtml ?? "" }} />
           <div className="mt-8 flex flex-wrap gap-3">
             <Button href="/products">Shop the collection</Button>
             <Button href="/philosophy" variant="outline">

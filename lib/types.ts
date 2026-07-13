@@ -8,9 +8,12 @@ export interface Collection {
   title: string;
   descriptionHtml: string;
   image: string | null;
-  /** Focal point of the cover image, % from left/top; null/absent = centre. */
+  /** Tile focus (homepage tiles + collections index cards), % from left/top; null/absent = centre. */
   imageFocalX?: number | null;
   imageFocalY?: number | null;
+  /** Banner focus (the wide banner on the collection's own page); null/absent = centre. */
+  bannerFocalX?: number | null;
+  bannerFocalY?: number | null;
   group: CollectionGroup;
   position: number;
   featured: boolean;
@@ -124,12 +127,39 @@ export interface SizeChart {
   note: string;
 }
 
+/** Site-wide contact details & social links — edited once in Settings, shown everywhere. */
+export interface ContactSettings {
+  /** Display phone, e.g. "+92 300 0535503" (also used for tel: links). */
+  phone: string;
+  /** WhatsApp number, digits only with country code, e.g. "923000535503". */
+  whatsapp: string;
+  email: string;
+  /** The order-processing notice on the contact page. */
+  processingNote: string;
+  facebook: string;
+  instagram: string;
+  tiktok: string;
+}
+
+/** Matches the previously hard-coded values, so nothing changes until edited. */
+export const DEFAULT_CONTACT: ContactSettings = {
+  phone: "+92 300 0535503",
+  whatsapp: "923000535503",
+  email: "willowweave.co@gmail.com",
+  processingNote:
+    "Orders are processed within 1–3 business days (excluding weekends & public holidays).",
+  facebook: "https://www.facebook.com/profile.php?id=61578804677834",
+  instagram: "https://www.instagram.com/willowweave.co",
+  tiktok: "https://www.tiktok.com/@willowweave.co?_t=ZS-8zrfDejv3g8&_r=1",
+};
+
 export interface StoreSettings {
   storeName: string;
   shippingFee: number;
   freeShippingThreshold: number | null;
   notifyEmail: string;
   announcement: string | null;
+  contact: ContactSettings;
 }
 
 /** One slide of the homepage hero slideshow (admin-managed). */

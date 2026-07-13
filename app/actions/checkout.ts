@@ -113,7 +113,7 @@ export async function placeOrderAction(raw: CheckoutFormInput): Promise<Checkout
         maxAge: 60 * 30,
         path: "/",
       });
-      await sendOrderEmails(order, settings.notifyEmail);
+      await sendOrderEmails(order, settings.notifyEmail, settings.contact.phone);
     }
 
     // stock changed → refresh cached storefront pages

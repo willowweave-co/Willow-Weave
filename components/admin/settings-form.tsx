@@ -26,6 +26,8 @@ export function SettingsForm({ initial }: { initial: StoreSettings }) {
     notifyEmail: initial.notifyEmail,
     announcement: initial.announcement ?? "",
   });
+  const [contact, setContact] = useState({ ...initial.contact });
+  const setC = (patch: Partial<typeof contact>) => setContact((c) => ({ ...c, ...patch }));
 
   const save = () =>
     startTransition(async () => {
@@ -37,6 +39,7 @@ export function SettingsForm({ initial }: { initial: StoreSettings }) {
           : null,
         notifyEmail: form.notifyEmail,
         announcement: form.announcement || null,
+        contact,
       });
       if (res.ok) {
         toast("Settings saved.");
@@ -99,6 +102,80 @@ export function SettingsForm({ initial }: { initial: StoreSettings }) {
           />
         </div>
       </div>
+
+      <h2 className="mt-8 mb-1 font-semibold text-ink">Contact & social links</h2>
+      <p className="mb-4 text-xs text-umber">
+        Shown everywhere the store displays them — footer, contact page, packing slips and order
+        emails. Change once here, it changes everywhere.
+      </p>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <Label htmlFor="s-phone">Phone (as displayed)</Label>
+          <Input
+            id="s-phone"
+            value={contact.phone}
+            onChange={(e) => setC({ phone: e.target.value })}
+            placeholder="+92 300 0535503"
+          />
+        </div>
+        <div>
+          <Label htmlFor="s-wa">WhatsApp number (digits only, with country code)</Label>
+          <Input
+            id="s-wa"
+            inputMode="numeric"
+            value={contact.whatsapp}
+            onChange={(e) => setC({ whatsapp: e.target.value.replace(/\D/g, "") })}
+            placeholder="923000535503"
+          />
+        </div>
+        <div className="sm:col-span-2">
+          <Label htmlFor="s-cemail">Public contact email</Label>
+          <Input
+            id="s-cemail"
+            type="email"
+            value={contact.email}
+            onChange={(e) => setC({ email: e.target.value })}
+            placeholder="willowweave.co@gmail.com"
+          />
+        </div>
+        <div className="sm:col-span-2">
+          <Label htmlFor="s-note">Order-processing notice (contact page)</Label>
+          <Input
+            id="s-note"
+            value={contact.processingNote}
+            onChange={(e) => setC({ processingNote: e.target.value })}
+            placeholder="Orders are processed within 1–3 business days…"
+          />
+        </div>
+        <div>
+          <Label htmlFor="s-fb">Facebook URL (empty = hidden)</Label>
+          <Input
+            id="s-fb"
+            value={contact.facebook}
+            onChange={(e) => setC({ facebook: e.target.value })}
+            placeholder="https://www.facebook.com/…"
+          />
+        </div>
+        <div>
+          <Label htmlFor="s-ig">Instagram URL (empty = hidden)</Label>
+          <Input
+            id="s-ig"
+            value={contact.instagram}
+            onChange={(e) => setC({ instagram: e.target.value })}
+            placeholder="https://www.instagram.com/…"
+          />
+        </div>
+        <div className="sm:col-span-2">
+          <Label htmlFor="s-tt">TikTok URL (empty = hidden)</Label>
+          <Input
+            id="s-tt"
+            value={contact.tiktok}
+            onChange={(e) => setC({ tiktok: e.target.value })}
+            placeholder="https://www.tiktok.com/@…"
+          />
+        </div>
+      </div>
+
       <div className="mt-5 flex justify-end">
         <Button onClick={save} loading={pending}>
           Save settings

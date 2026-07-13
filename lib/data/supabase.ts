@@ -2,6 +2,7 @@ import type { Repo } from "./index";
 import type {
   CheckoutInput,
   Collection,
+  ContactSettings,
   DiscountCode,
   HeroSlide,
   Order,
@@ -13,6 +14,7 @@ import type {
   StaffMember,
   StoreSettings,
 } from "@/lib/types";
+import { DEFAULT_CONTACT } from "@/lib/types";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { createSupabaseServer } from "@/lib/supabase/server";
 import { computeStats } from "@/lib/stats";
@@ -81,6 +83,8 @@ function rowToCollection(row: Row): Collection {
     image: row.image_url,
     imageFocalX: row.image_focal_x ?? null,
     imageFocalY: row.image_focal_y ?? null,
+    bannerFocalX: row.banner_focal_x ?? null,
+    bannerFocalY: row.banner_focal_y ?? null,
     group: row.group,
     position: row.position ?? 0,
     featured: row.featured ?? false,
@@ -238,6 +242,8 @@ export const supabaseRepo: Repo = {
       freeShippingThreshold: numOrNull(data.free_shipping_threshold),
       notifyEmail: data.notify_email ?? "",
       announcement: data.announcement,
+      // merge over defaults so partially-saved / pre-migration rows stay complete
+      contact: { ...DEFAULT_CONTACT, ...((data.contact as Partial<ContactSettings>) ?? {}) },
     };
   },
 
@@ -253,6 +259,33 @@ export const supabaseRepo: Repo = {
     if (error) throw error;
     // null until the owner first saves
     return (data.hero_slides as HeroSlide[] | null) ?? DEFAULT_HERO_SLIDES;
+  },
+
+  async getSitePages(): Promise<Record<string, { title: string; bodyHtml: string }>> {
+    const { data, error } = await publicDb().from("site_pages").select("*");
+    // Table doesn't exist yet (migration 0007 not applied) — the storefront
+    // must still render, so fall back to the built-in copy. PostgREST reports
+    // missing tables as PGRST205 (schema cache), Postgres itself as 42P01.
+    if (error?.code === "PGRST205" || error?.code === "42P01") return {};
+    if (error) throw error;
+    const out: Record<string, { title: string; bodyHtml: string }> = {};
+    for (const row of data ?? []) {
+      out[row.handle] = { title: row.title, bodyHtml: row.body_html ?? "" };
+    }
+    return out;
+  },
+
+  async getHomepageCollections(): Promise<string[] | null> {
+    const { data, error } = await publicDb()
+      .from("store_settings")
+      .select("homepage_collections")
+      .eq("id", 1)
+      .single();
+    // 42703 = migration 0006 not applied yet — fall back to automatic picks
+    if (error?.code === "42703") return null;
+    if (error) throw error;
+    const ids = data.homepage_collections as string[] | null;
+    return Array.isArray(ids) && ids.length ? ids.map(String) : null;
   },
 
   async previewDiscount(code, subtotal) {
@@ -487,6 +520,8 @@ export const supabaseRepo: Repo = {
       image_url: c.image,
       image_focal_x: c.imageFocalX ?? null,
       image_focal_y: c.imageFocalY ?? null,
+      banner_focal_x: c.bannerFocalX ?? null,
+      banner_focal_y: c.bannerFocalY ?? null,
       group: c.group,
       position: c.position,
       featured: c.featured,
@@ -597,6 +632,7 @@ export const supabaseRepo: Repo = {
         free_shipping_threshold: s.freeShippingThreshold,
         notify_email: s.notifyEmail,
         announcement: s.announcement,
+        contact: s.contact,
       })
       .eq("id", 1);
     if (error) throw error;
@@ -608,6 +644,47 @@ export const supabaseRepo: Repo = {
       .from("store_settings")
       .update({ hero_slides: slides })
       .eq("id", 1);
+    if (error) throw error;
+  },
+
+  async saveHomepageCollections(ids: string[] | null) {
+    const client = await db();
+    const { error } = await client
+      .from("store_settings")
+      .update({ homepage_collections: ids })
+      .eq("id", 1);
+    if (error) throw error;
+  },
+
+  async saveSitePage(page: { handle: string; title: string; bodyHtml: string }) {
+    const client = await db();
+    const { error } = await client.from("site_pages").upsert(
+      {
+        handle: page.handle,
+        title: page.title,
+        body_html: page.bodyHtml,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "handle" }
+    );
+    if (error) throw error;
+  },
+
+  async setCollectionTileFocus(id: string, x: number | null, y: number | null) {
+    const client = await db();
+    const { error } = await client
+      .from("collections")
+      .update({ image_focal_x: x, image_focal_y: y })
+      .eq("id", Number(id));
+    if (error) throw error;
+  },
+
+  async deleteOrder(id: string) {
+    // RLS grants staff select/update but not delete; the action has already
+    // verified staff, so use the service-role client (items cascade via FK).
+    const { createSupabaseAdmin } = await import("@/lib/supabase/admin");
+    const admin = createSupabaseAdmin();
+    const { error } = await admin.from("orders").delete().eq("id", Number(id));
     if (error) throw error;
   },
 

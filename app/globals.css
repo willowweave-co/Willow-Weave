@@ -81,6 +81,8 @@
   .rte h1 { @apply text-2xl; }
   .rte h2 { @apply text-xl; }
   .rte h3 { @apply text-lg; }
+  .rte h4 { @apply text-base; }
+  .rte s, .rte strike { @apply line-through; }
   .rte ul { @apply my-3 list-disc pl-5; }
   .rte ol { @apply my-3 list-decimal pl-5; }
   .rte li { @apply my-1; }

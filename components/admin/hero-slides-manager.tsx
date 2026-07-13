@@ -8,7 +8,7 @@ import { saveHeroSlidesAction } from "@/app/actions/admin";
 import { MediaPickerDialog, type MediaItem } from "@/components/admin/media-library";
 import { FocalPointDialog } from "@/components/admin/focal-point-dialog";
 import { Button } from "@/components/ui/button";
-import { Input, Label, Checkbox } from "@/components/ui/fields";
+import { Input, Label, Select, Checkbox } from "@/components/ui/fields";
 import { useToast } from "@/components/ui/toast";
 import { focalPosition } from "@/lib/utils";
 
@@ -167,13 +167,36 @@ export function HeroSlidesManager({
                 </div>
                 <div>
                   <Label htmlFor={`href-${s.id}`}>Links to</Label>
-                  <Input
-                    id={`href-${s.id}`}
-                    value={s.href}
-                    onChange={(e) => patch(s.id, { href: e.target.value })}
-                    placeholder="/collections/…"
-                    list="hero-link-options"
-                  />
+                  {(() => {
+                    const isCustom = !linkOptions.some((o) => o.href === s.href);
+                    return (
+                      <>
+                        <Select
+                          id={`href-${s.id}`}
+                          value={isCustom ? "__custom" : s.href}
+                          onChange={(e) =>
+                            // "" for custom → the URL input below appears empty, ready to type
+                            patch(s.id, { href: e.target.value === "__custom" ? "" : e.target.value })
+                          }
+                        >
+                          {linkOptions.map((o) => (
+                            <option key={o.href} value={o.href}>
+                              {o.label}
+                            </option>
+                          ))}
+                          <option value="__custom">Custom URL…</option>
+                        </Select>
+                        {isCustom && (
+                          <Input
+                            value={s.href}
+                            onChange={(e) => patch(s.id, { href: e.target.value })}
+                            placeholder="/products or https://…"
+                            className="mt-2 h-9"
+                          />
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
                 <div>
                   <Label htmlFor={`cta-${s.id}`}>Button text (empty = no button)</Label>
@@ -223,14 +246,6 @@ export function HeroSlidesManager({
         ))}
       </ul>
 
-      <datalist id="hero-link-options">
-        {linkOptions.map((o) => (
-          <option key={o.href} value={o.href}>
-            {o.label}
-          </option>
-        ))}
-      </datalist>
-
       <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
         <div>
           <Button
@@ -274,6 +289,10 @@ export function HeroSlidesManager({
               patch(slide.id, { focalX: pt?.x ?? null, focalY: pt?.y ?? null })
             }
             title="Hero slide focus"
+            previews={[
+              { label: "Desktop hero (wide)", aspect: "8 / 3" },
+              { label: "Phone hero (tall)", aspect: "4 / 5" },
+            ]}
           />
         ) : null;
       })()}

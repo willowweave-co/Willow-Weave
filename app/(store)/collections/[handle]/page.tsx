@@ -60,7 +60,7 @@ export default async function CollectionPage({ params, searchParams }: Props) {
             priority
             sizes="100vw"
             className="object-cover"
-            style={focalPosition(collection.imageFocalX, collection.imageFocalY)}
+            style={focalPosition(collection.bannerFocalX, collection.bannerFocalY)}
           />
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-parchment to-sand" />

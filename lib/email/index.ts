@@ -1,5 +1,6 @@
 import { Resend } from "resend";
 import type { Order, OrderStatus } from "@/lib/types";
+import { DEFAULT_CONTACT } from "@/lib/types";
 import { formatPKR } from "@/lib/money";
 
 /**
@@ -107,7 +108,7 @@ function ownerEmailHtml(order: OrderLike): string {
   </div>`;
 }
 
-function customerEmailHtml(order: OrderLike): string {
+function customerEmailHtml(order: OrderLike, contactPhone: string): string {
   return `
   <div style="${S.wrap}">
     <div style="${S.card}">
@@ -126,7 +127,7 @@ function customerEmailHtml(order: OrderLike): string {
         <table width="100%" cellpadding="0" cellspacing="0">${itemsHtml(order)}${totalsHtml(order)}</table>
         <p style="${S.muted};margin:18px 0 0;">
           Orders are processed within 1–3 business days and delivered in 2–7 business days.
-          Questions? Just reply to this email or call +92 300 0535503.
+          Questions? Just reply to this email or call ${escapeHtml(contactPhone)}.
         </p>
       </div>
     </div>
@@ -179,7 +180,11 @@ async function deliver(
 }
 
 /** Fire order emails. Never throws — an email failure must not fail an order. */
-export async function sendOrderEmails(order: OrderLike, notifyEmail: string): Promise<void> {
+export async function sendOrderEmails(
+  order: OrderLike,
+  notifyEmail: string,
+  contactPhone: string = DEFAULT_CONTACT.phone
+): Promise<void> {
   try {
     const jobs: Promise<void>[] = [];
     if (notifyEmail) {
@@ -198,7 +203,7 @@ export async function sendOrderEmails(order: OrderLike, notifyEmail: string): Pr
         deliver(
           order.email,
           `Order ${order.orderNumber} confirmed — Willow Weave`,
-          customerEmailHtml(order),
+          customerEmailHtml(order, contactPhone),
           // customer replies land in the owner's real inbox
           notifyEmail || undefined
         )

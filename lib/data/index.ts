@@ -30,6 +30,10 @@ export interface Repo {
   getSizeCharts(): Promise<SizeChart[]>;
   getSettings(): Promise<StoreSettings>;
   getHeroSlides(): Promise<HeroSlide[]>;
+  /** Curated homepage "The Collections" slots (ordered ids); null = automatic picks. */
+  getHomepageCollections(): Promise<string[] | null>;
+  /** Saved overrides for editable site pages, keyed by handle (missing = use built-in copy). */
+  getSitePages(): Promise<Record<string, { title: string; bodyHtml: string }>>;
 
   // checkout — confirmation details travel via a short-lived cookie set by the
   // checkout action (never a public order lookup, so order numbers can't be
@@ -64,6 +68,12 @@ export interface Repo {
   deleteDiscount(id: string): Promise<void>;
   saveSettings(s: StoreSettings): Promise<void>;
   saveHeroSlides(slides: HeroSlide[]): Promise<void>;
+  saveHomepageCollections(ids: string[] | null): Promise<void>;
+  saveSitePage(page: { handle: string; title: string; bodyHtml: string }): Promise<void>;
+  /** Update only a collection's tile focal point (homepage/collection-list crops). */
+  setCollectionTileFocus(id: string, x: number | null, y: number | null): Promise<void>;
+  /** Permanently remove an order (fake/bogus entries) regardless of status. */
+  deleteOrder(id: string): Promise<void>;
   getStaff(): Promise<StaffMember[]>;
 }
 

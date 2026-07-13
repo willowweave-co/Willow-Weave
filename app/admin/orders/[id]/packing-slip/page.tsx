@@ -36,7 +36,7 @@ export default async function PackingSlipPage({ params }: Props) {
             <h1 className="heading-display text-xl font-semibold text-ink">
               {settings.storeName}
             </h1>
-            <p className="mt-0.5 text-xs text-umber">willowweave.co · +92 300 0535503</p>
+            <p className="mt-0.5 text-xs text-umber">willowweave.co · {settings.contact.phone}</p>
           </div>
           <div className="text-right">
             <p className="text-lg font-bold text-ink">{order.orderNumber}</p>

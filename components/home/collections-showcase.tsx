@@ -50,13 +50,25 @@ function CollectionTile({
   );
 }
 
-export function CollectionsShowcase({ collections }: { collections: Collection[] }) {
+export function CollectionsShowcase({
+  collections,
+  curatedIds,
+}: {
+  collections: Collection[];
+  /** Admin-picked slots (Admin → Homepage); null = automatic picks. Slots 1 and 6 render wide. */
+  curatedIds?: string[] | null;
+}) {
   const volumes = collections
     .filter((c) => c.group === "volumes")
     .sort((a, b) => b.handle.localeCompare(a.handle)) // newest volume first
     .slice(0, 3);
   const occasions = collections.filter((c) => c.group === "occasions");
   const pieces = collections.filter((c) => c.group === "pieces").slice(0, 4);
+
+  const byId = new Map(collections.map((c) => [c.id, c]));
+  const curated = (curatedIds ?? [])
+    .map((id, slot) => ({ collection: byId.get(id), wide: slot === 0 || slot === 5 }))
+    .filter((s): s is { collection: Collection; wide: boolean } => !!s.collection);
 
   return (
     <section className="container-site mt-14 md:mt-20">
@@ -78,18 +90,31 @@ export function CollectionsShowcase({ collections }: { collections: Collection[]
       </div>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {occasions.slice(0, 1).map((c) => (
-          <CollectionTile key={c.id} collection={c} className="col-span-2" wide />
-        ))}
-        {volumes.slice(0, 2).map((c) => (
-          <CollectionTile key={c.id} collection={c} />
-        ))}
-        {pieces.slice(0, 2).map((c) => (
-          <CollectionTile key={c.id} collection={c} />
-        ))}
-        {occasions.slice(1, 2).map((c) => (
-          <CollectionTile key={c.id} collection={c} className="col-span-2" wide />
-        ))}
+        {curated.length > 0 ? (
+          curated.map(({ collection: c, wide }) => (
+            <CollectionTile
+              key={c.id}
+              collection={c}
+              className={wide ? "col-span-2" : undefined}
+              wide={wide}
+            />
+          ))
+        ) : (
+          <>
+            {occasions.slice(0, 1).map((c) => (
+              <CollectionTile key={c.id} collection={c} className="col-span-2" wide />
+            ))}
+            {volumes.slice(0, 2).map((c) => (
+              <CollectionTile key={c.id} collection={c} />
+            ))}
+            {pieces.slice(0, 2).map((c) => (
+              <CollectionTile key={c.id} collection={c} />
+            ))}
+            {occasions.slice(1, 2).map((c) => (
+              <CollectionTile key={c.id} collection={c} className="col-span-2" wide />
+            ))}
+          </>
+        )}
       </div>
 
       <div className="mt-6 text-center sm:hidden">

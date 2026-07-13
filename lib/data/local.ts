@@ -18,6 +18,7 @@ import type {
 import { computeStats } from "@/lib/stats";
 import { validateDiscount, MAX_ITEM_QTY } from "@/lib/discounts";
 import { DEFAULT_HERO_SLIDES } from "./hero-defaults";
+import { DEFAULT_CONTACT } from "@/lib/types";
 
 /**
  * Local-mode adapter: the full store running against data/*.json.
@@ -63,6 +64,10 @@ interface Overlay {
   settings: StoreSettings | null;
   /** null/absent = seed defaults (older store.json files predate the key) */
   heroSlides?: HeroSlide[] | null;
+  /** curated homepage collection slots; null/absent = automatic picks */
+  homepageCollections?: string[] | null;
+  /** overrides for editable site pages (about/policies/…), keyed by handle */
+  sitePages?: Record<string, { title: string; bodyHtml: string }>;
 }
 
 const EMPTY_OVERLAY: Overlay = {
@@ -82,6 +87,7 @@ const DEFAULT_SETTINGS: StoreSettings = {
   freeShippingThreshold: null,
   notifyEmail: process.env.ORDER_NOTIFY_EMAIL ?? "ausatali27@gmail.com",
   announcement: null,
+  contact: DEFAULT_CONTACT,
 };
 
 // ── base catalog (loaded once per process) ───────────────────────────────────
@@ -279,12 +285,30 @@ export const localRepo: Repo = {
 
   async getSettings() {
     const overlay = await loadOverlay();
-    return overlay.settings ?? DEFAULT_SETTINGS;
+    const saved = overlay.settings;
+    if (!saved) return DEFAULT_SETTINGS;
+    // older store.json files predate the contact block — merge over defaults
+    return {
+      ...DEFAULT_SETTINGS,
+      ...saved,
+      contact: { ...DEFAULT_CONTACT, ...(saved.contact ?? {}) },
+    };
   },
 
   async getHeroSlides() {
     const overlay = await loadOverlay();
     return overlay.heroSlides ?? DEFAULT_HERO_SLIDES;
+  },
+
+  async getHomepageCollections() {
+    const overlay = await loadOverlay();
+    const ids = overlay.homepageCollections;
+    return Array.isArray(ids) && ids.length ? ids : null;
+  },
+
+  async getSitePages() {
+    const overlay = await loadOverlay();
+    return overlay.sitePages ?? {};
   },
 
   async previewDiscount(code, subtotal) {
@@ -619,6 +643,50 @@ export const localRepo: Repo = {
       const overlay = await loadOverlay();
       overlay.heroSlides = slides;
       await saveOverlay(overlay);
+    });
+  },
+
+  async saveHomepageCollections(ids: string[] | null) {
+    await withLock(async () => {
+      const overlay = await loadOverlay();
+      overlay.homepageCollections = ids;
+      await saveOverlay(overlay);
+    });
+  },
+
+  async saveSitePage(page: { handle: string; title: string; bodyHtml: string }) {
+    await withLock(async () => {
+      const overlay = await loadOverlay();
+      overlay.sitePages = {
+        ...(overlay.sitePages ?? {}),
+        [page.handle]: { title: page.title, bodyHtml: page.bodyHtml },
+      };
+      await saveOverlay(overlay);
+    });
+  },
+
+  async setCollectionTileFocus(id: string, x: number | null, y: number | null) {
+    await withLock(async () => {
+      const overlay = await loadOverlay();
+      const collections = await effectiveCollections();
+      const current = collections.find((c) => c.id === id);
+      if (!current) return;
+      const next = { ...current, imageFocalX: x, imageFocalY: y };
+      const baseHas = (await base()).collections.some((c) => c.id === id);
+      if (baseHas) {
+        overlay.collections[id] = next;
+      } else {
+        const idx = overlay.newCollections.findIndex((c) => c.id === id);
+        if (idx >= 0) overlay.newCollections[idx] = next;
+      }
+      await saveOverlay(overlay);
+    });
+  },
+
+  async deleteOrder(id: string) {
+    await withLock(async () => {
+      const orders = await loadOrders();
+      await saveOrders(orders.filter((o) => o.id !== id));
     });
   },
 
