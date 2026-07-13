@@ -28,7 +28,15 @@ export interface Repo {
   getProducts(opts?: { includeUnpublished?: boolean }): Promise<Product[]>;
   getProductByHandle(handle: string, opts?: { includeUnpublished?: boolean }): Promise<Product | null>;
   getSizeCharts(): Promise<SizeChart[]>;
+  /** Public settings. `notifyEmail` is always "" — it is not public (see getNotifyEmail). */
   getSettings(): Promise<StoreSettings>;
+  /** Full settings row for the admin form, including notifyEmail. Staff session required. */
+  getSettingsAdmin(): Promise<StoreSettings>;
+  /**
+   * Where order notifications go. Server-only, trusted read: checkout runs as an
+   * anonymous shopper and can't see the staff-only settings row.
+   */
+  getNotifyEmail(): Promise<string>;
   getHeroSlides(): Promise<HeroSlide[]>;
   /** Curated homepage "The Collections" slots (ordered ids); null = automatic picks. */
   getHomepageCollections(): Promise<string[] | null>;

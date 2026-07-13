@@ -19,6 +19,13 @@ npm run dev        →  http://localhost:3000        (the store)
    [supabase/migrations/0001_init.sql](supabase/migrations/0001_init.sql) and **Run**.
    Then do the same for every later file in `supabase/migrations/` in order
    (0002, 0003, …) — already-applied ones are safe to re-run.
+
+   > **If you have an existing database, `0009_security_hardening.sql` is not
+   > optional.** It stops the anon key from reading unpublished products'
+   > prices, stock and images; restricts the traffic analytics to staff; hides
+   > your notification email; and adds the policy that lets an owner delete an
+   > order. Until it's run, "Delete order" will refuse to work, and the leaks
+   > it closes are live.
 3. **Settings → API**: copy three values into `.env.local`
    (copy `.env.example` → `.env.local` first):
    - `NEXT_PUBLIC_SUPABASE_URL`
@@ -37,9 +44,49 @@ npm run dev        →  http://localhost:3000        (the store)
 6. Restart `npm run dev` — the site now serves from Supabase and
    `/admin` requires your login.
 
+7. **Turn off public sign-ups** (do this before going live).
+   **Authentication → Sign In / Providers** → on the page itself (NOT inside
+   the Email dialog) find the **User Signups** card → turn off
+   *"Allow new users to sign up"*.
+
+   > Do **not** touch *"Enable email provider"* inside the Email dialog. Its
+   > description also says "sign up", but it controls email auth entirely —
+   > turning it off locks every staff member out of the dashboard.
+
+   Staff accounts are created by the owner in **Admin → Settings**, so nobody
+   should be able to self-register. Left on, anyone can create a Supabase
+   account with the (public) anon key — they still can't read the store's data,
+   but it's an open door with no reason to exist.
+
+8. **Password rules** — **Authentication → Sign In / Providers → Email**:
+   set **Minimum password length = 8** (matches what the dashboard's own
+   account form enforces, so the two can't disagree).
+
+   *"Prevent use of leaked passwords"* (the HaveIBeenPwned check) is **Pro-plan
+   only** — it can't be enabled on the free tier. Skip it. What covers you
+   instead: sign-ups are off (step 7), accounts are invite-only, and the temp
+   passwords the owner hands out are 12 random characters.
+
+   Leave *"Secure password change"* and *"Require current password when
+   updating"* **off**. The app already refuses to change an email or password
+   without the current password (`updateAccountAction`); these enforce the same
+   rule at the Supabase layer using a nonce/reauthentication flow the app
+   doesn't currently implement, so enabling them would break the account form.
+
+9. **Enable "RLS on all new tables"** if Supabase offers it — every existing
+   table already has RLS on, and this stops a future one from being created
+   world-readable by accident. (Reminder: RLS on + no policies = deny all, so a
+   new table won't be readable until you write a policy for it.)
+
 > ⚠️ **Stock counts**: Shopify never publishes real quantities, so every
 > in-stock variant was seeded with **stock = 10**. Fix the real numbers in
 > **Admin → Inventory** on day one.
+
+> 🔒 **Rate limiting**: the app throttles checkout, discount-code checks,
+> search and the traffic beacon in-process (`lib/rate-limit.ts`), which stops
+> the cheap attacks. For a real perimeter, also enable Vercel's firewall rate
+> limiting (**Project → Firewall**) on `/api/*` — that runs at the edge, before
+> a request ever reaches a function.
 
 ## 2 · Cloudinary (product images) — recommended
 

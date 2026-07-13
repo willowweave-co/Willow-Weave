@@ -6,8 +6,10 @@ import { AccountSettings } from "@/components/admin/account-settings";
 export const metadata = { title: "Settings" };
 
 export default async function AdminSettingsPage() {
+  // getSettingsAdmin (not getSettings) — the form edits notifyEmail, which the
+  // public read deliberately blanks out.
   const [settings, staff, user] = await Promise.all([
-    repo.getSettings(),
+    repo.getSettingsAdmin(),
     repo.getStaff(),
     getAdminUser(),
   ]);

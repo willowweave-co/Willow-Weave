@@ -10,7 +10,16 @@ export default async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !anon) return NextResponse.next();
+
+  // No Supabase configured. On a dev machine that's local preview mode, and
+  // /admin is intentionally open. In a real deployment it means the env vars
+  // are MISSING — never serve an unauthenticated dashboard: fail closed.
+  if (!url || !anon) {
+    if (process.env.NODE_ENV === "production") {
+      return NextResponse.redirect(new URL("/", request.url));
+    }
+    return NextResponse.next();
+  }
 
   let response = NextResponse.next({ request });
   const supabase = createServerClient(url, anon, {

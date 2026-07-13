@@ -11,6 +11,31 @@ const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp", "image/avif", 
 const ALLOWED_VIDEO = new Set(["video/mp4", "video/webm"]);
 
 /**
+ * `file.type` is whatever the client claimed. Confirm the bytes actually are
+ * what the MIME says before we store or forward them — a file labelled
+ * image/png whose contents are HTML/SVG is the classic stored-XSS vector.
+ */
+function sniff(buf: Buffer): "image" | "video" | null {
+  const ascii = (start: number, text: string) =>
+    buf.length >= start + text.length &&
+    buf.subarray(start, start + text.length).toString("latin1") === text;
+  const bytes = (...sig: number[]) =>
+    buf.length >= sig.length && sig.every((b, i) => buf[i] === b);
+
+  if (bytes(0xff, 0xd8, 0xff)) return "image"; // JPEG
+  if (bytes(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a)) return "image"; // PNG
+  if (ascii(0, "GIF87a") || ascii(0, "GIF89a")) return "image"; // GIF
+  if (ascii(0, "RIFF") && ascii(8, "WEBP")) return "image"; // WebP
+  if (ascii(4, "ftyp")) {
+    // ISO-BMFF: AVIF/HEIC are images, everything else here (mp4/M4V) is video
+    const brand = buf.subarray(8, 12).toString("latin1");
+    return brand === "avif" || brand === "avis" ? "image" : "video";
+  }
+  if (bytes(0x1a, 0x45, 0xdf, 0xa3)) return "video"; // Matroska/WebM
+  return null;
+}
+
+/**
  * Product image / hero media upload.
  *  - Cloudinary configured → uploads to willow-weave/uploads, returns CDN URL
  *  - Local mode fallback   → saves under public/uploads (dev preview only)
@@ -41,6 +66,15 @@ export async function POST(request: NextRequest) {
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
+
+  // the claimed MIME must match what the bytes actually are
+  const sniffed = sniff(buffer);
+  if (sniffed === null || sniffed !== (isVideo ? "video" : "image")) {
+    return NextResponse.json(
+      { error: "That file isn't a real image or video (its contents don't match its type)." },
+      { status: 400 }
+    );
+  }
 
   const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
   const apiKey = process.env.CLOUDINARY_API_KEY;

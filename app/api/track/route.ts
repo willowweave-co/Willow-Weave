@@ -1,15 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { dataMode } from "@/lib/data";
-import { createSupabaseAdmin } from "@/lib/supabase/admin";
+import { createSupabaseServer } from "@/lib/supabase/server";
+import { rateLimit, clientIpFrom } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
 /**
  * Public pageview beacon for the storefront (components/store/traffic-beacon.tsx).
- * Writes to page_views with the service-role client — the table has RLS with no
- * policies, so the anon key can't read or spoof it directly. Powers the
- * Admin → Overview "Live traffic" section.
+ *
+ * Writes through the record_page_view() RPC (security definer, granted to anon)
+ * rather than the service-role key: this route is unauthenticated, and a
+ * service-role client in an unauthenticated path is one logic slip away from
+ * full database access. The RPC can only ever append one row to page_views.
+ * Reads still go through traffic_snapshot(), which is staff-only.
  */
 
 const payloadSchema = z.object({
@@ -30,12 +34,15 @@ const BOT_UA =
 
 export async function POST(request: NextRequest) {
   // Local mode has no database — accept and drop so the storefront never errors.
-  if (dataMode === "local" || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    return new NextResponse(null, { status: 204 });
-  }
+  if (dataMode === "local") return new NextResponse(null, { status: 204 });
 
   const ua = request.headers.get("user-agent") ?? "";
   if (BOT_UA.test(ua)) return new NextResponse(null, { status: 204 });
+
+  // A real visitor fires one of these per navigation. Cap the flood a single
+  // source can pour into page_views (free-tier row budget, and skewed stats).
+  const limit = rateLimit(`track:${clientIpFrom(request)}`, 60, 60_000);
+  if (!limit.ok) return new NextResponse(null, { status: 204 });
 
   let parsed;
   try {
@@ -49,14 +56,14 @@ export async function POST(request: NextRequest) {
 
   const { vid, path, ref, utm } = parsed.data;
   try {
-    const admin = createSupabaseAdmin();
-    await admin.from("page_views").insert({
-      visitor_id: vid,
-      path,
-      referrer: ref || null,
-      utm_source: utm?.source || null,
-      utm_medium: utm?.medium || null,
-      utm_campaign: utm?.campaign || null,
+    const supabase = await createSupabaseServer();
+    await supabase.rpc("record_page_view", {
+      p_vid: vid,
+      p_path: path,
+      p_ref: ref || null,
+      p_source: utm?.source || null,
+      p_medium: utm?.medium || null,
+      p_campaign: utm?.campaign || null,
     });
   } catch {
     // analytics must never break the store — swallow (e.g. migration not run yet)

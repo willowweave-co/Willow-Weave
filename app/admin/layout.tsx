@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { getAdminUser } from "@/lib/admin-auth";
+import { dataMode } from "@/lib/data";
 import { THEME_IMAGES } from "@/lib/content";
 import { AdminNav, AdminSignOut } from "@/components/admin/admin-nav";
 import { OrderWatcher } from "@/components/admin/order-watcher";
@@ -17,6 +18,21 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const user = await getAdminUser();
+
+  // No user AND no Supabase to sign in against = a production deploy missing
+  // its env vars. There is nothing to authenticate against, so serve nothing —
+  // don't fall through to the dashboard on local JSON. (proxy.ts already
+  // redirects here; this is the belt to its braces, in case middleware is
+  // bypassed.)
+  if (!user && dataMode === "local") {
+    return (
+      <div className="flex min-h-dvh items-center justify-center bg-ivory px-4">
+        <p className="max-w-sm text-center text-sm leading-relaxed text-bark">
+          The dashboard is unavailable: this deployment has no database configured.
+        </p>
+      </div>
+    );
+  }
 
   // /admin/login renders without the chrome (proxy.ts already redirects
   // signed-out users there in Supabase mode)

@@ -13,6 +13,7 @@ import type {
   StoreSettings,
 } from "@/lib/types";
 import { requireStaff, requireOwner } from "@/lib/admin-auth";
+import { sanitizeRichText } from "@/lib/sanitize";
 import { sendStatusEmail } from "@/lib/email";
 import { createSupabaseAdmin } from "@/lib/supabase/admin";
 import { createSupabaseServer } from "@/lib/supabase/server";
@@ -58,15 +59,12 @@ function missingColumns(e: unknown): ActionResult | null {
   };
 }
 
-/** Strip scripts/handlers from owner-entered rich text. */
-function sanitizeHtml(html: string): string {
-  return html
-    .replace(/<script[\s\S]*?<\/script>/gi, "")
-    .replace(/<iframe[\s\S]*?<\/iframe>/gi, "")
-    .replace(/\son\w+\s*=\s*"[^"]*"/gi, "")
-    .replace(/\son\w+\s*=\s*'[^']*'/gi, "")
-    .replace(/javascript:/gi, "");
-}
+/**
+ * Owner-entered rich text is sanitized against an allowlist (lib/sanitize.ts).
+ * Server actions accept raw JSON, so a caller need not go through the editor —
+ * never trust the markup arriving here.
+ */
+const sanitizeHtml = sanitizeRichText;
 
 // ── Orders ───────────────────────────────────────────────────────────────────
 
@@ -78,8 +76,8 @@ export async function updateOrderStatusAction(
     await requireStaff();
     const order = await repo.updateOrderStatus(id, status);
     if (!order) return { ok: false, error: "Order not found." };
-    const settings = await repo.getSettings();
-    await sendStatusEmail(order, status, settings.notifyEmail || undefined);
+    const notifyEmail = await repo.getNotifyEmail();
+    await sendStatusEmail(order, status, notifyEmail || undefined);
     refresh();
     return { ok: true };
   } catch (e) {
@@ -98,14 +96,24 @@ export async function setOrderNotesAction(id: string, notes: string): Promise<Ac
   }
 }
 
-/** Permanently removes an order (fake/bogus entries). Stock is NOT restocked. */
+/**
+ * Permanently removes an order (fake/bogus entries). Stock is NOT restocked.
+ * Owner-only — destructive and irreversible. RLS enforces this too (0009).
+ */
 export async function deleteOrderAction(id: string): Promise<ActionResult> {
   try {
-    await requireStaff();
+    await requireOwner();
     await repo.deleteOrder(id);
     revalidatePath("/admin", "layout");
     return { ok: true };
   } catch (e) {
+    if (e instanceof Error && e.message === "ORDER_DELETE_DENIED") {
+      return {
+        ok: false,
+        error:
+          "The database refused the delete. Run supabase/migrations/0009_security_hardening.sql in the Supabase SQL editor, then try again.",
+      };
+    }
     return fail(e);
   }
 }
@@ -409,6 +417,24 @@ export interface AccountUpdateInput {
   name: string;
   email: string;
   newPassword?: string;
+  /** Required when changing the email or the password (not for the display name). */
+  currentPassword?: string;
+}
+
+/**
+ * Verify the caller genuinely knows their password, without touching the
+ * session cookies (a standalone client, so a failed attempt can't disturb the
+ * signed-in session).
+ */
+async function reauthenticate(email: string, password: string): Promise<boolean> {
+  const { createClient } = await import("@supabase/supabase-js");
+  const client = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    { auth: { persistSession: false, autoRefreshToken: false } }
+  );
+  const { error } = await client.auth.signInWithPassword({ email, password });
+  return !error;
 }
 
 /** Self-serve account settings for the signed-in staff member. */
@@ -431,29 +457,42 @@ export async function updateAccountAction(input: AccountUpdateInput): Promise<Ac
       return { ok: false, error: "The new password needs at least 8 characters." };
     }
 
+    // Changing the login email or the password is an account takeover in one
+    // step if a session is ever hijacked (stolen cookie, unattended laptop).
+    // Require the current password for both — knowing the session is not enough.
+    const changingEmail = email !== user.email.toLowerCase();
+    const changingPassword = !!input.newPassword;
+    if (changingEmail || changingPassword) {
+      if (!input.currentPassword) {
+        return { ok: false, error: "Enter your current password to change your email or password." };
+      }
+      const ok = await reauthenticate(user.email, input.currentPassword);
+      if (!ok) return { ok: false, error: "That current password isn't right." };
+    }
+
     // password: through the user's own session
     if (input.newPassword) {
       const session = await createSupabaseServer();
       const { error } = await session.auth.updateUser({ password: input.newPassword });
-      if (error) return { ok: false, error: `Couldn't change the password: ${error.message}` };
+      if (error) return opaque("change the password", error);
     }
 
     // email: service role applies it instantly (no confirmation round-trip);
-    // safe because requireStaff() gates this action
-    if (email !== user.email.toLowerCase()) {
+    // safe because requireStaff() + the re-auth above gate this action
+    if (changingEmail) {
       const admin = createSupabaseAdmin();
       const { error } = await admin.auth.admin.updateUserById(user.id, {
         email,
         email_confirm: true,
       });
-      if (error) return { ok: false, error: `Couldn't change the email: ${error.message}` };
+      if (error) return opaque("change the email", error);
     }
 
     // display name (+ keep profile email in sync); service role but pinned to own row
     {
       const admin = createSupabaseAdmin();
       const { error } = await admin.from("profiles").update({ name, email }).eq("id", user.id);
-      if (error) return { ok: false, error: error.message };
+      if (error) return opaque("update the account", error);
     }
 
     revalidatePath("/admin", "layout");
@@ -481,6 +520,16 @@ function generateTempPassword(): string {
 
 function validEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+/**
+ * Supabase/GoTrue error messages describe our internals (constraint names,
+ * provider config, rate-limit shapes). Log them where we can read them; hand
+ * the browser something plain.
+ */
+function opaque(what: string, error: { message: string }): ActionResult {
+  console.error(`${what}:`, error.message);
+  return { ok: false, error: `Couldn't ${what}. Please try again.` };
 }
 
 /** Owners with a usable count guard — the store must always keep one. */
@@ -531,15 +580,15 @@ export async function createStaffAction(
       if (/already.*registered/i.test(error.message)) {
         const { data: list } = await admin.auth.admin.listUsers();
         const existing = list.users.find((u) => u.email?.toLowerCase() === cleanEmail);
-        if (!existing) return { ok: false, error: error.message };
+        if (!existing) return opaque("add that team member", error);
         userId = existing.id;
         const { error: upErr } = await admin.auth.admin.updateUserById(userId, {
           password: tempPassword,
           email_confirm: true,
         });
-        if (upErr) return { ok: false, error: upErr.message };
+        if (upErr) return opaque("add that team member", upErr);
       } else {
-        return { ok: false, error: error.message };
+        return opaque("add that team member", error);
       }
     }
     if (!userId) return { ok: false, error: "Account creation failed — please try again." };
@@ -550,7 +599,7 @@ export async function createStaffAction(
       name: name.trim() || cleanEmail,
       role,
     });
-    if (pErr) return { ok: false, error: pErr.message };
+    if (pErr) return opaque("add that team member", pErr);
 
     revalidatePath("/admin/settings");
     return { ok: true, tempPassword };
@@ -576,7 +625,7 @@ export async function resetStaffPasswordAction(userId: string): Promise<StaffAct
       password: tempPassword,
       email_confirm: true,
     });
-    if (error) return { ok: false, error: error.message };
+    if (error) return opaque("reset that password", error);
     return { ok: true, tempPassword };
   } catch (e) {
     return fail(e);
@@ -601,7 +650,7 @@ export async function updateStaffRoleAction(
       return { ok: false, error: "The store needs at least one owner." };
     }
     const { error } = await admin.from("profiles").update({ role }).eq("id", userId);
-    if (error) return { ok: false, error: error.message };
+    if (error) return opaque("change that role", error);
     revalidatePath("/admin/settings");
     return { ok: true };
   } catch (e) {
@@ -628,7 +677,7 @@ export async function removeStaffAction(userId: string): Promise<ActionResult> {
     }
     // deleting the auth user cascades to the profile row
     const { error } = await admin.auth.admin.deleteUser(userId);
-    if (error) return { ok: false, error: error.message };
+    if (error) return opaque("remove that team member", error);
     revalidatePath("/admin/settings");
     return { ok: true };
   } catch (e) {

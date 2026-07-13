@@ -24,9 +24,15 @@ export function AccountSettings({
   const [pending, startTransition] = useTransition();
   const [name, setName] = useState(currentName);
   const [email, setEmail] = useState(currentEmail);
+  const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+
+  // Changing either credential requires proving you know the current password —
+  // the display name alone doesn't.
+  const emailChanged = email.trim().toLowerCase() !== currentEmail.toLowerCase();
+  const needsCurrentPassword = emailChanged || !!newPassword;
 
   const save = () => {
     setError(null);
@@ -34,14 +40,20 @@ export function AccountSettings({
       setError("The two passwords don't match.");
       return;
     }
+    if (needsCurrentPassword && !currentPassword) {
+      setError("Enter your current password to change your email or password.");
+      return;
+    }
     startTransition(async () => {
       const res = await updateAccountAction({
         name,
         email,
         newPassword: newPassword || undefined,
+        currentPassword: currentPassword || undefined,
       });
       if (res.ok) {
         toast("Account updated.");
+        setCurrentPassword("");
         setNewPassword("");
         setConfirmPassword("");
         router.refresh();
@@ -124,6 +136,25 @@ export function AccountSettings({
               />
             </div>
           </div>
+
+          {needsCurrentPassword && (
+            <div className="mt-4 rounded-xl border border-gold/50 bg-gold/10 p-3.5">
+              <Label htmlFor="acc-current">Current password</Label>
+              <Input
+                id="acc-current"
+                type="password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                placeholder="Confirm it's really you"
+                autoComplete="current-password"
+                className="max-w-sm"
+              />
+              <p className="mt-1 text-xs text-walnut-dark">
+                Required to change your login email or password.
+              </p>
+            </div>
+          )}
+
           <div className="mt-5 flex justify-end">
             <Button onClick={save} loading={pending}>
               <KeyRound className="h-4 w-4" /> Update account
