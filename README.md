@@ -51,3 +51,29 @@ Next.js 16 (App Router, RSC) · Tailwind CSS v4 · Supabase (Postgres, Auth, RLS
 · Cloudinary · Resend · Recharts · TypeScript. Images are resized by the
 Shopify/Cloudinary CDNs via a custom loader, so Vercel's image quota is never
 consumed.
+
+## Maintainer notes (read before touching production)
+
+Some of this app's security lives **outside the code**, configured by hand in
+the Supabase dashboard. Reading the source alone will not reveal it, so if you
+take over this project, know that:
+
+- **The database schema is applied by running `supabase/migrations/*.sql` in
+  order** in the Supabase SQL editor — including
+  `0009_security_hardening.sql`, which is what stops the public (anon) key from
+  reading unpublished products' prices/stock/images and hides the owner's
+  notification email. If you point the app at a fresh Supabase project, every
+  migration must be run or those protections don't exist. All are re-runnable.
+- **Public sign-ups are turned OFF** in the dashboard (Authentication → Sign In
+  / Providers → User Signups). Staff accounts are invite-only, created by the
+  owner in Admin → Settings. Do not re-enable sign-ups.
+- **Auth fails closed in production**: if the Supabase env vars are missing from
+  a deployment, `/admin` is unavailable (not open). Set the env vars for
+  Vercel's **Preview** environment as well as Production, or Preview deploys
+  show "dashboard unavailable".
+- **Supabase's advisor flags `store_settings_public` as a `SECURITY DEFINER`
+  view.** That is intended — it exposes only non-sensitive settings columns to
+  the storefront; see the comment in `0009_security_hardening.sql`. Not a bug to
+  "fix".
+
+Full go-live checklist, including these steps, is in **[SETUP.md](SETUP.md)**.
