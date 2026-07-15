@@ -38,7 +38,12 @@ export default async function AdminOrderDetailPage({ params }: Props) {
             {order.orderNumber} <OrderStatusBadge status={order.status} />
           </h1>
           <p className="mt-1 text-sm text-umber">
-            Placed {formatDateTime(order.createdAt)} · Cash on Delivery
+            Placed {formatDateTime(order.createdAt)} ·{" "}
+            {order.paymentMethod === "bank" ? (
+              <strong className="text-walnut">Online bank transfer — verify the receipt before dispatch</strong>
+            ) : (
+              "Cash on Delivery"
+            )}
           </p>
         </div>
         <div className="no-print flex items-center gap-2">
@@ -116,9 +121,22 @@ export default async function AdminOrderDetailPage({ params }: Props) {
                 <dd>{order.shippingFee > 0 ? formatPKR(order.shippingFee) : "Free"}</dd>
               </div>
               <div className="flex justify-between pt-1.5 text-base font-semibold text-ink">
-                <dt>Total to collect (COD)</dt>
+                <dt>
+                  {order.paymentMethod === "bank"
+                    ? "Total — bank transfer (prepaid)"
+                    : "Total to collect (COD)"}
+                </dt>
                 <dd>{formatPKR(order.total)}</dd>
               </div>
+              {order.currency !== "PKR" && order.displayTotal != null && (
+                <div className="flex justify-between text-xs text-umber">
+                  <dt>Customer&rsquo;s currency</dt>
+                  <dd>
+                    {order.currency}{" "}
+                    {order.displayTotal.toLocaleString("en", { maximumFractionDigits: 2 })}
+                  </dd>
+                </div>
+              )}
             </dl>
           </section>
 
@@ -173,7 +191,10 @@ export default async function AdminOrderDetailPage({ params }: Props) {
                 <span>
                   {order.address}
                   <br />
-                  <strong>{order.city}</strong>
+                  <strong>
+                    {order.city}
+                    {order.country !== "Pakistan" && `, ${order.country}`}
+                  </strong>
                 </span>
               </li>
             </ul>

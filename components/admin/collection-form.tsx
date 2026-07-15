@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input, Label, Select, Checkbox } from "@/components/ui/fields";
 import { RichTextEditor } from "@/components/ui/rich-text";
 import { useToast } from "@/components/ui/toast";
-import { slugify, cn, focalPosition } from "@/lib/utils";
+import { slugify, cn, focalPosition, focalCrop } from "@/lib/utils";
 
 interface ProductOption {
   id: string;
@@ -49,6 +49,7 @@ export function CollectionForm({
       ? { x: initial.bannerFocalX ?? 50, y: initial.bannerFocalY ?? 50 }
       : null
   );
+  const [bannerZoom, setBannerZoom] = useState<number | null>(initial.bannerFocalZoom ?? null);
   const [focusOpen, setFocusOpen] = useState<"tile" | "banner" | null>(null);
   const [group, setGroup] = useState<CollectionGroup>(initial.group);
   const [featured, setFeatured] = useState(initial.featured);
@@ -81,6 +82,7 @@ export function CollectionForm({
         imageFocalY: imageFocal?.y ?? null,
         bannerFocalX: bannerFocal?.x ?? null,
         bannerFocalY: bannerFocal?.y ?? null,
+        bannerFocalZoom: bannerZoom,
         group,
         featured,
         published,
@@ -191,6 +193,7 @@ export function CollectionForm({
                     setImage(e.target.value);
                     setImageFocal(null); // different photo → old focus no longer applies
                     setBannerFocal(null);
+                    setBannerZoom(null);
                   }}
                   placeholder="Paste an image URL…"
                   className="h-9 min-w-0 flex-1"
@@ -226,7 +229,7 @@ export function CollectionForm({
                         fill
                         sizes="288px"
                         className="object-cover"
-                        style={focalPosition(bannerFocal?.x, bannerFocal?.y)}
+                        style={focalCrop(bannerFocal?.x, bannerFocal?.y, bannerZoom)}
                       />
                     </div>
                     <button
@@ -340,6 +343,7 @@ export function CollectionForm({
           setImage(items[0]?.url ?? "");
           setImageFocal(null); // different photo → old focus no longer applies
           setBannerFocal(null);
+          setBannerZoom(null);
         }}
         title="Choose a cover image"
       />
@@ -364,7 +368,12 @@ export function CollectionForm({
           onClose={() => setFocusOpen(null)}
           src={image}
           initial={bannerFocal}
-          onSave={setBannerFocal}
+          withZoom
+          initialZoom={bannerZoom}
+          onSave={(pt, zoom) => {
+            setBannerFocal(pt);
+            setBannerZoom(zoom);
+          }}
           title="Banner focus — this collection's page header"
           previews={[
             { label: "Desktop banner", aspect: "9 / 2" },

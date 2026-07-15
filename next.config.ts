@@ -32,7 +32,11 @@ const nextConfig: NextConfig = {
             key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline'",
+              // 'unsafe-eval' is DEV-ONLY: React needs eval() there for
+              // debugging (callstack reconstruction). Production never gets it.
+              `script-src 'self' 'unsafe-inline'${
+                process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""
+              }`,
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https://res.cloudinary.com https://cdn.shopify.com",
               "media-src 'self' https://res.cloudinary.com",

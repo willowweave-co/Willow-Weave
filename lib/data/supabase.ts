@@ -3,6 +3,7 @@ import type {
   CheckoutInput,
   Collection,
   ContactSettings,
+  IntlShippingSettings,
   DiscountCode,
   HeroSlide,
   Order,
@@ -14,7 +15,8 @@ import type {
   StaffMember,
   StoreSettings,
 } from "@/lib/types";
-import { DEFAULT_CONTACT } from "@/lib/types";
+import { DEFAULT_BANK_TRANSFER, DEFAULT_CONTACT, DEFAULT_INTL_SHIPPING } from "@/lib/types";
+import type { BankTransferSettings } from "@/lib/types";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { createSupabaseServer } from "@/lib/supabase/server";
 import { computeStats } from "@/lib/stats";
@@ -85,6 +87,7 @@ function rowToCollection(row: Row): Collection {
     imageFocalY: row.image_focal_y ?? null,
     bannerFocalX: row.banner_focal_x ?? null,
     bannerFocalY: row.banner_focal_y ?? null,
+    bannerFocalZoom: row.banner_focal_zoom ?? null,
     group: row.group,
     position: row.position ?? 0,
     featured: row.featured ?? false,
@@ -117,8 +120,11 @@ function rowToOrder(row: Row): Order {
     email: row.email,
     address: row.address,
     city: row.city,
+    country: row.country ?? "Pakistan",
     notes: row.notes,
-    paymentMethod: "cod",
+    paymentMethod: row.payment_method === "bank" ? "bank" : "cod",
+    currency: row.currency ?? "PKR",
+    displayTotal: numOrNull(row.display_total),
     subtotal: num(row.subtotal),
     discountCode: row.discount_code,
     discountAmount: num(row.discount_amount),
@@ -159,7 +165,7 @@ const isMissingRelation = (e: { code?: string } | null) =>
  * transitional path: once 0009 is applied, the base table is staff-only and
  * this fallback can no longer read it anyway.
  */
-async function publicSettingsRow(columns: string): Promise<Row> {
+async function publicSettingsRow(columns: string, fallbackColumns?: string): Promise<Row> {
   const view = await publicDb()
     .from("store_settings_public")
     .select(columns)
@@ -167,6 +173,19 @@ async function publicSettingsRow(columns: string): Promise<Row> {
     .maybeSingle();
   if (!view.error && view.data) return view.data as Row;
   if (view.error && !isMissingRelation(view.error)) throw view.error;
+
+  // The view exists but predates newer columns (its whitelist is frozen at
+  // creation) — retry with the older column set so the storefront keeps
+  // rendering until the latest migration is run.
+  if (fallbackColumns) {
+    const older = await publicDb()
+      .from("store_settings_public")
+      .select(fallbackColumns)
+      .eq("id", 1)
+      .maybeSingle();
+    if (!older.error && older.data) return older.data as Row;
+    if (older.error && !isMissingRelation(older.error)) throw older.error;
+  }
 
   const legacy = await publicDb().from("store_settings").select(columns).eq("id", 1).single();
   if (legacy.error) throw legacy.error;
@@ -265,6 +284,8 @@ export const supabaseRepo: Repo = {
    */
   async getSettings(): Promise<StoreSettings> {
     const data = await publicSettingsRow(
+      "id, store_name, shipping_fee, free_shipping_threshold, announcement, announcement_color, contact, intl_shipping, bank_transfer",
+      // pre-0011 view (frozen whitelist) — newer fields fall back to defaults
       "id, store_name, shipping_fee, free_shipping_threshold, announcement, contact"
     );
     return {
@@ -275,6 +296,15 @@ export const supabaseRepo: Repo = {
       announcement: data.announcement,
       // merge over defaults so partially-saved / pre-migration rows stay complete
       contact: { ...DEFAULT_CONTACT, ...((data.contact as Partial<ContactSettings>) ?? {}) },
+      intlShipping: {
+        ...DEFAULT_INTL_SHIPPING,
+        ...((data.intl_shipping as Partial<IntlShippingSettings>) ?? {}),
+      },
+      announcementColor: data.announcement_color ?? null,
+      bankTransfer: {
+        ...DEFAULT_BANK_TRANSFER,
+        ...((data.bank_transfer as Partial<BankTransferSettings>) ?? {}),
+      },
     };
   },
 
@@ -294,6 +324,15 @@ export const supabaseRepo: Repo = {
       notifyEmail: data.notify_email ?? "",
       announcement: data.announcement,
       contact: { ...DEFAULT_CONTACT, ...((data.contact as Partial<ContactSettings>) ?? {}) },
+      intlShipping: {
+        ...DEFAULT_INTL_SHIPPING,
+        ...((data.intl_shipping as Partial<IntlShippingSettings>) ?? {}),
+      },
+      announcementColor: data.announcement_color ?? null,
+      bankTransfer: {
+        ...DEFAULT_BANK_TRANSFER,
+        ...((data.bank_transfer as Partial<BankTransferSettings>) ?? {}),
+      },
     };
   },
 
@@ -372,6 +411,10 @@ export const supabaseRepo: Repo = {
       p_email: input.email,
       p_address: input.address,
       p_city: input.city,
+      p_country: input.country || "Pakistan",
+      p_payment_method: input.paymentMethod,
+      p_currency: input.currency || "PKR",
+      p_display_rate: input.displayRate,
       p_notes: input.notes,
       p_discount_code: input.discountCode,
       p_items: input.items.map((i) => ({ variant_id: Number(i.variantId), quantity: i.quantity })),
@@ -587,6 +630,7 @@ export const supabaseRepo: Repo = {
       image_focal_y: c.imageFocalY ?? null,
       banner_focal_x: c.bannerFocalX ?? null,
       banner_focal_y: c.bannerFocalY ?? null,
+      banner_focal_zoom: c.bannerFocalZoom ?? null,
       group: c.group,
       position: c.position,
       featured: c.featured,
@@ -697,7 +741,10 @@ export const supabaseRepo: Repo = {
         free_shipping_threshold: s.freeShippingThreshold,
         notify_email: s.notifyEmail,
         announcement: s.announcement,
+        announcement_color: s.announcementColor,
         contact: s.contact,
+        intl_shipping: s.intlShipping,
+        bank_transfer: s.bankTransfer,
       })
       .eq("id", 1);
     if (error) throw error;

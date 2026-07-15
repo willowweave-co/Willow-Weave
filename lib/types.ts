@@ -14,6 +14,8 @@ export interface Collection {
   /** Banner focus (the wide banner on the collection's own page); null/absent = centre. */
   bannerFocalX?: number | null;
   bannerFocalY?: number | null;
+  /** Banner zoom percent (100–300); null/absent = no zoom. */
+  bannerFocalZoom?: number | null;
   group: CollectionGroup;
   position: number;
   featured: boolean;
@@ -67,6 +69,9 @@ export interface Product {
 
 export type OrderStatus = "pending" | "confirmed" | "shipped" | "delivered" | "cancelled";
 
+/** cod = pay the rider in cash; bank = online transfer, verified before dispatch */
+export type PaymentMethod = "cod" | "bank";
+
 export const ORDER_STATUSES: OrderStatus[] = ["pending", "confirmed", "shipped", "delivered", "cancelled"];
 
 export interface OrderItem {
@@ -91,8 +96,13 @@ export interface Order {
   email: string | null;
   address: string;
   city: string;
+  country: string;
   notes: string | null;
-  paymentMethod: "cod";
+  paymentMethod: PaymentMethod;
+  /** Display currency the customer shopped in (PKR = domestic default). */
+  currency: string;
+  /** Order total converted to `currency` at order time; null when PKR. */
+  displayTotal: number | null;
   subtotal: number;
   discountCode: string | null;
   discountAmount: number;
@@ -153,13 +163,55 @@ export const DEFAULT_CONTACT: ContactSettings = {
   tiktok: "https://www.tiktok.com/@willowweave.co?_t=ZS-8zrfDejv3g8&_r=1",
 };
 
+/** One country we ship to internationally, with its flat delivery charge in PKR. */
+export interface IntlShippingCountry {
+  name: string;
+  fee: number;
+}
+
+export interface IntlShippingSettings {
+  /** Shown at checkout when a non-Pakistan country is selected. */
+  note: string;
+  /** Countries enabled for checkout (Pakistan is always available). */
+  countries: IntlShippingCountry[];
+}
+
+export const DEFAULT_INTL_SHIPPING: IntlShippingSettings = {
+  note: "International orders are dispatched within 3–5 business days and usually arrive in 7–14. Our team will confirm delivery and payment details with you on WhatsApp after you place the order.",
+  countries: [],
+};
+
+/** Bank-transfer payment details shown to customers who pick that option. */
+export interface BankTransferSettings {
+  bankName: string;
+  accountName: string;
+  accountNumber: string;
+  iban: string;
+}
+
+export const DEFAULT_BANK_TRANSFER: BankTransferSettings = {
+  bankName: "",
+  accountName: "",
+  accountNumber: "",
+  iban: "",
+};
+
+/** Bank transfer is offered at checkout only once details are filled in. */
+export function bankTransferConfigured(b: BankTransferSettings): boolean {
+  return !!(b.accountNumber.trim() || b.iban.trim());
+}
+
 export interface StoreSettings {
   storeName: string;
   shippingFee: number;
   freeShippingThreshold: number | null;
   notifyEmail: string;
   announcement: string | null;
+  /** Announcement bar background (hex); null = the default moss green. */
+  announcementColor: string | null;
   contact: ContactSettings;
+  intlShipping: IntlShippingSettings;
+  bankTransfer: BankTransferSettings;
 }
 
 /** One slide of the homepage hero slideshow (admin-managed). */
@@ -170,6 +222,8 @@ export interface HeroSlide {
   /** Focal point of the media, % from left/top; null/absent = centre. */
   focalX?: number | null;
   focalY?: number | null;
+  /** Zoom percent around the focal point (100–300); null/absent = no zoom. */
+  focalZoom?: number | null;
   /** Small label above the heading, e.g. "Volume 5". Empty = hidden. */
   eyebrow: string;
   heading: string;
@@ -210,7 +264,13 @@ export interface CheckoutInput {
   email: string | null;
   address: string;
   city: string;
+  country: string;
   notes: string | null;
+  paymentMethod: PaymentMethod;
+  /** Shopper's display currency; totals stay PKR, this is recorded for labels. */
+  currency: string;
+  /** Server-verified conversion rate (units per 1 PKR); null when PKR. */
+  displayRate: number | null;
   discountCode: string | null;
   items: { variantId: string; productId: string; quantity: number }[];
 }

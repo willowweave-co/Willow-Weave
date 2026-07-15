@@ -1,4 +1,5 @@
 import { repo } from "@/lib/data";
+import { DEFAULT_ANNOUNCEMENT_COLOR, announcementTextColor } from "@/lib/announcement";
 import { buildNav } from "@/components/store/nav-data";
 import { Header } from "@/components/store/header";
 import { Footer } from "@/components/store/footer";
@@ -16,7 +17,13 @@ export default async function StoreLayout({ children }: { children: React.ReactN
   return (
     <div className="flex min-h-dvh flex-col">
       {settings.announcement && (
-        <p className="bg-walnut px-4 py-2 text-center text-xs font-medium tracking-wide text-ivory">
+        <p
+          className="px-4 py-2 text-center text-xs font-medium tracking-wide"
+          style={{
+            backgroundColor: settings.announcementColor ?? DEFAULT_ANNOUNCEMENT_COLOR,
+            color: announcementTextColor(settings.announcementColor ?? DEFAULT_ANNOUNCEMENT_COLOR),
+          }}
+        >
           {settings.announcement}
         </p>
       )}

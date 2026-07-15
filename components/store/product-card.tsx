@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { Product } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { Price } from "@/components/store/price";
+import { CardAddButton } from "@/components/store/card-add-button";
 import { discountPercent } from "@/lib/money";
 import { cn, focalPosition } from "@/lib/utils";
 
@@ -31,6 +32,8 @@ export function ProductCard({
   const soldOut = !product.variants.some((v) => v.stock > 0);
   const pct = discountPercent(min, compareAt);
   const [img1, img2] = product.images;
+  // quick-add uses the first in-stock variant; size is adjustable in the cart
+  const quickAdd = product.variants.find((v) => v.stock > 0);
 
   return (
     <Link
@@ -74,6 +77,22 @@ export function ProductCard({
           <div className="absolute inset-0 flex items-center justify-center bg-ivory/55 backdrop-blur-[1px]">
             <Badge tone="neutral" className="bg-ink/80 text-ivory">Sold out</Badge>
           </div>
+        )}
+        {quickAdd && (
+          <CardAddButton
+            item={{
+              productId: product.id,
+              variantId: quickAdd.id,
+              handle: product.handle,
+              title: product.title,
+              size: quickAdd.size,
+              color: quickAdd.color,
+              unitPrice: quickAdd.price,
+              compareAtPrice: quickAdd.compareAtPrice,
+              image: img1?.src ?? null,
+              maxStock: quickAdd.stock,
+            }}
+          />
         )}
       </div>
       <div className="mt-3 space-y-1 px-0.5">

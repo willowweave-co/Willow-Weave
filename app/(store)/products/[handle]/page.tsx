@@ -175,7 +175,7 @@ export default async function ProductPage({ params }: Props) {
               <AccordionItem label="Delivery & Returns">
                 <div className="rte">
                   <p>
-                    <strong>Cash on Delivery</strong> across Pakistan. Orders are processed within
+                    <strong>Cash on Delivery</strong> across Pakistan — and we ship internationally. Orders are processed within
                     1–3 business days; delivery takes 2–5 business days in urban areas and 5–7 in
                     remote areas.
                     {settings.shippingFee > 0 ? (

@@ -114,6 +114,8 @@ export function AdminSignOut() {
   return (
     <button
       onClick={async () => {
+        // one accidental click shouldn't end the session
+        if (!confirm("Sign out of the dashboard?")) return;
         await createSupabaseBrowser().auth.signOut();
         router.push("/admin/login");
         router.refresh();

@@ -18,7 +18,12 @@ import type {
 import { computeStats } from "@/lib/stats";
 import { validateDiscount, MAX_ITEM_QTY } from "@/lib/discounts";
 import { DEFAULT_HERO_SLIDES } from "./hero-defaults";
-import { DEFAULT_CONTACT } from "@/lib/types";
+import {
+  DEFAULT_BANK_TRANSFER,
+  DEFAULT_CONTACT,
+  DEFAULT_INTL_SHIPPING,
+  bankTransferConfigured,
+} from "@/lib/types";
 
 /**
  * Local-mode adapter: the full store running against data/*.json.
@@ -87,7 +92,10 @@ const DEFAULT_SETTINGS: StoreSettings = {
   freeShippingThreshold: null,
   notifyEmail: process.env.ORDER_NOTIFY_EMAIL ?? "ausatali27@gmail.com",
   announcement: null,
+  announcementColor: null,
   contact: DEFAULT_CONTACT,
+  intlShipping: DEFAULT_INTL_SHIPPING,
+  bankTransfer: DEFAULT_BANK_TRANSFER,
 };
 
 // ── base catalog (loaded once per process) ───────────────────────────────────
@@ -302,6 +310,8 @@ export const localRepo: Repo = {
       ...DEFAULT_SETTINGS,
       ...saved,
       contact: { ...DEFAULT_CONTACT, ...(saved.contact ?? {}) },
+      intlShipping: { ...DEFAULT_INTL_SHIPPING, ...(saved.intlShipping ?? {}) },
+      bankTransfer: { ...DEFAULT_BANK_TRANSFER, ...(saved.bankTransfer ?? {}) },
     };
   },
 
@@ -371,9 +381,22 @@ export const localRepo: Repo = {
         d!.timesUsed += 1;
       }
 
-      let shipping = settings.shippingFee;
-      if (settings.freeShippingThreshold != null && subtotal - discountAmount >= settings.freeShippingThreshold) {
-        shipping = 0;
+      const paymentMethod = input.paymentMethod === "bank" ? "bank" : "cod";
+      if (paymentMethod === "bank" && !bankTransferConfigured(settings.bankTransfer)) {
+        throw new Error("BANK_UNAVAILABLE");
+      }
+
+      const country = input.country?.trim() || "Pakistan";
+      let shipping: number;
+      if (country === "Pakistan") {
+        shipping = settings.shippingFee;
+        if (settings.freeShippingThreshold != null && subtotal - discountAmount >= settings.freeShippingThreshold) {
+          shipping = 0;
+        }
+      } else {
+        const zone = settings.intlShipping.countries.find((c) => c.name === country);
+        if (!zone) throw new Error(`BAD_COUNTRY:${country}`);
+        shipping = zone.fee;
       }
 
       const now = new Date().toISOString();
@@ -386,8 +409,14 @@ export const localRepo: Repo = {
         email: input.email,
         address: input.address,
         city: input.city,
+        country,
         notes: input.notes,
-        paymentMethod: "cod",
+        paymentMethod,
+        currency: input.currency || "PKR",
+        displayTotal:
+          input.currency && input.currency !== "PKR" && input.displayRate && input.displayRate > 0
+            ? Math.round((subtotal - discountAmount + shipping) * input.displayRate * 100) / 100
+            : null,
         subtotal,
         discountCode: appliedCode,
         discountAmount,

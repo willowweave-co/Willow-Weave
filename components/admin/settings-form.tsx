@@ -14,6 +14,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/fields";
 import { useToast } from "@/components/ui/toast";
+import { SHIPPABLE_COUNTRIES } from "@/lib/countries";
+import { DEFAULT_ANNOUNCEMENT_COLOR, announcementTextColor } from "@/lib/announcement";
 
 export function SettingsForm({ initial }: { initial: StoreSettings }) {
   const router = useRouter();
@@ -28,6 +30,19 @@ export function SettingsForm({ initial }: { initial: StoreSettings }) {
   });
   const [contact, setContact] = useState({ ...initial.contact });
   const setC = (patch: Partial<typeof contact>) => setContact((c) => ({ ...c, ...patch }));
+  const [bank, setBank] = useState({ ...initial.bankTransfer });
+  const setB = (patch: Partial<typeof bank>) => setBank((b) => ({ ...b, ...patch }));
+  const [announceColor, setAnnounceColor] = useState(
+    initial.announcementColor ?? DEFAULT_ANNOUNCEMENT_COLOR
+  );
+  const [intlNote, setIntlNote] = useState(initial.intlShipping.note);
+  const [intlCountries, setIntlCountries] = useState<{ name: string; fee: string }[]>(
+    initial.intlShipping.countries.map((z) => ({ name: z.name, fee: String(z.fee) }))
+  );
+  const [addCountry, setAddCountry] = useState("");
+  const remaining = SHIPPABLE_COUNTRIES.filter(
+    (name) => !intlCountries.some((z) => z.name === name)
+  );
 
   const save = () =>
     startTransition(async () => {
@@ -39,7 +54,14 @@ export function SettingsForm({ initial }: { initial: StoreSettings }) {
           : null,
         notifyEmail: form.notifyEmail,
         announcement: form.announcement || null,
+        announcementColor:
+          announceColor.toLowerCase() === DEFAULT_ANNOUNCEMENT_COLOR ? null : announceColor,
         contact,
+        bankTransfer: bank,
+        intlShipping: {
+          note: intlNote,
+          countries: intlCountries.map((z) => ({ name: z.name, fee: Number(z.fee) || 0 })),
+        },
       });
       if (res.ok) {
         toast("Settings saved.");
@@ -94,12 +116,42 @@ export function SettingsForm({ initial }: { initial: StoreSettings }) {
         </div>
         <div className="sm:col-span-2">
           <Label htmlFor="s-announce">Announcement bar (empty = hidden)</Label>
-          <Input
-            id="s-announce"
-            value={form.announcement}
-            onChange={(e) => setForm({ ...form, announcement: e.target.value })}
-            placeholder="Eid sale — up to 40% off, Cash on Delivery nationwide!"
-          />
+          <div className="flex items-center gap-2">
+            <Input
+              id="s-announce"
+              value={form.announcement}
+              onChange={(e) => setForm({ ...form, announcement: e.target.value })}
+              placeholder="Eid sale — up to 40% off, Cash on Delivery nationwide!"
+              className="min-w-0 flex-1"
+            />
+            <input
+              type="color"
+              value={announceColor}
+              onChange={(e) => setAnnounceColor(e.target.value)}
+              aria-label="Announcement bar colour"
+              title="Announcement bar colour"
+              className="h-10 w-12 shrink-0 cursor-pointer rounded-lg border border-line bg-white/70 p-1"
+            />
+            <button
+              type="button"
+              onClick={() => setAnnounceColor(DEFAULT_ANNOUNCEMENT_COLOR)}
+              disabled={announceColor.toLowerCase() === DEFAULT_ANNOUNCEMENT_COLOR}
+              className="shrink-0 rounded-full border border-line px-3 py-2 text-xs font-medium text-bark transition-colors hover:border-walnut hover:text-walnut disabled:opacity-40"
+            >
+              Default green
+            </button>
+          </div>
+          {form.announcement && (
+            <p
+              className="mt-2 rounded-lg px-3 py-1.5 text-center text-xs font-medium tracking-wide"
+              style={{
+                backgroundColor: announceColor,
+                color: announcementTextColor(announceColor),
+              }}
+            >
+              {form.announcement}
+            </p>
+          )}
         </div>
       </div>
 
@@ -172,6 +224,126 @@ export function SettingsForm({ initial }: { initial: StoreSettings }) {
             value={contact.tiktok}
             onChange={(e) => setC({ tiktok: e.target.value })}
             placeholder="https://www.tiktok.com/@…"
+          />
+        </div>
+      </div>
+
+      <h2 className="mt-8 mb-1 font-semibold text-ink">Bank transfer (online payment)</h2>
+      <p className="mb-4 text-xs text-umber">
+        Fill these in to offer &ldquo;Online bank transfer&rdquo; at checkout — customers see the
+        details, transfer the total, and send a receipt screenshot on WhatsApp/email before
+        dispatch. Leave account number AND IBAN empty to hide the option.
+      </p>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <Label htmlFor="s-bank-name">Bank name</Label>
+          <Input
+            id="s-bank-name"
+            value={bank.bankName}
+            onChange={(e) => setB({ bankName: e.target.value })}
+            placeholder="Meezan Bank"
+          />
+        </div>
+        <div>
+          <Label htmlFor="s-bank-holder">Account holder name</Label>
+          <Input
+            id="s-bank-holder"
+            value={bank.accountName}
+            onChange={(e) => setB({ accountName: e.target.value })}
+            placeholder="Willow Weave"
+          />
+        </div>
+        <div>
+          <Label htmlFor="s-bank-acc">Account number</Label>
+          <Input
+            id="s-bank-acc"
+            value={bank.accountNumber}
+            onChange={(e) => setB({ accountNumber: e.target.value })}
+            placeholder="0123 4567890 123"
+          />
+        </div>
+        <div>
+          <Label htmlFor="s-bank-iban">IBAN</Label>
+          <Input
+            id="s-bank-iban"
+            value={bank.iban}
+            onChange={(e) => setB({ iban: e.target.value })}
+            placeholder="PK00 MEZN 0000 0000 0000 0000"
+          />
+        </div>
+      </div>
+
+      <h2 className="mt-8 mb-1 font-semibold text-ink">International shipping</h2>
+      <p className="mb-4 text-xs text-umber">
+        Countries added here become selectable at checkout with their own delivery charge (in
+        Rs). Pakistan always uses the domestic charge above; the free-delivery threshold applies
+        to Pakistan only. India can&rsquo;t be enabled.
+      </p>
+      <div className="space-y-3">
+        {intlCountries.length > 0 && (
+          <ul className="divide-y divide-line rounded-xl border border-line">
+            {intlCountries.map((z, i) => (
+              <li key={z.name} className="flex items-center gap-3 px-4 py-2.5">
+                <span className="min-w-0 flex-1 text-sm text-bark">{z.name}</span>
+                <span className="text-xs text-umber">Rs.</span>
+                <Input
+                  inputMode="numeric"
+                  value={z.fee}
+                  onChange={(e) =>
+                    setIntlCountries((cur) =>
+                      cur.map((x, idx) =>
+                        idx === i ? { ...x, fee: e.target.value.replace(/\D/g, "") } : x
+                      )
+                    )
+                  }
+                  aria-label={`Delivery charge for ${z.name}`}
+                  className="h-8 w-28"
+                />
+                <button
+                  onClick={() => setIntlCountries((cur) => cur.filter((_, idx) => idx !== i))}
+                  aria-label={`Stop shipping to ${z.name}`}
+                  className="rounded-full p-1.5 text-umber/70 transition-colors hover:bg-linen hover:text-madder"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        <div className="flex flex-wrap items-center gap-2">
+          <Select
+            value={addCountry}
+            onChange={(e) => setAddCountry(e.target.value)}
+            aria-label="Add a shipping country"
+            className="w-auto min-w-52"
+          >
+            <option value="">Add a country…</option>
+            {remaining.map((name) => (
+              <option key={name} value={name}>
+                {name}
+              </option>
+            ))}
+          </Select>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!addCountry}
+            onClick={() => {
+              if (!addCountry) return;
+              setIntlCountries((cur) => [...cur, { name: addCountry, fee: "" }]);
+              setAddCountry("");
+            }}
+          >
+            Add
+          </Button>
+        </div>
+        <div>
+          <Label htmlFor="s-intl-note">Note shown to international customers at checkout</Label>
+          <Input
+            id="s-intl-note"
+            value={intlNote}
+            onChange={(e) => setIntlNote(e.target.value)}
+            placeholder="International orders usually arrive in 7–14 business days…"
           />
         </div>
       </div>

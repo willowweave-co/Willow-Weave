@@ -8,7 +8,7 @@ import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
 import { useCart } from "@/lib/cart/cart-context";
 import { Dialog } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { formatPKR } from "@/lib/money";
+import { useCurrency } from "@/components/store/currency-context";
 
 export function CartDrawer({
   freeShippingThreshold,
@@ -16,6 +16,7 @@ export function CartDrawer({
   freeShippingThreshold: number | null;
 }) {
   const { items, subtotal, isOpen, closeCart, updateQuantity, removeItem } = useCart();
+  const { format } = useCurrency();
   const pathname = usePathname();
 
   // Safety net: whatever triggers a navigation (checkout button, back button,
@@ -46,7 +47,7 @@ export function CartDrawer({
             <div className="border-b border-line bg-parchment/60 px-5 py-2.5 text-center text-xs text-bark">
               {remaining > 0 ? (
                 <>
-                  Add <strong>{formatPKR(remaining)}</strong> more for free shipping
+                  Add <strong>{format(remaining)}</strong> more for free shipping
                 </>
               ) : (
                 <strong className="text-moss">You’ve unlocked free shipping 🎉</strong>
@@ -104,7 +105,7 @@ export function CartDrawer({
                       </button>
                     </div>
                     <span className="text-sm font-semibold text-ink">
-                      {formatPKR(item.unitPrice * item.quantity)}
+                      {format(item.unitPrice * item.quantity)}
                     </span>
                   </div>
                 </div>
@@ -121,7 +122,7 @@ export function CartDrawer({
           <div className="border-t border-line bg-ivory px-5 py-4">
             <div className="mb-3 flex items-center justify-between">
               <span className="text-sm text-bark">Subtotal</span>
-              <span className="text-lg font-semibold text-ink">{formatPKR(subtotal)}</span>
+              <span className="text-lg font-semibold text-ink">{format(subtotal)}</span>
             </div>
             <p className="mb-3 text-center text-xs text-umber">
               Cash on Delivery · shipping calculated at checkout

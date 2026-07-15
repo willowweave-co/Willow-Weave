@@ -7,6 +7,8 @@ import { repo, DATA_CACHE_TAG } from "@/lib/data";
 import type { PlacedOrderDetails } from "@/lib/data";
 import { sendOrderEmails } from "@/lib/email";
 import { rateLimit, clientIp } from "@/lib/rate-limit";
+import { FALLBACK_RATES, isCurrencyCode } from "@/lib/currency";
+import { getRates } from "@/lib/currency-server";
 
 /** A real cart is a handful of lines; anything past this is an attempt to make
  *  place_order() loop. Quantity per line is capped separately (20). */
@@ -27,6 +29,10 @@ const checkoutSchema = z.object({
     .or(z.literal("")),
   address: z.string().trim().min(10, "Please enter your complete delivery address").max(500),
   city: z.string().trim().min(2, "Please enter your city").max(80),
+  country: z.string().trim().min(2, "Please pick your country").max(60).default("Pakistan"),
+  paymentMethod: z.enum(["cod", "bank"]).default("cod"),
+  /** Display currency for the label/receipt; the rate is looked up server-side. */
+  currency: z.string().trim().max(3).default("PKR"),
   notes: z.string().trim().max(500).optional().or(z.literal("")),
   discountCode: z.string().trim().max(40).optional().or(z.literal("")),
   items: z
@@ -63,6 +69,12 @@ function friendlyOrderError(message: string): string {
   }
   if (message.includes("EMPTY_CART")) return "Your cart is empty.";
   if (message.includes("BAD_QUANTITY")) return "One of the quantities looks wrong (max 20 per item).";
+  if (message.includes("BAD_COUNTRY")) {
+    return "We don't currently ship to that country — please pick another from the list.";
+  }
+  if (message.includes("BANK_UNAVAILABLE") || message.includes("BAD_PAYMENT_METHOD")) {
+    return "Bank transfer isn't available right now — please choose Cash on Delivery.";
+  }
   return "We couldn't place your order. Please try again in a moment.";
 }
 
@@ -89,12 +101,21 @@ export async function placeOrderAction(raw: CheckoutFormInput): Promise<Checkout
   const data = parsed.data;
 
   try {
+    // display currency: never trust a client-sent rate — look it up here
+    const currency = isCurrencyCode(data.currency) ? data.currency : "PKR";
+    const displayRate =
+      currency === "PKR" ? null : ((await getRates())[currency] ?? FALLBACK_RATES[currency]);
+
     const placed = await repo.placeOrder({
       customerName: data.customerName,
       phone: data.phone,
       email: data.email || null,
       address: data.address,
       city: data.city,
+      country: data.country || "Pakistan",
+      paymentMethod: data.paymentMethod,
+      currency,
+      displayRate,
       notes: data.notes || null,
       discountCode: data.discountCode || null,
       items: data.items,
@@ -116,6 +137,10 @@ export async function placeOrderAction(raw: CheckoutFormInput): Promise<Checkout
         email: order.email,
         address: order.address,
         city: order.city,
+        country: order.country,
+        paymentMethod: order.paymentMethod,
+        currency: order.currency,
+        displayTotal: order.displayTotal,
         subtotal: order.subtotal,
         discountCode: order.discountCode,
         discountAmount: order.discountAmount,
@@ -132,7 +157,7 @@ export async function placeOrderAction(raw: CheckoutFormInput): Promise<Checkout
         maxAge: 60 * 30,
         path: "/",
       });
-      await sendOrderEmails(order, notifyEmail, settings.contact.phone);
+      await sendOrderEmails(order, notifyEmail, settings);
     }
 
     // stock changed → refresh cached storefront pages + cached repo reads

@@ -2,10 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { cookies } from "next/headers";
-import { CheckCircle2, Banknote, PhoneCall } from "lucide-react";
+import { CheckCircle2, Banknote, Landmark, PhoneCall } from "lucide-react";
 import type { PlacedOrderDetails } from "@/lib/data";
+import { repo } from "@/lib/data";
+import { bankTransferConfigured } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { formatPKR } from "@/lib/money";
+import { formatMoney, isCurrencyCode } from "@/lib/currency";
 
 export const metadata: Metadata = { title: "Order confirmed", robots: { index: false } };
 
@@ -30,6 +33,24 @@ export default async function OrderConfirmedPage({ params }: Props) {
   } catch {
     order = null;
   }
+
+  const isBank = order?.paymentMethod === "bank";
+  const settings = isBank ? await repo.getSettings() : null;
+  const bank =
+    settings && bankTransferConfigured(settings.bankTransfer) ? settings.bankTransfer : null;
+
+  // Show amounts in the currency the customer shopped in, at the exact rate
+  // the order was recorded with (displayTotal / total), so this screen matches
+  // the checkout numbers they just saw. PKR orders stay plain PKR.
+  const impliedRate =
+    order && isCurrencyCode(order.currency) && order.currency !== "PKR" &&
+    order.displayTotal != null && order.total > 0
+      ? order.displayTotal / order.total
+      : null;
+  const fmt = (amountPKR: number) =>
+    impliedRate && order && isCurrencyCode(order.currency)
+      ? formatMoney(amountPKR, order.currency, { [order.currency]: impliedRate })
+      : formatPKR(amountPKR);
 
   return (
     <div className="container-site flex flex-col items-center py-14 md:py-20">
@@ -64,42 +85,110 @@ export default async function OrderConfirmedPage({ params }: Props) {
                     {[item.color, item.size].filter(Boolean).join(" · ")} × {item.quantity}
                   </span>
                 </span>
-                <span className="text-sm font-medium">{formatPKR(item.unitPrice * item.quantity)}</span>
+                <span className="text-sm font-medium">{fmt(item.unitPrice * item.quantity)}</span>
               </li>
             ))}
           </ul>
           <dl className="mt-5 space-y-2 border-t border-line pt-4 text-sm">
             <div className="flex justify-between">
               <dt className="text-bark">Subtotal</dt>
-              <dd>{formatPKR(order.subtotal)}</dd>
+              <dd>{fmt(order.subtotal)}</dd>
             </div>
             {order.discountAmount > 0 && (
               <div className="flex justify-between text-moss">
                 <dt>Discount{order.discountCode ? ` (${order.discountCode})` : ""}</dt>
-                <dd>−{formatPKR(order.discountAmount)}</dd>
+                <dd>−{fmt(order.discountAmount)}</dd>
               </div>
             )}
             <div className="flex justify-between">
               <dt className="text-bark">Delivery</dt>
-              <dd>{order.shippingFee > 0 ? formatPKR(order.shippingFee) : "Free"}</dd>
+              <dd>{order.shippingFee > 0 ? fmt(order.shippingFee) : "Free"}</dd>
             </div>
             <div className="flex justify-between border-t border-line pt-2.5 text-base font-semibold">
-              <dt>Total — Cash on Delivery</dt>
-              <dd>{formatPKR(order.total)}</dd>
+              <dt>{isBank ? "Total — Bank transfer" : "Total — Cash on Delivery"}</dt>
+              <dd>{fmt(order.total)}</dd>
             </div>
           </dl>
-          <div className="mt-5 rounded-xl bg-parchment/70 px-4 py-3 text-sm leading-relaxed text-bark">
-            <p className="flex items-start gap-2">
-              <Banknote className="mt-0.5 h-4 w-4 shrink-0 text-walnut" />
-              <span>
-                Keep <strong>{formatPKR(order.total)}</strong> ready. Delivering to{" "}
-                <strong>
-                  {order.address}, {order.city}
-                </strong>{" "}
-                — we may call {order.phone} to confirm.
-              </span>
-            </p>
-          </div>
+          {isBank && bank ? (
+            <div className="mt-5 rounded-xl border border-gold/50 bg-gold/10 px-4 py-3.5 text-sm leading-relaxed text-bark">
+              <p className="flex items-start gap-2 font-semibold text-ink">
+                <Landmark className="mt-0.5 h-4 w-4 shrink-0 text-walnut" />
+                One more step — complete your transfer
+              </p>
+              <dl className="mt-2.5 space-y-1 text-sm">
+                {bank.bankName && (
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-umber">Bank</dt>
+                    <dd className="font-semibold">{bank.bankName}</dd>
+                  </div>
+                )}
+                {bank.accountName && (
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-umber">Account holder</dt>
+                    <dd className="font-semibold">{bank.accountName}</dd>
+                  </div>
+                )}
+                {bank.accountNumber && (
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-umber">Account number</dt>
+                    <dd className="font-semibold break-all">{bank.accountNumber}</dd>
+                  </div>
+                )}
+                {bank.iban && (
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-umber">IBAN</dt>
+                    <dd className="font-semibold break-all">{bank.iban}</dd>
+                  </div>
+                )}
+              </dl>
+              <p className="mt-2.5 text-xs leading-relaxed">
+                Transfer <strong>{fmt(order.total)}</strong>{impliedRate && <> ({formatPKR(order.total)})</>}, then send a screenshot of the
+                transaction receipt (amount, date and reference visible) plus a screenshot of
+                this page
+                {settings?.contact.whatsapp ? (
+                  <>
+                    {" "}
+                    on{" "}
+                    <a
+                      href={`https://wa.me/${settings.contact.whatsapp}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-walnut underline underline-offset-2"
+                    >
+                      WhatsApp
+                    </a>
+                  </>
+                ) : null}
+                {settings?.contact.email ? (
+                  <>
+                    {" "}
+                    or to{" "}
+                    <a
+                      href={`mailto:${settings.contact.email}`}
+                      className="text-walnut underline underline-offset-2"
+                    >
+                      {settings.contact.email}
+                    </a>
+                  </>
+                ) : null}
+                . We dispatch as soon as the transfer is confirmed.
+              </p>
+            </div>
+          ) : (
+            <div className="mt-5 rounded-xl bg-parchment/70 px-4 py-3 text-sm leading-relaxed text-bark">
+              <p className="flex items-start gap-2">
+                <Banknote className="mt-0.5 h-4 w-4 shrink-0 text-walnut" />
+                <span>
+                  Keep <strong>{fmt(order.total)}</strong>{impliedRate && <> ({formatPKR(order.total)})</>} ready. Delivering to{" "}
+                  <strong>
+                    {order.address}, {order.city}
+                    {order.country !== "Pakistan" && `, ${order.country}`}
+                  </strong>{" "}
+                  — we may call {order.phone} to confirm.
+                </span>
+              </p>
+            </div>
+          )}
         </div>
       ) : (
         <p className="mt-6 max-w-md text-center text-sm leading-relaxed text-umber">

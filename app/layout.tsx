@@ -3,6 +3,8 @@ import { Fraunces, Jost } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/lib/cart/cart-context";
 import { ToastProvider } from "@/components/ui/toast";
+import { CurrencyProvider } from "@/components/store/currency-context";
+import { getRates } from "@/lib/currency-server";
 
 const fraunces = Fraunces({
   subsets: ["latin"],
@@ -23,7 +25,7 @@ export const metadata: Metadata = {
     template: "%s · Willow Weave",
   },
   description:
-    "Willow Weave — women's clothing crafted with premium fabrics. 2-piece and 3-piece suits, tops and trousers. Cash on Delivery across Pakistan.",
+    "Willow Weave — women's clothing crafted with premium fabrics. 2-piece and 3-piece suits, tops and trousers. Cash on Delivery across Pakistan — international shipping available worldwide.",
 };
 
 export const viewport: Viewport = {
@@ -32,12 +34,16 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // cached 12h; static pages stay static (no request-specific data involved)
+  const rates = await getRates();
   return (
     <html lang="en" className={`${fraunces.variable} ${jost.variable}`}>
       <body>
         <ToastProvider>
-          <CartProvider>{children}</CartProvider>
+          <CurrencyProvider rates={rates}>
+            <CartProvider>{children}</CartProvider>
+          </CurrencyProvider>
         </ToastProvider>
       </body>
     </html>

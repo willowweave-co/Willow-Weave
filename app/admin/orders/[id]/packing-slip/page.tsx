@@ -54,6 +54,12 @@ export default async function PackingSlipPage({ params }: Props) {
               {order.address}
               <br />
               {order.city}
+              {order.country !== "Pakistan" && (
+                <>
+                  <br />
+                  <strong className="uppercase">{order.country}</strong>
+                </>
+              )}
             </p>
             <p className="mt-1 text-sm font-medium text-ink">📞 {order.phone}</p>
           </div>
@@ -61,10 +67,21 @@ export default async function PackingSlipPage({ params }: Props) {
             <p className="text-[0.65rem] font-semibold tracking-[0.14em] text-umber uppercase">
               Payment
             </p>
-            <p className="mt-1.5 text-sm font-semibold text-ink">CASH ON DELIVERY</p>
-            <p className="mt-2 inline-block rounded-lg border-2 border-ink px-4 py-2 text-lg font-bold text-ink">
-              Collect {formatPKR(order.total)}
+            <p className="mt-1.5 text-sm font-semibold text-ink">
+              {order.paymentMethod === "bank"
+                ? "PREPAID — BANK TRANSFER (verify receipt before dispatch)"
+                : "CASH ON DELIVERY"}
             </p>
+            <p className="mt-2 inline-block rounded-lg border-2 border-ink px-4 py-2 text-lg font-bold text-ink">
+              {order.paymentMethod === "bank" ? "PAID" : "Collect"} {formatPKR(order.total)}
+            </p>
+            {order.currency !== "PKR" && order.displayTotal != null && (
+              <p className="mt-1 text-sm font-semibold text-bark">
+                = {order.currency}{" "}
+                {order.displayTotal.toLocaleString("en", { maximumFractionDigits: 2 })}{" "}
+                <span className="font-normal text-umber">(customer&rsquo;s currency)</span>
+              </p>
+            )}
           </div>
         </section>
 
@@ -109,9 +126,18 @@ export default async function PackingSlipPage({ params }: Props) {
             <dd>{order.shippingFee > 0 ? formatPKR(order.shippingFee) : "Free"}</dd>
           </div>
           <div className="flex justify-between border-t border-line pt-1.5 text-base font-bold text-ink">
-            <dt>Total (COD)</dt>
+            <dt>{order.paymentMethod === "bank" ? "Total (paid)" : "Total (COD)"}</dt>
             <dd>{formatPKR(order.total)}</dd>
           </div>
+          {order.currency !== "PKR" && order.displayTotal != null && (
+            <div className="flex justify-between text-sm text-bark">
+              <dt>In {order.currency}</dt>
+              <dd>
+                {order.currency}{" "}
+                {order.displayTotal.toLocaleString("en", { maximumFractionDigits: 2 })}
+              </dd>
+            </div>
+          )}
         </dl>
 
         {order.notes && (

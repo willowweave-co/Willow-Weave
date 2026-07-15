@@ -5,8 +5,8 @@ import Link from "next/link";
 import { Search } from "lucide-react";
 import { formatPKR } from "@/lib/money";
 import { formatDateTime, cn } from "@/lib/utils";
-import { OrderStatusBadge } from "@/components/ui/badge";
-import { ORDER_STATUSES, type OrderStatus } from "@/lib/types";
+import { Badge, OrderStatusBadge } from "@/components/ui/badge";
+import { ORDER_STATUSES, type OrderStatus, type PaymentMethod } from "@/lib/types";
 
 export interface OrderRow {
   id: string;
@@ -15,7 +15,9 @@ export interface OrderRow {
   phone: string;
   email: string | null;
   city: string;
+  country: string;
   address: string;
+  paymentMethod: PaymentMethod;
   status: OrderStatus;
   total: number;
   itemCount: number;
@@ -40,7 +42,7 @@ export function OrdersTable({
         if (status && o.status !== status) return false;
         if (query) {
           const hay =
-            `${o.orderNumber} ${o.customerName} ${o.phone} ${o.city} ${o.email ?? ""}`.toLowerCase();
+            `${o.orderNumber} ${o.customerName} ${o.phone} ${o.city} ${o.country} ${o.email ?? ""}`.toLowerCase();
           if (!hay.includes(query)) return false;
         }
         return true;
@@ -102,12 +104,18 @@ export function OrdersTable({
                     <span className="block text-sm font-semibold text-ink">{o.orderNumber}</span>
                     <span className="block truncate text-sm text-bark">{o.customerName}</span>
                     <span className="block truncate text-xs text-umber">
-                      {o.city} · {formatDateTime(o.createdAt)}
+                      {o.city}
+                      {o.country !== "Pakistan" && `, ${o.country}`} · {formatDateTime(o.createdAt)}
                     </span>
                   </span>
                   <span className="flex shrink-0 flex-col items-end gap-1">
                     <OrderStatusBadge status={o.status} />
                     <span className="text-sm font-semibold text-ink">{formatPKR(o.total)}</span>
+                    {o.paymentMethod === "bank" && (
+                      <span className="text-[0.6rem] font-semibold tracking-wide text-walnut uppercase">
+                        Bank transfer
+                      </span>
+                    )}
                   </span>
                 </Link>
               </li>
@@ -123,6 +131,7 @@ export function OrdersTable({
                   <th className="px-4 py-3.5 font-medium">Customer</th>
                   <th className="hidden px-4 py-3.5 font-medium md:table-cell">Delivery</th>
                   <th className="hidden px-4 py-3.5 font-medium md:table-cell">Items</th>
+                  <th className="px-4 py-3.5 font-medium">Payment</th>
                   <th className="px-4 py-3.5 font-medium">Status</th>
                   <th className="px-4 py-3.5 text-right font-medium sm:px-5">Total</th>
                 </tr>
@@ -143,13 +152,26 @@ export function OrdersTable({
                       <p className="text-bark">{o.customerName}</p>
                       <p className="text-xs text-umber">{o.phone}</p>
                       {/* delivery column is hidden on phones — surface the city here */}
-                      <p className="text-xs text-umber md:hidden">{o.city}</p>
+                      <p className="text-xs text-umber md:hidden">
+                        {o.city}
+                        {o.country !== "Pakistan" && `, ${o.country}`}
+                      </p>
                     </td>
                     <td className="hidden max-w-52 px-4 py-3.5 md:table-cell">
-                      <p className="truncate text-bark">{o.city}</p>
+                      <p className="truncate text-bark">
+                        {o.city}
+                        {o.country !== "Pakistan" && `, ${o.country}`}
+                      </p>
                       <p className="truncate text-xs text-umber">{o.address}</p>
                     </td>
                     <td className="hidden px-4 py-3.5 text-bark md:table-cell">{o.itemCount}</td>
+                    <td className="px-4 py-3.5">
+                      {o.paymentMethod === "bank" ? (
+                        <Badge tone="warning">Bank</Badge>
+                      ) : (
+                        <Badge tone="neutral">COD</Badge>
+                      )}
+                    </td>
                     <td className="px-4 py-3.5">
                       <OrderStatusBadge status={o.status} />
                     </td>

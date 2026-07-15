@@ -7,7 +7,7 @@ import { Minus, Plus, Trash2, ShoppingBag, TicketPercent } from "lucide-react";
 import { useCart } from "@/lib/cart/cart-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/fields";
-import { formatPKR } from "@/lib/money";
+import { useCurrency } from "@/components/store/currency-context";
 import { previewDiscountAction } from "@/app/actions/checkout";
 
 export function CartPageContent({
@@ -18,6 +18,7 @@ export function CartPageContent({
   freeShippingThreshold: number | null;
 }) {
   const { items, subtotal, hydrated, updateQuantity, removeItem } = useCart();
+  const { format } = useCurrency();
   const [code, setCode] = useState("");
   const [applied, setApplied] = useState<{ code: string; amount: number } | null>(null);
   const [codeError, setCodeError] = useState<string | null>(null);
@@ -131,7 +132,7 @@ export function CartPageContent({
                   </div>
                   <div className="text-right">
                     <p className="font-semibold text-ink">
-                      {formatPKR(item.unitPrice * item.quantity)}
+                      {format(item.unitPrice * item.quantity)}
                     </p>
                     {item.quantity >= item.maxStock && (
                       <p className="text-[0.7rem] text-madder">Max stock reached</p>
@@ -167,7 +168,7 @@ export function CartPageContent({
             {codeError && <p className="mt-1.5 text-xs text-madder">{codeError}</p>}
             {applied && (
               <p className="mt-1.5 text-xs text-moss">
-                Code <strong>{applied.code}</strong> applied — you save {formatPKR(applied.amount)}
+                Code <strong>{applied.code}</strong> applied — you save {format(applied.amount)}
               </p>
             )}
           </div>
@@ -175,28 +176,28 @@ export function CartPageContent({
           <dl className="mt-5 space-y-2.5 border-t border-line pt-4 text-sm">
             <div className="flex justify-between">
               <dt className="text-bark">Subtotal</dt>
-              <dd className="font-medium text-ink">{formatPKR(subtotal)}</dd>
+              <dd className="font-medium text-ink">{format(subtotal)}</dd>
             </div>
             {applied && (
               <div className="flex justify-between text-moss">
                 <dt>Discount ({applied.code})</dt>
-                <dd>−{formatPKR(applied.amount)}</dd>
+                <dd>−{format(applied.amount)}</dd>
               </div>
             )}
             <div className="flex justify-between">
               <dt className="text-bark">Delivery</dt>
               <dd className="font-medium text-ink">
-                {effectiveShipping === 0 ? "Free" : formatPKR(effectiveShipping)}
+                {effectiveShipping === 0 ? "Free" : format(effectiveShipping)}
               </dd>
             </div>
             {freeShippingThreshold != null && !freeShipping && (
               <p className="text-xs text-umber">
-                Free delivery on orders over {formatPKR(freeShippingThreshold)}
+                Free delivery on orders over {format(freeShippingThreshold)}
               </p>
             )}
             <div className="flex justify-between border-t border-line pt-3 text-base font-semibold text-ink">
               <dt>Total</dt>
-              <dd>{formatPKR(total)}</dd>
+              <dd>{format(total)}</dd>
             </div>
           </dl>
 

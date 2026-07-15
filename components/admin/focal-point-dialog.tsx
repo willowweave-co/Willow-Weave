@@ -23,11 +23,15 @@ interface FocalPointDialogProps {
   mediaType?: "image" | "video";
   /** Current focal point, or null = centre. */
   initial: FocalPoint | null;
-  /** Called on save; null = reset to centre. */
-  onSave: (point: FocalPoint | null) => void;
+  /** Called on save; null point = reset to centre; null zoom = no zoom. */
+  onSave: (point: FocalPoint | null, zoom: number | null) => void;
   title?: string;
   /** The crops this context actually uses, shown as live previews. */
   previews?: CropPreview[];
+  /** Show the zoom slider (hero/banner crops that support zooming in). */
+  withZoom?: boolean;
+  /** Current zoom percent (100–300), null = none. */
+  initialZoom?: number | null;
 }
 
 const DEFAULT_PREVIEWS: CropPreview[] = [
@@ -45,14 +49,20 @@ export function FocalPointDialog({
   onSave,
   title = "Choose the image focus",
   previews = DEFAULT_PREVIEWS,
+  withZoom = false,
+  initialZoom = null,
 }: FocalPointDialogProps) {
   const [point, setPoint] = useState<FocalPoint | null>(initial);
+  const [zoom, setZoom] = useState<number>(initialZoom ?? 100);
   const areaRef = useRef<HTMLDivElement>(null);
   const dragging = useRef(false);
 
   useEffect(() => {
-    if (open) setPoint(initial);
-  }, [open, initial]);
+    if (open) {
+      setPoint(initial);
+      setZoom(initialZoom ?? 100);
+    }
+  }, [open, initial, initialZoom]);
 
   useEffect(() => {
     if (!open) return;
@@ -78,6 +88,12 @@ export function FocalPointDialog({
   };
 
   const objectPosition = `${point?.x ?? 50}% ${point?.y ?? 50}%`;
+  const previewStyle: React.CSSProperties = {
+    objectPosition,
+    ...(withZoom && zoom > 100
+      ? { transform: `scale(${zoom / 100})`, transformOrigin: objectPosition }
+      : {}),
+  };
 
   return createPortal(
     <div className="fixed inset-0 z-[95]" role="dialog" aria-modal="true" aria-label={title}>
@@ -142,6 +158,24 @@ export function FocalPointDialog({
             <p className="text-xs text-umber">
               Click (or drag) the spot that must stay in view — a face, the embroidery, the neckline.
             </p>
+            {withZoom && (
+              <div className="flex w-full max-w-sm items-center gap-3">
+                <span className="text-xs font-medium text-bark">Zoom</span>
+                <input
+                  type="range"
+                  min={100}
+                  max={300}
+                  step={5}
+                  value={zoom}
+                  onChange={(e) => setZoom(Number(e.target.value))}
+                  aria-label="Zoom level"
+                  className="min-w-0 flex-1 accent-walnut"
+                />
+                <span className="w-10 text-right text-xs tabular-nums text-umber">
+                  {(zoom / 100).toFixed(2).replace(/\.?0+$/, "")}×
+                </span>
+              </div>
+            )}
           </div>
 
           {/* live previews of the storefront crops */}
@@ -163,7 +197,7 @@ export function FocalPointDialog({
                         playsInline
                         preload="metadata"
                         className="h-full w-full object-cover"
-                        style={{ objectPosition }}
+                        style={previewStyle}
                       />
                     ) : (
                       // eslint-disable-next-line @next/next/no-img-element -- tiny live preview
@@ -171,7 +205,7 @@ export function FocalPointDialog({
                         src={src}
                         alt=""
                         className="h-full w-full object-cover"
-                        style={{ objectPosition }}
+                        style={previewStyle}
                       />
                     )}
                   </div>
@@ -183,8 +217,16 @@ export function FocalPointDialog({
         </div>
 
         <div className="flex items-center justify-between gap-3 border-t border-line px-5 py-3.5">
-          <Button variant="ghost" size="sm" onClick={() => setPoint(null)} disabled={!point}>
-            Reset to centre
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setPoint(null);
+              setZoom(100);
+            }}
+            disabled={!point && zoom <= 100}
+          >
+            Reset
           </Button>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" onClick={onClose}>
@@ -193,7 +235,7 @@ export function FocalPointDialog({
             <Button
               size="sm"
               onClick={() => {
-                onSave(point);
+                onSave(point, withZoom && zoom > 100 ? Math.round(zoom) : null);
                 onClose();
               }}
             >

@@ -22,7 +22,11 @@ interface CartContextValue {
   isOpen: boolean;
   openCart: () => void;
   closeCart: () => void;
-  addItem: (item: Omit<CartItem, "quantity">, quantity?: number) => void;
+  addItem: (
+    item: Omit<CartItem, "quantity">,
+    quantity?: number,
+    opts?: { open?: boolean }
+  ) => void;
   updateQuantity: (variantId: string, quantity: number) => void;
   removeItem: (variantId: string) => void;
   clear: () => void;
@@ -58,19 +62,23 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }, [items]);
 
-  const addItem = useCallback((item: Omit<CartItem, "quantity">, quantity = 1) => {
-    setItems((prev) => {
-      const existing = prev.find((x) => x.variantId === item.variantId);
-      if (existing) {
-        const next = Math.min(existing.quantity + quantity, item.maxStock);
-        return prev.map((x) =>
-          x.variantId === item.variantId ? { ...x, ...item, quantity: next } : x
-        );
-      }
-      return [...prev, { ...item, quantity: Math.min(quantity, item.maxStock) }];
-    });
-    setIsOpen(true);
-  }, []);
+  const addItem = useCallback(
+    (item: Omit<CartItem, "quantity">, quantity = 1, opts?: { open?: boolean }) => {
+      setItems((prev) => {
+        const existing = prev.find((x) => x.variantId === item.variantId);
+        if (existing) {
+          const next = Math.min(existing.quantity + quantity, item.maxStock);
+          return prev.map((x) =>
+            x.variantId === item.variantId ? { ...x, ...item, quantity: next } : x
+          );
+        }
+        return [...prev, { ...item, quantity: Math.min(quantity, item.maxStock) }];
+      });
+      // card quick-add keeps you browsing; the product page still opens the drawer
+      if (opts?.open !== false) setIsOpen(true);
+    },
+    []
+  );
 
   const updateQuantity = useCallback((variantId: string, quantity: number) => {
     setItems((prev) =>

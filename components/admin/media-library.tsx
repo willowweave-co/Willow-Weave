@@ -14,7 +14,7 @@ import {
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/fields";
+import { Input, Select } from "@/components/ui/fields";
 import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 
@@ -168,6 +168,7 @@ export function MediaLibrary({
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [q, setQ] = useState("");
+  const [sort, setSort] = useState<"newest" | "oldest" | "name">("newest");
 
   const fetchPage = useCallback(
     async (query: string, cursor: string | null) => {
@@ -175,12 +176,13 @@ export function MediaLibrary({
       if (kind === "image") params.set("kind", "image");
       if (query) params.set("q", query);
       if (cursor) params.set("cursor", cursor);
+      if (sort !== "newest") params.set("sort", sort);
       const res = await fetch(`/api/admin/media?${params}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Couldn't load the media library");
       return data as { items: MediaItem[]; nextCursor: string | null };
     },
-    [kind]
+    [kind, sort]
   );
 
   useEffect(() => {
@@ -267,14 +269,26 @@ export function MediaLibrary({
     <div className={cn("flex min-h-0 flex-col gap-4", className)}>
       <UploadDropzone kind={kind} onUploaded={handleUploaded} />
 
-      <div className="relative">
-        <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-umber" />
-        <Input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Search by product or file name…"
-          className="h-9 pl-9"
-        />
+      <div className="flex items-center gap-2">
+        <div className="relative min-w-0 flex-1">
+          <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-umber" />
+          <Input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search by product or file name…"
+            className="h-9 pl-9"
+          />
+        </div>
+        <Select
+          value={sort}
+          onChange={(e) => setSort(e.target.value as typeof sort)}
+          aria-label="Sort media"
+          className="h-9 w-auto shrink-0 py-1.5 text-xs"
+        >
+          <option value="newest">Newest first</option>
+          <option value="oldest">Oldest first</option>
+          <option value="name">Name (A–Z)</option>
+        </Select>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
