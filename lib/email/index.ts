@@ -11,7 +11,14 @@ import { formatPKR } from "@/lib/money";
 const FROM = process.env.EMAIL_FROM ?? "Willow Weave <onboarding@resend.dev>";
 
 function siteUrl(): string {
-  return process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  // Emails must never link to localhost from a real deployment: prefer the
+  // configured site URL, else the production domain Vercel injects on every
+  // deploy (bare hostname, no scheme), and only then the dev fallback.
+  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL;
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+  }
+  return "http://localhost:3000";
 }
 
 type OrderLike = Pick<
