@@ -1,6 +1,7 @@
 "use server";
 
 import { randomInt } from "node:crypto";
+import { after } from "next/server";
 import { revalidatePath, updateTag } from "next/cache";
 import { repo, dataMode, DATA_CACHE_TAG } from "@/lib/data";
 import type {
@@ -84,7 +85,15 @@ export async function updateOrderStatusAction(
     const order = await repo.updateOrderStatus(id, status);
     if (!order) return { ok: false, error: "Order not found." };
     const notifyEmail = await repo.getNotifyEmail();
-    await sendStatusEmail(order, status, notifyEmail || undefined);
+    // after the response — the dashboard shouldn't wait on Resend, and a mail
+    // hiccup must never report a status change (already saved) as failed
+    after(async () => {
+      try {
+        await sendStatusEmail(order, status, notifyEmail || undefined);
+      } catch (e) {
+        console.error("status email failed (status was saved):", e);
+      }
+    });
     refresh();
     return { ok: true };
   } catch (e) {

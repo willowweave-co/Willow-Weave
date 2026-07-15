@@ -57,20 +57,28 @@ export function MobileMenu({ nav }: { nav: NavData }) {
   // The drawer MUST be portaled to <body>: the sticky header uses
   // backdrop-blur, and a filter on an ancestor turns it into the containing
   // block for position:fixed — trapping the overlay inside the 64px header.
+  // Backdrop and panel share one 300ms clock (opacity on the backdrop itself,
+  // not the wrapper) so opening and closing are exact mirrors — previously the
+  // wrapper faded at the default 150ms while the panel slid at 300ms, making
+  // the close read as a different, abrupt animation.
   const drawer = (
     <div
-      className={cn(
-        "fixed inset-0 z-[80] transition-opacity md:hidden",
-        open ? "opacity-100" : "pointer-events-none opacity-0"
-      )}
+      className={cn("fixed inset-0 z-[80] md:hidden", open ? "" : "pointer-events-none")}
       role="dialog"
       aria-modal="true"
       aria-label="Menu"
     >
-      <div className="absolute inset-0 bg-ink/45" onClick={() => setOpen(false)} aria-hidden />
       <div
         className={cn(
-          "absolute inset-y-0 left-0 flex w-[85vw] max-w-sm flex-col bg-ivory shadow-2xl transition-transform duration-300",
+          "absolute inset-0 bg-ink/45 transition-opacity duration-300",
+          open ? "opacity-100" : "opacity-0"
+        )}
+        onClick={() => setOpen(false)}
+        aria-hidden
+      />
+      <div
+        className={cn(
+          "absolute inset-y-0 left-0 flex w-[85vw] max-w-sm flex-col bg-ivory shadow-2xl transition-transform duration-300 ease-in-out",
           open ? "translate-x-0" : "-translate-x-full"
         )}
       >

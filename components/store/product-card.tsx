@@ -36,11 +36,11 @@ export function ProductCard({
   const quickAdd = product.variants.find((v) => v.stock > 0);
 
   return (
-    <Link
-      href={`/products/${product.handle}`}
-      className={cn("group block", className)}
-      prefetch={false}
-    >
+    // default prefetch on purpose: product pages are prerendered (SSG), so
+    // cards fetch them as they scroll into view and a tap opens instantly —
+    // prefetch={false} here made every click wait a full round trip with no
+    // skeleton, which read as "the site is broken"
+    <Link href={`/products/${product.handle}`} className={cn("group block", className)}>
       <div className="relative aspect-[4/5] overflow-hidden rounded-xl bg-linen">
         {img1 ? (
           <>

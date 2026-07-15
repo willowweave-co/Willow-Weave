@@ -333,7 +333,7 @@ export function FiltersPanel({ facets, resultCount }: { facets: FacetData; resul
           >
             <div
               className={cn(
-                "absolute inset-0 bg-ink/45 transition-opacity",
+                "absolute inset-0 bg-ink/45 transition-opacity duration-300",
                 mobileOpen ? "opacity-100" : "opacity-0"
               )}
               onClick={() => setMobileOpen(false)}
@@ -341,7 +341,7 @@ export function FiltersPanel({ facets, resultCount }: { facets: FacetData; resul
             />
             <div
               className={cn(
-                "absolute inset-y-0 left-0 flex w-[85vw] max-w-sm flex-col bg-ivory shadow-2xl transition-transform duration-300",
+                "absolute inset-y-0 left-0 flex w-[85vw] max-w-sm flex-col bg-ivory shadow-2xl transition-transform duration-300 ease-in-out",
                 mobileOpen ? "translate-x-0" : "-translate-x-full"
               )}
             >

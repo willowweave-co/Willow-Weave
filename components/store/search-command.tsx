@@ -17,6 +17,8 @@ const TYPE_META = {
 
 export function SearchCommand() {
   const [open, setOpen] = useState(false);
+  // stays true through the 200ms exit animation, then the overlay unmounts
+  const [visible, setVisible] = useState(false);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -45,6 +47,7 @@ export function SearchCommand() {
 
   useEffect(() => {
     if (open) {
+      setVisible(true);
       setTimeout(() => inputRef.current?.focus(), 30);
       document.body.style.overflow = "hidden";
     } else {
@@ -52,6 +55,12 @@ export function SearchCommand() {
       setQuery("");
       setResults([]);
       setActive(0);
+      // let the fade-out play before unmounting
+      const t = setTimeout(() => setVisible(false), 200);
+      return () => {
+        clearTimeout(t);
+        document.body.style.overflow = "";
+      };
     }
     return () => {
       document.body.style.overflow = "";
@@ -124,16 +133,25 @@ export function SearchCommand() {
     }
   };
 
-  if (!open) return null;
+  if (!visible) return null;
+  const closing = !open;
 
   return (
     <div className="fixed inset-0 z-[95]" role="dialog" aria-modal="true" aria-label="Search">
       <div
-        className="animate-fade-in absolute inset-0 bg-ink/50 backdrop-blur-[2px]"
+        className={cn(
+          "absolute inset-0 bg-ink/50 backdrop-blur-[2px]",
+          closing ? "animate-fade-out" : "animate-fade-in"
+        )}
         onClick={() => setOpen(false)}
         aria-hidden
       />
-      <div className="animate-fade-up absolute top-[10vh] left-1/2 w-[calc(100vw-2rem)] max-w-xl -translate-x-1/2">
+      <div
+        className={cn(
+          "absolute top-[10vh] left-1/2 w-[calc(100vw-2rem)] max-w-xl -translate-x-1/2",
+          closing ? "animate-fade-down" : "animate-fade-up"
+        )}
+      >
         <div className="overflow-hidden rounded-2xl border border-line bg-ivory shadow-2xl">
           <div className="flex items-center gap-3 border-b border-line px-4">
             {loading ? (

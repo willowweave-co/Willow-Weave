@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { cookies } from "next/headers";
+import { after } from "next/server";
 import { revalidatePath, updateTag } from "next/cache";
 import { repo, DATA_CACHE_TAG } from "@/lib/data";
 import type { PlacedOrderDetails } from "@/lib/data";
@@ -157,7 +158,15 @@ export async function placeOrderAction(raw: CheckoutFormInput): Promise<Checkout
         maxAge: 60 * 30,
         path: "/",
       });
-      await sendOrderEmails(order, notifyEmail, settings);
+      // Emails go out AFTER the response: the shopper shouldn't wait on
+      // Resend, and a mail hiccup must never report a placed order as failed.
+      after(async () => {
+        try {
+          await sendOrderEmails(order, notifyEmail, settings);
+        } catch (e) {
+          console.error("order emails failed (order was placed):", e);
+        }
+      });
     }
 
     // stock changed → refresh cached storefront pages + cached repo reads
