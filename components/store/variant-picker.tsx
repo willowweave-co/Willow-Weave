@@ -178,7 +178,7 @@ export function VariantPicker({ product }: { product: Product }) {
       </div>
 
       <p className="rounded-xl bg-parchment/70 px-4 py-3 text-center text-xs leading-relaxed text-bark">
-        💵 <strong>Cash on Delivery</strong> across Pakistan — pay when your order arrives.
+        💵 <strong>Cash on Delivery</strong> across Pakistan & worldwide shipping — pay when your order arrives.
       </p>
     </div>
   );

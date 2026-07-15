@@ -10,7 +10,7 @@ import { FocalPointDialog } from "@/components/admin/focal-point-dialog";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select, Checkbox } from "@/components/ui/fields";
 import { useToast } from "@/components/ui/toast";
-import { focalPosition } from "@/lib/utils";
+import { focalCrop } from "@/lib/utils";
 
 const MAX_SLIDES = 8;
 
@@ -24,7 +24,7 @@ function newId() {
 }
 
 function MediaThumb({ slide }: { slide: HeroSlide }) {
-  const style = focalPosition(slide.focalX, slide.focalY);
+  const style = focalCrop(slide.focalX, slide.focalY, slide.focalZoom);
   return (
     <div className="relative aspect-[16/9] w-full overflow-hidden rounded-lg border border-line bg-linen sm:w-40 sm:shrink-0">
       {slide.mediaType === "video" ? (
@@ -86,6 +86,7 @@ export function HeroSlidesManager({
                 mediaUrl: m.url,
                 focalX: null,
                 focalY: null,
+                focalZoom: null,
                 eyebrow: "",
                 heading: "",
                 href: "/products",
@@ -96,7 +97,13 @@ export function HeroSlidesManager({
       );
     } else {
       // different media → old focal point no longer applies
-      patch(pickerFor, { mediaUrl: m.url, mediaType: m.kind, focalX: null, focalY: null });
+      patch(pickerFor, {
+        mediaUrl: m.url,
+        mediaType: m.kind,
+        focalX: null,
+        focalY: null,
+        focalZoom: null,
+      });
     }
   };
 
@@ -285,8 +292,10 @@ export function HeroSlidesManager({
                 ? { x: slide.focalX ?? 50, y: slide.focalY ?? 50 }
                 : null
             }
-            onSave={(pt) =>
-              patch(slide.id, { focalX: pt?.x ?? null, focalY: pt?.y ?? null })
+            withZoom
+            initialZoom={slide.focalZoom ?? null}
+            onSave={(pt, zoom) =>
+              patch(slide.id, { focalX: pt?.x ?? null, focalY: pt?.y ?? null, focalZoom: zoom })
             }
             title="Hero slide focus"
             previews={[

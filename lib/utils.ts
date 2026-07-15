@@ -19,6 +19,21 @@ export function focalPosition(
   return { objectPosition: `${x ?? 50}% ${y ?? 50}%` };
 }
 
+/**
+ * focalPosition plus an optional zoom (percent, 100 = none): the image is
+ * scaled up around the focal point so only that region shows. The container
+ * must be `overflow-hidden` (hero and banners already are).
+ */
+export function focalCrop(
+  x?: number | null,
+  y?: number | null,
+  zoom?: number | null
+): CSSProperties | undefined {
+  const pos = `${x ?? 50}% ${y ?? 50}%`;
+  if (!zoom || zoom <= 100) return focalPosition(x, y);
+  return { objectPosition: pos, transform: `scale(${zoom / 100})`, transformOrigin: pos };
+}
+
 export function slugify(s: string): string {
   return s
     .toLowerCase()

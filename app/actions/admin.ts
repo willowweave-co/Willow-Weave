@@ -44,6 +44,13 @@ function pct(v: unknown): number | null {
     : null;
 }
 
+/** Clamp a focal zoom to 101–300%; 100/invalid means "no zoom" (null). */
+function pctZoom(v: unknown): number | null {
+  return typeof v === "number" && Number.isFinite(v) && v > 100
+    ? Math.min(300, Math.round(v))
+    : null;
+}
+
 /**
  * "Column/table does not exist" — a recent migration hasn't been run yet.
  * Postgres reports 42703/42P01; PostgREST reports PGRST204/PGRST205 when the
@@ -55,7 +62,7 @@ function missingColumns(e: unknown): ActionResult | null {
   return {
     ok: false,
     error:
-      "The database needs a one-time update: run the newest files in supabase/migrations/ (0005–0007) in the Supabase SQL editor, then save again.",
+      "The database needs a one-time update: run the newest files in supabase/migrations/ (0005–0009) in the Supabase SQL editor, then save again.",
   };
 }
 
@@ -193,6 +200,7 @@ export async function saveCollectionAction(collection: Collection): Promise<Acti
       imageFocalY: pct(collection.imageFocalY),
       bannerFocalX: pct(collection.bannerFocalX),
       bannerFocalY: pct(collection.bannerFocalY),
+      bannerFocalZoom: pctZoom(collection.bannerFocalZoom),
     });
     refresh();
     return { ok: true };
@@ -293,6 +301,26 @@ export async function saveSettingsAction(settings: StoreSettings): Promise<Actio
         instagram: c.instagram.trim(),
         tiktok: c.tiktok.trim(),
       },
+      announcementColor: /^#[0-9a-fA-F]{6}$/.test(settings.announcementColor ?? "")
+        ? settings.announcementColor!.toLowerCase()
+        : null,
+      bankTransfer: {
+        bankName: (settings.bankTransfer?.bankName ?? "").trim().slice(0, 80),
+        accountName: (settings.bankTransfer?.accountName ?? "").trim().slice(0, 120),
+        accountNumber: (settings.bankTransfer?.accountNumber ?? "").trim().slice(0, 60),
+        iban: (settings.bankTransfer?.iban ?? "").trim().toUpperCase().slice(0, 40),
+      },
+      intlShipping: await (async () => {
+        const { SHIPPABLE_COUNTRIES } = await import("@/lib/countries");
+        const seen = new Set<string>();
+        const countries = (settings.intlShipping?.countries ?? [])
+          .filter((z) => SHIPPABLE_COUNTRIES.includes(z.name) && !seen.has(z.name) && !!seen.add(z.name))
+          .map((z) => ({ name: z.name, fee: Math.max(0, Math.round(Number(z.fee) || 0)) }));
+        return {
+          note: (settings.intlShipping?.note ?? "").trim().slice(0, 600),
+          countries,
+        };
+      })(),
     });
     refresh();
     return { ok: true };
@@ -329,6 +357,7 @@ export async function saveHeroSlidesAction(slides: HeroSlide[]): Promise<ActionR
         mediaUrl,
         focalX: pct(s.focalX),
         focalY: pct(s.focalY),
+        focalZoom: pctZoom(s.focalZoom),
         eyebrow: s.eyebrow?.trim() ?? "",
         heading,
         href,

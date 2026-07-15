@@ -38,6 +38,17 @@ async function getCloudinary() {
   return cloudinary;
 }
 
+export type MediaSort = "newest" | "oldest" | "name";
+
+function sortItems(items: MediaItem[], sort: MediaSort): MediaItem[] {
+  const by: Record<MediaSort, (a: MediaItem, b: MediaItem) => number> = {
+    newest: (a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""),
+    oldest: (a, b) => (a.createdAt ?? "").localeCompare(b.createdAt ?? ""),
+    name: (a, b) => a.filename.localeCompare(b.filename, undefined, { numeric: true }),
+  };
+  return [...items].sort(by[sort]);
+}
+
 /** Local-mode fallback: list whatever `/api/admin/upload` saved under public/uploads. */
 async function listLocal(kind: string, q: string): Promise<MediaItem[]> {
   const dir = path.join(process.cwd(), "public", "uploads");
@@ -66,7 +77,7 @@ async function listLocal(kind: string, q: string): Promise<MediaItem[]> {
       filename: name,
     });
   }
-  return items.sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
+  return items;
 }
 
 /**
@@ -83,6 +94,9 @@ export async function GET(request: NextRequest) {
   // Cloudinary's search expression is Lucene-ish; keep the query alphanumeric.
   const q = (params.get("q") ?? "").replace(/[^a-zA-Z0-9 _-]/g, "").trim();
   const cursor = params.get("cursor") ?? null;
+  const sortParam = params.get("sort");
+  const sort: MediaSort =
+    sortParam === "oldest" || sortParam === "name" ? sortParam : "newest";
 
   if (!cloudinaryConfigured()) {
     if (!user.localMode) {
@@ -91,7 +105,10 @@ export async function GET(request: NextRequest) {
         { status: 400 }
       );
     }
-    return NextResponse.json({ items: await listLocal(kind, q), nextCursor: null });
+    return NextResponse.json({
+      items: sortItems(await listLocal(kind, q), sort),
+      nextCursor: null,
+    });
   }
 
   try {
@@ -128,10 +145,13 @@ export async function GET(request: NextRequest) {
         (r.format ? `.${r.format}` : ""),
     });
     const runSearch = async (maxResults: number, nextCursor: string | null) => {
-      let search = cloudinary.search
-        .expression(expression)
-        .sort_by("created_at", "desc")
-        .max_results(maxResults);
+      let search =
+        sort === "name"
+          ? cloudinary.search.expression(expression).sort_by("public_id", "asc")
+          : cloudinary.search
+              .expression(expression)
+              .sort_by("created_at", sort === "oldest" ? "asc" : "desc");
+      search = search.max_results(maxResults);
       if (nextCursor) search = search.next_cursor(nextCursor);
       return (await search.execute()) as {
         resources?: CloudinaryResource[];
@@ -154,7 +174,7 @@ export async function GET(request: NextRequest) {
         sweepCursor = result.next_cursor ?? null;
         if (!sweepCursor) break;
       }
-      return NextResponse.json({ items: matches, nextCursor: null });
+      return NextResponse.json({ items: sortItems(matches, sort), nextCursor: null });
     }
 
     const result = await runSearch(60, cursor);

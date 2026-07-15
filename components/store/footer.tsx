@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Phone, Mail, Truck, BadgeCheck, MessageCircle } from "lucide-react";
 import { THEME_IMAGES } from "@/lib/content";
 import { repo } from "@/lib/data";
+import { CurrencySwitcher } from "@/components/store/currency-context";
 
 /** lucide-react v1 dropped brand glyphs — tiny inline marks keep the row consistent. */
 function FacebookIcon({ className }: { className?: string }) {
@@ -41,7 +42,7 @@ function TikTokIcon({ className }: { className?: string }) {
 }
 
 const VALUE_PROPS = [
-  { icon: Truck, title: "Cash on Delivery", text: "Pay when your order arrives — anywhere in Pakistan" },
+  { icon: Truck, title: "Cash on Delivery", text: "Pay on arrival across Pakistan — we ship worldwide too" },
   { icon: BadgeCheck, title: "Premium Fabrics", text: "Lawn, silks, chiffon & velvet, thoughtfully sourced" },
   { icon: MessageCircle, title: "WhatsApp Support", text: "Questions answered fast — we're one message away" },
 ];
@@ -180,9 +181,13 @@ export async function Footer() {
       </div>
 
       <div className="border-t border-line">
-        <div className="container-site flex flex-col items-center justify-between gap-2 py-5 text-xs text-umber sm:flex-row">
+        <div className="container-site flex flex-col items-center justify-between gap-3 py-5 text-xs text-umber sm:flex-row">
           <p>© {year} Willow Weave. All rights reserved.</p>
-          <p>Cash on Delivery across Pakistan 🇵🇰</p>
+          <div className="flex flex-col items-center gap-1.5 sm:flex-row sm:gap-3">
+            {/* display-only conversion — COD is always charged in PKR */}
+            <CurrencySwitcher />
+            <p>Cash on Delivery across Pakistan 🇵🇰 · shipping worldwide 🌍</p>
+          </div>
         </div>
       </div>
     </footer>

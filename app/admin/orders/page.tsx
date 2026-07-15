@@ -24,6 +24,8 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
     phone: o.phone,
     email: o.email,
     city: o.city,
+    country: o.country,
+    paymentMethod: o.paymentMethod,
     address: o.address,
     status: o.status,
     total: o.total,
@@ -36,7 +38,8 @@ export default async function AdminOrdersPage({ searchParams }: Props) {
       <header className="mb-6">
         <h1 className="heading-display text-2xl font-semibold text-ink">Orders</h1>
         <p className="mt-1 text-sm text-umber">
-          Track every COD order — contact details, delivery address and status in one place.
+          Track every order — payment method, contact details, delivery address and status in one
+          place.
         </p>
       </header>
 

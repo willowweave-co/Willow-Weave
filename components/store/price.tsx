@@ -1,6 +1,14 @@
-import { cn } from "@/lib/utils";
-import { formatPKR } from "@/lib/money";
+"use client";
 
+import { cn } from "@/lib/utils";
+import { useCurrency } from "@/components/store/currency-context";
+
+/**
+ * Product price in the shopper's display currency (footer switcher /
+ * geo-detected). SSR renders PKR; the provider swaps currency after mount,
+ * so static pages hydrate cleanly. Cart & checkout totals stay in PKR — COD
+ * is always charged in rupees.
+ */
 export function Price({
   price,
   compareAtPrice,
@@ -15,6 +23,7 @@ export function Price({
   className?: string;
   size?: "sm" | "md" | "lg";
 }) {
+  const { format } = useCurrency();
   const onSale = compareAtPrice != null && compareAtPrice > price;
   return (
     <span
@@ -28,10 +37,10 @@ export function Price({
     >
       {prefix && <span className="text-umber text-[0.8em]">{prefix}</span>}
       <span className={cn("font-semibold", onSale ? "text-madder" : "text-ink")}>
-        {formatPKR(price)}
+        {format(price)}
       </span>
       {onSale && (
-        <s className="text-umber/70 text-[0.85em] font-normal">{formatPKR(compareAtPrice)}</s>
+        <s className="text-umber/70 text-[0.85em] font-normal">{format(compareAtPrice)}</s>
       )}
     </span>
   );

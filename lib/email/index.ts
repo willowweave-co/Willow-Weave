@@ -1,5 +1,5 @@
 import { Resend } from "resend";
-import type { Order, OrderStatus } from "@/lib/types";
+import type { Order, OrderStatus, StoreSettings } from "@/lib/types";
 import { DEFAULT_CONTACT } from "@/lib/types";
 import { formatPKR } from "@/lib/money";
 
@@ -22,6 +22,8 @@ type OrderLike = Pick<
   | "email"
   | "address"
   | "city"
+  | "country"
+  | "paymentMethod"
   | "notes"
   | "subtotal"
   | "discountCode"
@@ -31,6 +33,13 @@ type OrderLike = Pick<
   | "items"
   | "createdAt"
 >;
+
+/** "Lahore" at home, "Dubai, United Arab Emirates" abroad. */
+function placeLine(order: OrderLike): string {
+  return order.country && order.country !== "Pakistan"
+    ? `${order.city}, ${order.country}`
+    : order.city;
+}
 
 const S = {
   wrap: `margin:0;padding:24px;background:#faf6ef;font-family:Georgia,'Times New Roman',serif;color:#29211a;`,
@@ -45,11 +54,24 @@ const S = {
   btn: `display:inline-block;background:#6b4a2f;color:#faf6ef;text-decoration:none;padding:11px 22px;border-radius:999px;font-size:14px;`,
 };
 
+/** Email clients need absolute image URLs; local /uploads paths get the site origin. */
+function absoluteUrl(u: string): string {
+  return u.startsWith("http") ? u : `${siteUrl()}${u}`;
+}
+
 function itemsHtml(order: OrderLike): string {
   return order.items
     .map(
       (i) => `
       <tr>
+        <td width="48" style="padding:10px 12px 10px 0;border-bottom:1px solid #efe7d9;">
+          ${
+            i.image
+              ? `<img src="${absoluteUrl(i.image)}" alt="" width="44" height="55"
+                   style="display:block;width:44px;height:55px;object-fit:cover;border-radius:8px;border:1px solid #e5daca;" />`
+              : `<div style="width:44px;height:55px;border-radius:8px;background:#f4ede0;"></div>`
+          }
+        </td>
         <td style="padding:10px 0;border-bottom:1px solid #efe7d9;font-size:14px;">
           ${escapeHtml(i.title)}
           <div style="${S.muted}">${[i.color, i.size].filter(Boolean).map(escapeHtml).join(" · ")} × ${i.quantity}</div>
@@ -63,16 +85,19 @@ function itemsHtml(order: OrderLike): string {
 }
 
 function totalsHtml(order: OrderLike): string {
+  // colspan 2: the items rows above have a thumbnail column
   const line = (label: string, value: string, strong = false) => `
     <tr>
-      <td style="padding:6px 0;font-size:${strong ? "16px" : "14px"};${strong ? "font-weight:700;" : ""}">${label}</td>
+      <td colspan="2" style="padding:6px 0;font-size:${strong ? "16px" : "14px"};${strong ? "font-weight:700;" : ""}">${label}</td>
       <td align="right" style="padding:6px 0;font-size:${strong ? "16px" : "14px"};${strong ? "font-weight:700;" : ""}">${value}</td>
     </tr>`;
+  const totalLabel =
+    order.paymentMethod === "bank" ? "Total — Bank transfer" : "Total — Cash on Delivery";
   return `
     ${line("Subtotal", formatPKR(order.subtotal))}
     ${order.discountAmount > 0 ? line(`Discount${order.discountCode ? ` (${escapeHtml(order.discountCode)})` : ""}`, `−${formatPKR(order.discountAmount)}`) : ""}
     ${line("Delivery", order.shippingFee > 0 ? formatPKR(order.shippingFee) : "Free")}
-    ${line("Total — Cash on Delivery", formatPKR(order.total), true)}
+    ${line(totalLabel, formatPKR(order.total), true)}
   `;
 }
 
@@ -87,7 +112,7 @@ function ownerEmailHtml(order: OrderLike): string {
   <div style="${S.wrap}">
     <div style="${S.card}">
       <div style="${S.head}">
-        <h1 style="${S.h1}">🛍️ New COD order ${order.orderNumber}</h1>
+        <h1 style="${S.h1}">🛍️ New ${order.paymentMethod === "bank" ? "BANK-TRANSFER" : "COD"} order ${order.orderNumber}</h1>
         <p style="${S.sub}">${new Date(order.createdAt).toLocaleString("en-GB")} · ${formatPKR(order.total)}</p>
       </div>
       <div style="${S.body}">
@@ -95,7 +120,7 @@ function ownerEmailHtml(order: OrderLike): string {
         <p style="margin:0 0 16px;font-size:14px;line-height:1.6;">
           <strong>${escapeHtml(order.customerName)}</strong><br/>
           📞 ${escapeHtml(order.phone)}${order.email ? `<br/>✉️ ${escapeHtml(order.email)}` : ""}<br/>
-          📍 ${escapeHtml(order.address)}, ${escapeHtml(order.city)}
+          📍 ${escapeHtml(order.address)}, ${escapeHtml(placeLine(order))}
           ${order.notes ? `<br/>📝 ${escapeHtml(order.notes)}` : ""}
         </p>
         <h2 style="font-size:15px;margin:0 0 6px;">Items</h2>
@@ -108,25 +133,66 @@ function ownerEmailHtml(order: OrderLike): string {
   </div>`;
 }
 
-function customerEmailHtml(order: OrderLike, contactPhone: string): string {
+/** Bank account box + "send us your receipt" instructions for transfer orders. */
+function bankInstructionsHtml(order: OrderLike, settings: StoreSettings): string {
+  const b = settings.bankTransfer;
+  const waLink = settings.contact.whatsapp
+    ? `https://wa.me/${settings.contact.whatsapp}`
+    : null;
+  const row = (label: string, value: string) =>
+    value
+      ? `<tr><td style="padding:3px 12px 3px 0;font-size:13px;color:#6e5c4b;white-space:nowrap;">${label}</td>
+         <td style="padding:3px 0;font-size:14px;font-weight:600;">${escapeHtml(value)}</td></tr>`
+      : "";
+  return `
+    <p style="font-size:14px;line-height:1.6;margin:0 0 10px;">
+      Please transfer <strong>${formatPKR(order.total)}</strong> to:
+    </p>
+    <table cellpadding="0" cellspacing="0" style="margin:0 0 14px;background:#faf6ef;border:1px solid #e5daca;border-radius:10px;padding:12px 16px;width:100%;">
+      ${row("Bank", b.bankName)}
+      ${row("Account holder", b.accountName)}
+      ${row("Account number", b.accountNumber)}
+      ${row("IBAN", b.iban)}
+    </table>
+    <p style="font-size:14px;line-height:1.7;margin:0 0 16px;">
+      Then send us <strong>a screenshot/photo of the transaction receipt</strong> (please make
+      sure the amount, date and reference are clearly visible) together with
+      <strong>a screenshot of this order (${order.orderNumber})</strong> —
+      ${waLink ? `on <a href="${waLink}" style="color:#6b4a2f;">WhatsApp</a>` : "on WhatsApp"}
+      ${settings.contact.email ? ` or by email to <a href="mailto:${escapeHtml(settings.contact.email)}" style="color:#6b4a2f;">${escapeHtml(settings.contact.email)}</a>` : ""}.
+      We dispatch your order as soon as the transfer is confirmed.
+    </p>`;
+}
+
+function customerEmailHtml(order: OrderLike, settings: StoreSettings): string {
+  const contactPhone = settings.contact.phone || DEFAULT_CONTACT.phone;
+  const isBank = order.paymentMethod === "bank";
   return `
   <div style="${S.wrap}">
     <div style="${S.card}">
       <div style="${S.head}">
         <h1 style="${S.h1}">Thank you, ${escapeHtml(order.customerName.split(" ")[0])} 🌿</h1>
-        <p style="${S.sub}">Order ${order.orderNumber} is confirmed</p>
+        <p style="${S.sub}">Order ${order.orderNumber} is ${isBank ? "reserved" : "confirmed"}</p>
       </div>
       <div style="${S.body}">
-        <p style="font-size:14px;line-height:1.6;margin:0 0 16px;">
-          We’ve received your order and will start preparing it right away. You’ll pay
-          <strong>${formatPKR(order.total)} in cash</strong> when it arrives at:
-        </p>
+        ${
+          isBank
+            ? bankInstructionsHtml(order, settings)
+            : `<p style="font-size:14px;line-height:1.6;margin:0 0 16px;">
+                 We’ve received your order and will start preparing it right away. You’ll pay
+                 <strong>${formatPKR(order.total)} in cash</strong> when it arrives at:
+               </p>`
+        }
         <p style="font-size:14px;line-height:1.6;margin:0 0 16px;background:#faf6ef;border:1px solid #e5daca;border-radius:10px;padding:12px 16px;">
-          ${escapeHtml(order.address)}, ${escapeHtml(order.city)}<br/>📞 ${escapeHtml(order.phone)}
+          ${escapeHtml(order.address)}, ${escapeHtml(placeLine(order))}<br/>📞 ${escapeHtml(order.phone)}
         </p>
         <table width="100%" cellpadding="0" cellspacing="0">${itemsHtml(order)}${totalsHtml(order)}</table>
         <p style="${S.muted};margin:18px 0 0;">
-          Orders are processed within 1–3 business days and delivered in 2–7 business days.
+          ${
+            order.country && order.country !== "Pakistan"
+              ? "International orders are dispatched within 3–5 business days and usually arrive in 7–14."
+              : "Orders are processed within 1–3 business days and delivered in 2–7 business days."
+          }
           Questions? Just reply to this email or call ${escapeHtml(contactPhone)}.
         </p>
       </div>
@@ -145,10 +211,12 @@ function shippedEmailHtml(order: OrderLike): string {
       <div style="${S.body}">
         <p style="font-size:14px;line-height:1.6;margin:0 0 14px;">
           Good news, ${escapeHtml(order.customerName.split(" ")[0])} — your Willow Weave order has been
-          shipped and should reach you within 2–5 business days. Please keep
+          shipped and should reach you within ${
+            order.country && order.country !== "Pakistan" ? "7–14" : "2–5"
+          } business days. Please keep
           <strong>${formatPKR(order.total)}</strong> ready as Cash on Delivery.
         </p>
-        <p style="${S.muted};margin:0;">Delivery address: ${escapeHtml(order.address)}, ${escapeHtml(order.city)}</p>
+        <p style="${S.muted};margin:0;">Delivery address: ${escapeHtml(order.address)}, ${escapeHtml(placeLine(order))}</p>
       </div>
     </div>
   </div>`;
@@ -183,15 +251,16 @@ async function deliver(
 export async function sendOrderEmails(
   order: OrderLike,
   notifyEmail: string,
-  contactPhone: string = DEFAULT_CONTACT.phone
+  settings: StoreSettings
 ): Promise<void> {
   try {
+    const isBank = order.paymentMethod === "bank";
     const jobs: Promise<void>[] = [];
     if (notifyEmail) {
       jobs.push(
         deliver(
           notifyEmail,
-          `New COD order ${order.orderNumber} — ${formatPKR(order.total)}`,
+          `New ${isBank ? "bank-transfer" : "COD"} order ${order.orderNumber} — ${formatPKR(order.total)}`,
           ownerEmailHtml(order),
           // owner hits Reply to answer the customer directly
           order.email ?? undefined
@@ -202,8 +271,10 @@ export async function sendOrderEmails(
       jobs.push(
         deliver(
           order.email,
-          `Order ${order.orderNumber} confirmed — Willow Weave`,
-          customerEmailHtml(order, contactPhone),
+          isBank
+            ? `Order ${order.orderNumber} — complete your bank transfer · Willow Weave`
+            : `Order ${order.orderNumber} confirmed — Willow Weave`,
+          customerEmailHtml(order, settings),
           // customer replies land in the owner's real inbox
           notifyEmail || undefined
         )
