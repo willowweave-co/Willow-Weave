@@ -283,7 +283,17 @@ export const localRepo: Repo = {
     return overlay.sizeCharts ?? (await base()).sizeCharts;
   },
 
+  /**
+   * Public settings — notifyEmail is blanked to mirror the Supabase adapter,
+   * where it lives behind a staff-only column. Keeping the two adapters
+   * identical means a caller that wrongly depends on it fails in dev too, not
+   * only in production.
+   */
   async getSettings() {
+    return { ...(await this.getSettingsAdmin()), notifyEmail: "" };
+  },
+
+  async getSettingsAdmin() {
     const overlay = await loadOverlay();
     const saved = overlay.settings;
     if (!saved) return DEFAULT_SETTINGS;
@@ -293,6 +303,10 @@ export const localRepo: Repo = {
       ...saved,
       contact: { ...DEFAULT_CONTACT, ...(saved.contact ?? {}) },
     };
+  },
+
+  async getNotifyEmail() {
+    return (await this.getSettingsAdmin()).notifyEmail;
   },
 
   async getHeroSlides() {

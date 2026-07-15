@@ -18,8 +18,17 @@ export interface AdminUser {
  * Wrapped in react cache(): the admin layout, the page and any API guard in
  * the same request share one auth + profile lookup instead of repeating it.
  */
+/**
+ * Local preview grants a synthetic owner with no sign-in — which is only ever
+ * acceptable off a developer's machine. If the Supabase env vars are missing
+ * from a real deployment (a Vercel Preview that didn't inherit them is the
+ * realistic case), auth must fail CLOSED rather than hand out owner rights.
+ */
+const localAdminAllowed = dataMode === "local" && process.env.NODE_ENV !== "production";
+
 export const getAdminUser = cache(async (): Promise<AdminUser | null> => {
   if (dataMode === "local") {
+    if (!localAdminAllowed) return null;
     return {
       id: "local-dev",
       email: "local@preview",

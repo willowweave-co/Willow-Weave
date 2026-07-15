@@ -144,6 +144,35 @@ async function db() {
   return createSupabaseServer();
 }
 
+/** PostgREST/Postgres codes for "that relation or column isn't there (yet)". */
+const MISSING_RELATION = ["PGRST205", "42P01", "PGRST204", "42703"];
+const isMissingRelation = (e: { code?: string } | null) =>
+  !!e?.code && MISSING_RELATION.includes(e.code);
+
+/**
+ * Read the public slice of the settings singleton.
+ *
+ * Prefers store_settings_public (migration 0009), the view that omits
+ * notify_email. Falls back to the base table when the view isn't there yet, so
+ * the storefront survives a deploy that lands before the migration is run —
+ * without the fallback, every page would 500. The fallback is strictly a
+ * transitional path: once 0009 is applied, the base table is staff-only and
+ * this fallback can no longer read it anyway.
+ */
+async function publicSettingsRow(columns: string): Promise<Row> {
+  const view = await publicDb()
+    .from("store_settings_public")
+    .select(columns)
+    .eq("id", 1)
+    .maybeSingle();
+  if (!view.error && view.data) return view.data as Row;
+  if (view.error && !isMissingRelation(view.error)) throw view.error;
+
+  const legacy = await publicDb().from("store_settings").select(columns).eq("id", 1).single();
+  if (legacy.error) throw legacy.error;
+  return legacy.data as Row;
+}
+
 /**
  * Cookieless anonymous client for PUBLIC catalog reads. Because it never
  * touches `cookies()`, the storefront pages that use it stay statically
@@ -229,8 +258,30 @@ export const supabaseRepo: Repo = {
     );
   },
 
+  /**
+   * PUBLIC settings — served from the store_settings_public view, which omits
+   * notify_email (the owner's private inbox). notifyEmail is always "" here;
+   * the trusted paths that need it call getNotifyEmail().
+   */
   async getSettings(): Promise<StoreSettings> {
-    const { data, error } = await publicDb()
+    const data = await publicSettingsRow(
+      "id, store_name, shipping_fee, free_shipping_threshold, announcement, contact"
+    );
+    return {
+      storeName: data.store_name,
+      shippingFee: num(data.shipping_fee),
+      freeShippingThreshold: numOrNull(data.free_shipping_threshold),
+      notifyEmail: "",
+      announcement: data.announcement,
+      // merge over defaults so partially-saved / pre-migration rows stay complete
+      contact: { ...DEFAULT_CONTACT, ...((data.contact as Partial<ContactSettings>) ?? {}) },
+    };
+  },
+
+  /** Staff-session read of the full row (includes notify_email) for the admin form. */
+  async getSettingsAdmin(): Promise<StoreSettings> {
+    const client = await db();
+    const { data, error } = await client
       .from("store_settings")
       .select("*")
       .eq("id", 1)
@@ -242,23 +293,38 @@ export const supabaseRepo: Repo = {
       freeShippingThreshold: numOrNull(data.free_shipping_threshold),
       notifyEmail: data.notify_email ?? "",
       announcement: data.announcement,
-      // merge over defaults so partially-saved / pre-migration rows stay complete
       contact: { ...DEFAULT_CONTACT, ...((data.contact as Partial<ContactSettings>) ?? {}) },
     };
   },
 
-  async getHeroSlides(): Promise<HeroSlide[]> {
-    const { data, error } = await publicDb()
+  /**
+   * Where new-order notifications go. Needed by the checkout action, which runs
+   * for an ANONYMOUS shopper and so cannot read the staff-only settings row —
+   * hence the service-role client. Server-only; never return this to a browser.
+   */
+  async getNotifyEmail(): Promise<string> {
+    const { createSupabaseAdmin } = await import("@/lib/supabase/admin");
+    const admin = createSupabaseAdmin();
+    const { data, error } = await admin
       .from("store_settings")
-      .select("hero_slides")
+      .select("notify_email")
       .eq("id", 1)
       .single();
-    // 42703 = column doesn't exist yet (migration 0003 not applied) — the
-    // storefront must still render, so fall back to the seed slides.
-    if (error?.code === "42703") return DEFAULT_HERO_SLIDES;
     if (error) throw error;
-    // null until the owner first saves
-    return (data.hero_slides as HeroSlide[] | null) ?? DEFAULT_HERO_SLIDES;
+    return data.notify_email ?? "";
+  },
+
+  async getHeroSlides(): Promise<HeroSlide[]> {
+    try {
+      const data = await publicSettingsRow("id, hero_slides");
+      // null until the owner first saves
+      return (data.hero_slides as HeroSlide[] | null) ?? DEFAULT_HERO_SLIDES;
+    } catch (e) {
+      // column doesn't exist yet (migration 0003 not applied) — the storefront
+      // must still render, so fall back to the seed slides.
+      if (isMissingRelation(e as { code?: string })) return DEFAULT_HERO_SLIDES;
+      throw e;
+    }
   },
 
   async getSitePages(): Promise<Record<string, { title: string; bodyHtml: string }>> {
@@ -276,16 +342,15 @@ export const supabaseRepo: Repo = {
   },
 
   async getHomepageCollections(): Promise<string[] | null> {
-    const { data, error } = await publicDb()
-      .from("store_settings")
-      .select("homepage_collections")
-      .eq("id", 1)
-      .single();
-    // 42703 = migration 0006 not applied yet — fall back to automatic picks
-    if (error?.code === "42703") return null;
-    if (error) throw error;
-    const ids = data.homepage_collections as string[] | null;
-    return Array.isArray(ids) && ids.length ? ids.map(String) : null;
+    try {
+      const data = await publicSettingsRow("id, homepage_collections");
+      const ids = data.homepage_collections as string[] | null;
+      return Array.isArray(ids) && ids.length ? ids.map(String) : null;
+    } catch (e) {
+      // migration 0006 not applied yet — fall back to automatic picks
+      if (isMissingRelation(e as { code?: string })) return null;
+      throw e;
+    }
   },
 
   async previewDiscount(code, subtotal) {
@@ -680,12 +745,20 @@ export const supabaseRepo: Repo = {
   },
 
   async deleteOrder(id: string) {
-    // RLS grants staff select/update but not delete; the action has already
-    // verified staff, so use the service-role client (items cascade via FK).
-    const { createSupabaseAdmin } = await import("@/lib/supabase/admin");
-    const admin = createSupabaseAdmin();
-    const { error } = await admin.from("orders").delete().eq("id", Number(id));
+    // Owner-only, enforced by the "owner delete orders" RLS policy (0009) —
+    // the session client, not the service role, so the database has the final
+    // say rather than the app. Items cascade via FK.
+    const client = await db();
+    const { data, error } = await client
+      .from("orders")
+      .delete()
+      .eq("id", Number(id))
+      .select("id");
     if (error) throw error;
+    // RLS refuses a delete by matching zero rows rather than erroring, so an
+    // empty result means "not permitted" (or migration 0009 isn't applied) —
+    // don't report success for a delete that never happened.
+    if (!data?.length) throw new Error("ORDER_DELETE_DENIED");
   },
 
   async getStaff(): Promise<StaffMember[]> {

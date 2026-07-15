@@ -6,6 +6,11 @@ import { revalidatePath, updateTag } from "next/cache";
 import { repo, DATA_CACHE_TAG } from "@/lib/data";
 import type { PlacedOrderDetails } from "@/lib/data";
 import { sendOrderEmails } from "@/lib/email";
+import { rateLimit, clientIp } from "@/lib/rate-limit";
+
+/** A real cart is a handful of lines; anything past this is an attempt to make
+ *  place_order() loop. Quantity per line is capped separately (20). */
+const MAX_CART_LINES = 50;
 
 const checkoutSchema = z.object({
   customerName: z.string().trim().min(2, "Please enter your full name").max(120),
@@ -32,7 +37,8 @@ const checkoutSchema = z.object({
         quantity: z.number().int().min(1).max(20),
       })
     )
-    .min(1, "Your cart is empty"),
+    .min(1, "Your cart is empty")
+    .max(MAX_CART_LINES, "That's too many different items for one order."),
 });
 
 export type CheckoutFormInput = z.input<typeof checkoutSchema>;
@@ -61,6 +67,16 @@ function friendlyOrderError(message: string): string {
 }
 
 export async function placeOrderAction(raw: CheckoutFormInput): Promise<CheckoutResult> {
+  // COD means an order costs the attacker nothing and us real stock — throttle
+  // before doing any work.
+  const limit = rateLimit(`order:${await clientIp()}`, 5, 10 * 60_000);
+  if (!limit.ok) {
+    return {
+      ok: false,
+      error: "Too many orders from this device just now. Please wait a few minutes and try again.",
+    };
+  }
+
   const parsed = checkoutSchema.safeParse(raw);
   if (!parsed.success) {
     const fieldErrors: Record<string, string> = {};
@@ -86,8 +102,11 @@ export async function placeOrderAction(raw: CheckoutFormInput): Promise<Checkout
 
     // Confirmation details travel via a short-lived, httpOnly cookie — the
     // confirmation page never exposes a guessable public order lookup.
-    const settings = await repo.getSettings();
-    const order = await repo.getOrderByNumberTrusted(placed.orderNumber);
+    const [notifyEmail, settings, order] = await Promise.all([
+      repo.getNotifyEmail(),
+      repo.getSettings(),
+      repo.getOrderByNumberTrusted(placed.orderNumber),
+    ]);
     if (order) {
       const details: PlacedOrderDetails = {
         orderNumber: order.orderNumber,
@@ -113,7 +132,7 @@ export async function placeOrderAction(raw: CheckoutFormInput): Promise<Checkout
         maxAge: 60 * 30,
         path: "/",
       });
-      await sendOrderEmails(order, settings.notifyEmail, settings.contact.phone);
+      await sendOrderEmails(order, notifyEmail, settings.contact.phone);
     }
 
     // stock changed → refresh cached storefront pages + cached repo reads
@@ -133,6 +152,13 @@ export async function previewDiscountAction(
 ): Promise<{ valid: boolean; amount?: number; code?: string }> {
   const trimmed = code.trim();
   if (!trimmed || trimmed.length > 40 || !Number.isFinite(subtotal)) return { valid: false };
+
+  // This endpoint answers "is this a real code?" — without a throttle the whole
+  // code space is enumerable. A shopper types one or two codes; 10 per minute
+  // is generous for them and useless for a brute-forcer.
+  const limit = rateLimit(`discount:${await clientIp()}`, 10, 60_000);
+  if (!limit.ok) return { valid: false };
+
   try {
     return await repo.previewDiscount(trimmed, subtotal);
   } catch {
