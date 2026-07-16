@@ -61,20 +61,30 @@ const S = {
   btn: `display:inline-block;background:#6b4a2f;color:#faf6ef;text-decoration:none;padding:11px 22px;border-radius:999px;font-size:14px;`,
 };
 
-/** Email clients need absolute image URLs; local /uploads paths get the site origin. */
-function absoluteUrl(u: string): string {
-  return u.startsWith("http") ? u : `${siteUrl()}${u}`;
+/**
+ * Product image URL for an email, made safe.
+ * Image URLs are staff-entered (product form / upload) and land here inside a
+ * src="…" attribute, so a value containing a quote could otherwise break out of
+ * it. Resolve /uploads paths to an absolute URL, accept ONLY http(s), and
+ * attribute-escape the result. Anything else returns "" → the placeholder tile.
+ */
+function safeImageUrl(u: string | null | undefined): string {
+  if (!u) return "";
+  const abs = u.startsWith("http") ? u : `${siteUrl()}${u.startsWith("/") ? "" : "/"}${u}`;
+  if (!/^https?:\/\//i.test(abs)) return "";
+  return escapeHtml(abs);
 }
 
 function itemsHtml(order: OrderLike): string {
   return order.items
-    .map(
-      (i) => `
+    .map((i) => {
+      const src = safeImageUrl(i.image);
+      return `
       <tr>
         <td width="48" style="padding:10px 12px 10px 0;border-bottom:1px solid #efe7d9;">
           ${
-            i.image
-              ? `<img src="${absoluteUrl(i.image)}" alt="" width="44" height="55"
+            src
+              ? `<img src="${src}" alt="" width="44" height="55"
                    style="display:block;width:44px;height:55px;object-fit:cover;border-radius:8px;border:1px solid #e5daca;" />`
               : `<div style="width:44px;height:55px;border-radius:8px;background:#f4ede0;"></div>`
           }
@@ -86,8 +96,8 @@ function itemsHtml(order: OrderLike): string {
         <td align="right" style="padding:10px 0;border-bottom:1px solid #efe7d9;font-size:14px;white-space:nowrap;">
           ${formatPKR(i.unitPrice * i.quantity)}
         </td>
-      </tr>`
-    )
+      </tr>`;
+    })
     .join("");
 }
 
