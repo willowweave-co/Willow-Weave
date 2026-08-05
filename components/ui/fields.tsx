@@ -18,7 +18,9 @@ export function Label({
   );
 }
 
-export function Input({ className, ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
+// ComponentProps (not InputHTMLAttributes) so callers can pass `ref` — React 19
+// treats it as an ordinary prop, and the login code box needs to focus itself.
+export function Input({ className, ...props }: React.ComponentProps<"input">) {
   return <input className={cn(fieldBase, className)} {...props} />;
 }
 

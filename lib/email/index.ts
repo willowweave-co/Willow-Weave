@@ -264,6 +264,93 @@ async function deliver(
   if (error) console.error(`Resend error for "${subject}" → ${to}:`, error.message);
 }
 
+// ── Dashboard sign-in code (2FA) ────────────────────────────────────────────
+
+function loginCodeEmailHtml(code: string, when: Date, ip: string | null): string {
+  return `
+  <div style="${S.wrap}">
+    <div style="${S.card}">
+      <div style="${S.head}">
+        <h1 style="${S.h1}">🔐 Your dashboard sign-in code</h1>
+        <p style="${S.sub}">Willow Weave · expires in 10 minutes</p>
+      </div>
+      <div style="${S.body}">
+        <p style="font-size:14px;line-height:1.6;margin:0 0 18px;">
+          Someone entered your email and password on the Willow Weave dashboard.
+          Enter this code to finish signing in:
+        </p>
+        <p style="margin:0 0 18px;text-align:center;">
+          <span style="display:inline-block;background:#faf6ef;border:1px solid #e5daca;border-radius:12px;
+                       padding:14px 26px;font-family:'Courier New',Courier,monospace;font-size:34px;
+                       font-weight:700;letter-spacing:10px;color:#29211a;">${escapeHtml(code)}</span>
+        </p>
+        <p style="${S.muted};margin:0 0 14px;line-height:1.6;">
+          Requested ${escapeHtml(when.toLocaleString("en-GB"))}${ip ? ` from ${escapeHtml(ip)}` : ""}.
+        </p>
+        <p style="font-size:14px;line-height:1.6;margin:0;padding:12px 16px;background:#faf6ef;
+                  border:1px solid #e5daca;border-radius:10px;">
+          <strong>Didn’t try to sign in?</strong> Your password may be known to someone else —
+          the code alone stops them getting in, but please change your password.
+        </p>
+        <p style="${S.muted};margin:16px 0 0;">
+          Never share this code. Willow Weave will never ask you for it.
+        </p>
+      </div>
+    </div>
+  </div>`;
+}
+
+/**
+ * Result of trying to email a sign-in code. The login route must be able to
+ * tell these apart: silently "sending" a code nobody receives would lock the
+ * owner out of their own dashboard with no explanation.
+ *  - sent    → Resend accepted it
+ *  - console → no RESEND_API_KEY (local dev); the code was printed to the log
+ *  - failed  → Resend rejected it / threw
+ */
+export type CodeDelivery = "sent" | "console" | "failed";
+
+export async function sendAdminLoginCode(
+  to: string,
+  code: string,
+  meta: { ip?: string | null } = {}
+): Promise<CodeDelivery> {
+  const key = process.env.RESEND_API_KEY;
+  const ip = meta.ip ?? null;
+
+  // Local dev without Resend: print the code so the flow stays testable. Guarded
+  // on NODE_ENV — a production deploy must never log a live sign-in code, and
+  // must not pretend the email went out.
+  if (!key) {
+    if (process.env.NODE_ENV === "production") {
+      console.error("sendAdminLoginCode: RESEND_API_KEY is not set — cannot deliver 2FA codes.");
+      return "failed";
+    }
+    console.log(
+      `\n━━━ ADMIN 2FA CODE (local — set RESEND_API_KEY to email it) ━━━\nTO: ${to}\nCODE: ${code}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`
+    );
+    return "console";
+  }
+
+  try {
+    const resend = new Resend(key);
+    const { error } = await resend.emails.send({
+      from: FROM,
+      to,
+      subject: `${code} is your Willow Weave dashboard code`,
+      html: loginCodeEmailHtml(code, new Date(), ip),
+    });
+    if (error) {
+      console.error("sendAdminLoginCode failed:", error.message);
+      return "failed";
+    }
+    return "sent";
+  } catch (e) {
+    console.error("sendAdminLoginCode threw:", e);
+    return "failed";
+  }
+}
+
 /** Fire order emails. Never throws — an email failure must not fail an order. */
 export async function sendOrderEmails(
   order: OrderLike,

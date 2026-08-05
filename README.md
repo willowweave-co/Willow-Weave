@@ -30,6 +30,7 @@ production.
 | Storefront | Home with hero + site-wide typo-tolerant search (Ctrl K), grouped Collections, filterable `/products` catalog, product pages with size/colour/stock, size-chart modal + `/size-guide`, About/Philosophy/Contact/policy pages |
 | Checkout | Cart drawer + cart page, discount codes, COD-only checkout with atomic stock decrement (no overselling), confirmation page, owner + customer emails |
 | Dashboard `/admin` | Sales overview with 30-day revenue chart, orders (status pipeline, restock-on-cancel, shipped-email, packing slips), product CRUD with variant matrix + image uploads, inventory editor, collections, discounts, size-chart editor, settings, staff invites (owner/staff roles) |
+| Dashboard sign-in | Password **plus** a 6-digit code emailed to the staff member (2FA). The password is checked server-side and the session is withheld until the code is confirmed, so a stolen password alone gets nobody in. 30-minute idle auto-logout. |
 | Data modes | `local` (JSON files, no accounts) ⇄ `supabase` (Postgres + RLS + auth) behind one interface — switched automatically by env vars |
 
 ## Scripts
@@ -64,6 +65,26 @@ take over this project, know that:
   reading unpublished products' prices/stock/images and hides the owner's
   notification email. If you point the app at a fresh Supabase project, every
   migration must be run or those protections don't exist. All are re-runnable.
+- **Dashboard sign-in needs `RESEND_API_KEY` in production.** Two-factor codes
+  go out through Resend, so with no key configured (or a Resend outage) the
+  login fails closed with "we couldn't send your verification code" — nobody,
+  including the owner, can sign in until email works again. This is deliberate:
+  the alternative is letting a password alone through. `SUPABASE_SERVICE_ROLE_KEY`
+  is required too (it stores the pending challenge and derives the code key).
+  Set `ADMIN_2FA_SECRET` to a long random string if you ever want the 2FA key
+  independent of the service-role key — rotating either only invalidates
+  in-flight codes.
+- **Migration `0013_admin_login_2fa.sql` must be applied** for the dashboard to
+  be reachable at all. Until it is, sign-in stops at "two-step sign-in isn't
+  ready on this deployment" — again, failing closed rather than skipping the
+  second factor.
+- **What the 2FA does and doesn't cover.** It stops someone who has only the
+  password — they never receive a session. It does *not* protect a session that
+  already exists: `@supabase/ssr` sets its auth cookies with `httpOnly: false`
+  by design, because the browser client reads them (idle-logout, order
+  realtime). So script injection on the `/admin` origin could still lift a live
+  session. That has always been true here and is unchanged by 2FA; it's the
+  reason the 30-minute idle logout matters.
 - **Public sign-ups are turned OFF** in the dashboard (Authentication → Sign In
   / Providers → User Signups). Staff accounts are invite-only, created by the
   owner in Admin → Settings. Do not re-enable sign-ups.
