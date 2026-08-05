@@ -23,6 +23,9 @@ export async function GET(request: NextRequest) {
     // not exist until migration 0004 is applied)
     const cutoff = new Date(Date.now() - 90 * 86_400_000).toISOString();
     await admin.from("page_views").delete().lt("created_at", cutoff);
+    // spent/expired 2FA challenges (migration 0013) — they hold encrypted
+    // session material, so don't let dead rows linger
+    await admin.rpc("purge_expired_login_challenges");
     return NextResponse.json({ ok: true, pingedAt: new Date().toISOString() });
   } catch (e) {
     console.error("keepalive failed:", e);
