@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input, Label, Select, Checkbox } from "@/components/ui/fields";
 import { RichTextEditor } from "@/components/ui/rich-text";
 import { useToast } from "@/components/ui/toast";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { slugify, cn, focalPosition, focalCrop } from "@/lib/utils";
 
 interface ProductOption {
@@ -32,6 +33,7 @@ export function CollectionForm({
 }) {
   const router = useRouter();
   const { toast } = useToast();
+  const confirm = useConfirm();
   const [pending, startTransition] = useTransition();
 
   const [title, setTitle] = useState(initial.title);
@@ -98,8 +100,14 @@ export function CollectionForm({
     });
   };
 
-  const remove = () => {
-    if (!confirm(`Delete “${title}”? Products stay — only the grouping is removed.`)) return;
+  const remove = async () => {
+    const ok = await confirm({
+      title: `Delete “${title}”?`,
+      body: "Products stay in the catalogue — only the grouping is removed.",
+      confirmLabel: "Delete collection",
+      danger: true,
+    });
+    if (!ok) return;
     startTransition(async () => {
       const res = await deleteCollectionAction(initial.id);
       if (res.ok) {

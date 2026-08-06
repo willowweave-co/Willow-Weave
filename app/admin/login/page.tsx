@@ -205,7 +205,7 @@ function LoginForm() {
             alt="Willow Weave"
             width={72}
             height={72}
-            className="mx-auto h-18 w-18 object-contain"
+            className="logo-shadow mx-auto h-18 w-18 object-contain"
           />
           <h1 className="heading-display mt-3 text-2xl font-semibold text-ink">
             {challenge ? "Check your email" : "Staff sign in"}

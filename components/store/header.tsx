@@ -11,7 +11,7 @@ function LinkColumn({ heading, links }: { heading: string; links: NavLink[] }) {
   if (!links.length) return null;
   return (
     <div className="min-w-36">
-      <p className="mb-2.5 text-[0.68rem] font-semibold tracking-[0.14em] text-umber uppercase">
+      <p className="mb-2.5 text-[0.72rem] font-semibold tracking-[0.14em] text-umber uppercase">
         {heading}
       </p>
       <ul className="space-y-1.5">
@@ -19,7 +19,7 @@ function LinkColumn({ heading, links }: { heading: string; links: NavLink[] }) {
           <li key={l.href}>
             <Link
               href={l.href}
-              className="block text-sm whitespace-nowrap text-bark transition-colors hover:text-walnut hover:underline hover:underline-offset-4"
+              className="block text-[0.9375rem] whitespace-nowrap text-bark transition-colors hover:text-walnut hover:underline hover:underline-offset-4"
             >
               {l.title}
             </Link>
@@ -37,7 +37,12 @@ export function Header({ nav }: { nav: NavData }) {
     // one, so blur directly on the header would kill the dropdown shelves'
     // matching frost. As siblings, both layers blur the page behind them.
     <header className="sticky top-0 z-50 border-b border-line/50 before:absolute before:inset-0 before:-z-10 before:bg-ivory/75 before:backdrop-blur-md before:content-['']">
-      <div className="container-site flex h-14 items-center justify-between gap-3 md:h-16">
+      {/* h-16 / md:h-20, up from h-14 / md:h-16, to carry the larger mark and
+          the bumped nav type. The hero and the collection banner pull
+          themselves up by exactly this much to sit under the translucent
+          bar — if this changes, `-mt-16 md:-mt-20` there has to change with
+          it or a strip of page background appears above the image. */}
+      <div className="container-site flex h-16 items-center justify-between gap-3 md:h-20">
         {/* mobile menu */}
         <div className="flex flex-1 items-center md:hidden">
           <MobileMenu nav={nav} />
@@ -52,9 +57,9 @@ export function Header({ nav }: { nav: NavData }) {
           <Image
             src={THEME_IMAGES.logo}
             alt="Willow Weave"
-            width={64}
-            height={64}
-            className="h-14 w-14 object-contain md:h-16 md:w-16"
+            width={80}
+            height={80}
+            className="logo-shadow h-16 w-16 object-contain md:h-20 md:w-20"
             priority
           />
         </Link>
@@ -80,7 +85,7 @@ export function Header({ nav }: { nav: NavData }) {
                 <Link
                   key={l.href}
                   href={l.href}
-                  className="text-sm whitespace-nowrap text-bark transition-colors hover:text-walnut hover:underline hover:underline-offset-4"
+                  className="text-[0.9375rem] whitespace-nowrap text-bark transition-colors hover:text-walnut hover:underline hover:underline-offset-4"
                 >
                   {l.title}
                 </Link>
@@ -89,13 +94,13 @@ export function Header({ nav }: { nav: NavData }) {
           </DesktopDropdown>
           <Link
             href="/products"
-            className="heading-display px-3.5 py-2 text-base font-medium text-bark transition-colors hover:text-walnut"
+            className="heading-display px-3.5 py-2 text-[1.0625rem] font-medium text-bark transition-colors hover:text-walnut"
           >
             Shop All
           </Link>
           <Link
             href="/size-guide"
-            className="heading-display px-3.5 py-2 text-base font-medium text-bark transition-colors hover:text-walnut"
+            className="heading-display px-3.5 py-2 text-[1.0625rem] font-medium text-bark transition-colors hover:text-walnut"
           >
             Size Guide
           </Link>
@@ -105,7 +110,7 @@ export function Header({ nav }: { nav: NavData }) {
                 <li key={l.href}>
                   <Link
                     href={l.href}
-                    className="block text-sm whitespace-nowrap text-bark transition-colors hover:text-walnut hover:underline hover:underline-offset-4"
+                    className="block text-[0.9375rem] whitespace-nowrap text-bark transition-colors hover:text-walnut hover:underline hover:underline-offset-4"
                   >
                     {l.title}
                   </Link>

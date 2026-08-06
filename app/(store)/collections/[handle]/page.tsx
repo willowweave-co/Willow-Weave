@@ -51,7 +51,7 @@ export default async function CollectionPage({ params, searchParams }: Props) {
       {/* banner — full-bleed like the homepage hero: runs under the
           translucent header and melts into the page. Deliberately shorter
           so the products keep the focus. */}
-      <section className="relative -mt-14 h-64 w-full overflow-hidden sm:h-72 md:-mt-16 md:h-80">
+      <section className="relative -mt-16 h-64 w-full overflow-hidden sm:h-72 md:-mt-20 md:h-80">
         {collection.image ? (
           <Image
             src={collection.image}
@@ -75,20 +75,31 @@ export default async function CollectionPage({ params, searchParams }: Props) {
 
       {/* title block sits in the melt zone below the image — in normal flow,
           so it can never cover the banner or get clipped on small screens */}
-      <div className="container-site relative z-20 -mt-16 sm:-mt-20 md:-mt-24">
-        <nav aria-label="Breadcrumb" className="mb-2 flex items-center gap-1 text-xs text-umber">
-          <Link href="/" className="hover:text-ink">Home</Link>
-          <ChevronRight className="h-3 w-3" />
-          <Link href="/collections" className="hover:text-ink">Collections</Link>
-        </nav>
-        <h1 className="heading-display text-3xl font-semibold text-ink sm:text-4xl">
-          {collection.title}
-        </h1>
-        {collection.descriptionHtml && (
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-bark">
-            {stripHtml(collection.descriptionHtml)}
-          </p>
-        )}
+      <div className="relative z-20 -mt-16 sm:-mt-20 md:-mt-24">
+        {/* The melt is only ~50% opaque this high up, so the breadcrumb and
+            title were landing on whatever the banner happened to be — pale
+            fabric washed the brown text out, dark fabric swallowed it. This
+            carries the ivory the rest of the way to solid behind the copy
+            only, leaving the banner above it untouched. */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 -top-6 bottom-0 bg-gradient-to-b from-transparent via-ivory/90 to-ivory"
+        />
+        <div className="container-site relative">
+          <nav aria-label="Breadcrumb" className="mb-2 flex items-center gap-1 text-xs text-umber">
+            <Link href="/" className="hover:text-ink">Home</Link>
+            <ChevronRight className="h-3 w-3" />
+            <Link href="/collections" className="hover:text-ink">Collections</Link>
+          </nav>
+          <h1 className="heading-display text-3xl font-semibold text-ink sm:text-4xl">
+            {collection.title}
+          </h1>
+          {collection.descriptionHtml && (
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-bark">
+              {stripHtml(collection.descriptionHtml)}
+            </p>
+          )}
+        </div>
       </div>
 
       <section className="container-site py-8">

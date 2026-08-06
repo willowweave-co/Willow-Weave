@@ -21,6 +21,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { createSupabaseBrowser } from "@/lib/supabase/client";
 
 const LINKS = [
@@ -104,7 +105,7 @@ export function AdminNav({
           <button
             onClick={() => setOpen(false)}
             aria-label="Close menu"
-            className="rounded-full p-1.5 text-bark hover:bg-linen"
+            className="focus-ring tap-44 rounded-full p-1.5 text-bark hover:bg-linen"
           >
             <X className="h-5 w-5" />
           </button>
@@ -137,7 +138,7 @@ export function AdminNav({
       <button
         onClick={() => setOpen(true)}
         aria-label="Open admin menu"
-        className="rounded-full p-2 text-bark hover:bg-linen"
+        className="focus-ring tap-44 rounded-full p-2 text-bark hover:bg-linen"
       >
         <Menu className="h-5 w-5" />
       </button>
@@ -148,16 +149,22 @@ export function AdminNav({
 
 export function AdminSignOut() {
   const router = useRouter();
+  const confirm = useConfirm();
   return (
     <button
       onClick={async () => {
         // one accidental click shouldn't end the session
-        if (!confirm("Sign out of the dashboard?")) return;
+        const ok = await confirm({
+          title: "Sign out of the dashboard?",
+          body: "You'll need your password and a fresh email code to get back in.",
+          confirmLabel: "Sign out",
+        });
+        if (!ok) return;
         await createSupabaseBrowser().auth.signOut();
         router.push("/admin/login");
         router.refresh();
       }}
-      className="flex items-center gap-1 text-xs text-umber transition-colors hover:text-madder"
+      className="focus-ring tap-tall flex items-center gap-1 rounded text-xs text-umber transition-colors hover:text-madder"
     >
       <LogOut className="h-3 w-3" /> Sign out
     </button>

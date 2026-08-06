@@ -77,7 +77,7 @@ export async function Footer() {
               alt=""
               width={48}
               height={48}
-              className="h-12 w-12 object-contain"
+              className="logo-shadow h-12 w-12 object-contain"
             />
             <span className="heading-display text-xl font-semibold text-ink">Willow Weave</span>
           </Link>

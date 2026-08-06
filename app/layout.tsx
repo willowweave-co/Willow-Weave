@@ -3,6 +3,7 @@ import { Fraunces, Jost } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/lib/cart/cart-context";
 import { ToastProvider } from "@/components/ui/toast";
+import { ConfirmProvider } from "@/components/ui/confirm-dialog";
 import { CurrencyProvider } from "@/components/store/currency-context";
 import { getRates } from "@/lib/currency-server";
 
@@ -41,9 +42,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="en" className={`${fraunces.variable} ${jost.variable}`}>
       <body>
         <ToastProvider>
-          <CurrencyProvider rates={rates}>
-            <CartProvider>{children}</CartProvider>
-          </CurrencyProvider>
+          <ConfirmProvider>
+            <CurrencyProvider rates={rates}>
+              <CartProvider>{children}</CartProvider>
+            </CurrencyProvider>
+          </ConfirmProvider>
         </ToastProvider>
       </body>
     </html>

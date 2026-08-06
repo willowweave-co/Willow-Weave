@@ -9,8 +9,12 @@ import { cn } from "@/lib/utils";
  * Quick-add on product cards: "Add to cart" appears on hover (always visible
  * on touch screens), then turns into a − qty + stepper once the item is in
  * the cart. Adds the first in-stock variant; sizes can be changed in the cart
- * or on the product page. Lives inside the card's <Link>, so every handler
- * must stop the navigation.
+ * or on the product page.
+ *
+ * No longer nested inside the card's <Link> — it now sits at z-10, above the
+ * anchor's ::before overlay — but the handlers still stop the event: the
+ * overlay is a sibling, and swallowing the click here keeps a tap on the
+ * pill's own padding from falling through to navigation.
  */
 export function CardAddButton({ item }: { item: Omit<CartItem, "quantity"> }) {
   const { items, addItem, updateQuantity, hydrated } = useCart();
@@ -42,7 +46,7 @@ export function CardAddButton({ item }: { item: Omit<CartItem, "quantity"> }) {
             stop(e);
             addItem(item, 1, { open: false });
           }}
-          className="flex w-full items-center justify-center gap-1.5 rounded-full bg-ivory/95 py-2 text-xs font-semibold text-ink shadow-md shadow-ink/10 backdrop-blur-sm transition-colors hover:bg-gold"
+          className="focus-ring flex w-full items-center justify-center gap-1.5 rounded-full bg-ivory/95 py-2 text-xs font-semibold text-ink shadow-md shadow-ink/10 backdrop-blur-sm transition-colors hover:bg-gold"
         >
           <ShoppingBag className="h-3.5 w-3.5" /> Add to cart
         </button>
@@ -55,7 +59,7 @@ export function CardAddButton({ item }: { item: Omit<CartItem, "quantity"> }) {
               stop(e);
               updateQuantity(item.variantId, qty - 1);
             }}
-            className="rounded-full p-2 text-bark transition-colors hover:text-madder"
+            className="focus-ring rounded-full p-2 text-bark transition-colors hover:text-madder"
           >
             <Minus className="h-3.5 w-3.5" />
           </button>
@@ -70,7 +74,7 @@ export function CardAddButton({ item }: { item: Omit<CartItem, "quantity"> }) {
               stop(e);
               updateQuantity(item.variantId, qty + 1);
             }}
-            className="rounded-full p-2 text-bark transition-colors hover:text-moss disabled:opacity-30"
+            className="focus-ring rounded-full p-2 text-bark transition-colors hover:text-moss disabled:opacity-30"
           >
             <Plus className="h-3.5 w-3.5" />
           </button>

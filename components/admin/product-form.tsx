@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Input, Label, Select, Checkbox, FieldError } from "@/components/ui/fields";
 import { RichTextEditor } from "@/components/ui/rich-text";
 import { useToast } from "@/components/ui/toast";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { slugify, cn, focalPosition } from "@/lib/utils";
 
 interface Props {
@@ -48,6 +49,7 @@ export function ProductForm({
 }: Props) {
   const router = useRouter();
   const { toast } = useToast();
+  const confirm = useConfirm();
   const [pending, startTransition] = useTransition();
   const dragFrom = useRef<number | null>(null);
 
@@ -166,8 +168,15 @@ export function ProductForm({
     });
   };
 
-  const remove = () => {
-    if (!confirm(`Delete “${title}”? This can't be undone.`)) return;
+  const remove = async () => {
+    const ok = await confirm({
+      title: `Delete “${title}”?`,
+      body: "The product, its variants and its stock levels are removed from the store. This can't be undone.",
+      confirmLabel: "Delete product",
+      danger: true,
+      typeToConfirm: title,
+    });
+    if (!ok) return;
     startTransition(async () => {
       const res = await deleteProductAction(initial.id);
       if (res.ok) {

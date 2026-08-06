@@ -8,6 +8,7 @@ import { saveSizeChartAction, deleteSizeChartAction } from "@/app/actions/admin"
 import { Button } from "@/components/ui/button";
 import { Input, Label, Textarea } from "@/components/ui/fields";
 import { useToast } from "@/components/ui/toast";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { cn } from "@/lib/utils";
 
 function blank(): SizeChart {
@@ -24,6 +25,7 @@ function blank(): SizeChart {
 export function SizeChartsManager({ charts }: { charts: SizeChart[] }) {
   const router = useRouter();
   const { toast } = useToast();
+  const confirm = useConfirm();
   const [pending, startTransition] = useTransition();
   const [selectedId, setSelectedId] = useState<string | null>(charts[0]?.id ?? null);
   const [draft, setDraft] = useState<SizeChart | null>(
@@ -90,9 +92,15 @@ export function SizeChartsManager({ charts }: { charts: SizeChart[] }) {
     });
   };
 
-  const remove = () => {
+  const remove = async () => {
     if (!draft?.id) return;
-    if (!confirm(`Delete “${draft.name}”? Products pointing to it fall back to no chart.`)) return;
+    const ok = await confirm({
+      title: `Delete “${draft.name}”?`,
+      body: "Products pointing to it fall back to no chart.",
+      confirmLabel: "Delete chart",
+      danger: true,
+    });
+    if (!ok) return;
     startTransition(async () => {
       const res = await deleteSizeChartAction(draft.id);
       if (res.ok) {

@@ -44,10 +44,10 @@ function CollectionCard({ c }: { c: Collection }) {
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-ink/55 via-transparent to-transparent" />
         <div className="absolute right-3 bottom-3 left-3">
-          <h3 className="heading-display text-[1.05rem] leading-tight font-semibold text-ivory">
+          <h3 className="heading-display on-image text-[1.05rem] leading-tight font-semibold text-ivory">
             {c.title}
           </h3>
-          <p className="mt-0.5 text-xs text-ivory/75">
+          <p className="on-image mt-0.5 text-xs text-ivory/90">
             {c.productIds.length} {c.productIds.length === 1 ? "piece" : "pieces"}
           </p>
         </div>

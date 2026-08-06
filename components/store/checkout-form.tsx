@@ -18,6 +18,21 @@ import {
   type CheckoutResult,
 } from "@/app/actions/checkout";
 
+const DRAFT_KEY = "ww:checkout-draft";
+
+interface CheckoutDraft {
+  form: {
+    customerName: string;
+    phone: string;
+    email: string;
+    address: string;
+    city: string;
+    notes: string;
+  };
+  country: string;
+  payment: PaymentMethod;
+}
+
 export function CheckoutForm({
   shippingFee,
   freeShippingThreshold,
@@ -60,6 +75,49 @@ export function CheckoutForm({
   const [formError, setFormError] = useState<string | null>(null);
   const [discount, setDiscount] = useState<{ code: string; amount: number } | null>(null);
 
+  // ── Draft recovery ──────────────────────────────────────────────────────
+  // Most of our traffic is phones, where a WhatsApp notification mid-checkout
+  // is routine. All of this lived in useState, so coming back to a reloaded
+  // tab meant re-typing a full name, phone and address — the single most
+  // expensive place in the store to lose someone.
+  //
+  // sessionStorage, deliberately, NOT localStorage: this is a customer's real
+  // name, phone number and home address. Session scope survives a reload, an
+  // app switch and an OS tab eviction — everything we actually need — while
+  // still clearing when the tab closes, so it can't sit on a shared or family
+  // phone indefinitely.
+  const [restored, setRestored] = useState(false);
+
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(DRAFT_KEY);
+      if (raw) {
+        const draft = JSON.parse(raw) as Partial<CheckoutDraft>;
+        if (draft.form) setForm((f) => ({ ...f, ...draft.form }));
+        if (typeof draft.country === "string") setCountry(draft.country);
+        // only honour a saved "bank" if the owner still has transfer enabled,
+        // otherwise the selection points at an option that isn't rendered
+        if (draft.payment === "bank" && bank) setPayment("bank");
+      }
+    } catch {
+      // private mode, a full quota or a corrupt entry must never be the
+      // reason someone can't check out — fall through to a blank form
+    }
+    setRestored(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Gated on `restored` so the first render's empty state can't overwrite
+  // the very draft we're about to read back.
+  useEffect(() => {
+    if (!restored) return;
+    try {
+      sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ form, country, payment }));
+    } catch {
+      // ignore — persistence is a convenience, never a requirement
+    }
+  }, [restored, form, country, payment]);
+
   // re-validate the code carried over from the cart page
   useEffect(() => {
     if (!initialDiscountCode || !hydrated || subtotal <= 0) return;
@@ -99,10 +157,23 @@ export function CheckoutForm({
       });
       if (result.ok && result.orderNumber) {
         clear();
+        // the order exists now; keeping the address around serves nobody
+        try {
+          sessionStorage.removeItem(DRAFT_KEY);
+        } catch {
+          // nothing to do — the entry expires with the tab regardless
+        }
         router.push(`/order-confirmed/${encodeURIComponent(result.orderNumber)}`);
       } else {
         setFieldErrors(result.fieldErrors ?? {});
-        setFormError(result.error ?? "Something went wrong.");
+        // The old fallback ("Something went wrong.") left the one question
+        // that actually matters unanswered — was I charged / did it go
+        // through? Nothing is charged on COD and the order isn't created
+        // unless the action succeeds, so say that plainly.
+        setFormError(
+          result.error ??
+            "We couldn't place your order just now. Nothing has been ordered and you haven't paid anything — your details are still filled in below, so please try again."
+        );
         window.scrollTo({ top: 0, behavior: "smooth" });
       }
     });
@@ -268,7 +339,7 @@ export function CheckoutForm({
                 type="button"
                 onClick={() => setPayment("cod")}
                 className={cn(
-                  "flex w-full items-center gap-3 rounded-xl border-2 px-4 py-3.5 text-left transition-colors",
+                  "focus-ring flex w-full items-center gap-3 rounded-xl border-2 px-4 py-3.5 text-left transition-colors",
                   payment === "cod"
                     ? "border-walnut bg-parchment/70"
                     : "border-line bg-white/40 hover:border-walnut/40"
@@ -288,7 +359,7 @@ export function CheckoutForm({
                   type="button"
                   onClick={() => setPayment("bank")}
                   className={cn(
-                    "flex w-full items-center gap-3 rounded-xl border-2 px-4 py-3.5 text-left transition-colors",
+                    "focus-ring flex w-full items-center gap-3 rounded-xl border-2 px-4 py-3.5 text-left transition-colors",
                     payment === "bank"
                       ? "border-walnut bg-parchment/70"
                       : "border-line bg-white/40 hover:border-walnut/40"

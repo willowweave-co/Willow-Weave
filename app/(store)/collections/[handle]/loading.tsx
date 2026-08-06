@@ -4,8 +4,10 @@ import { Skeleton, ProductGridSkeleton } from "@/components/ui/skeleton";
 export default function CollectionLoading() {
   return (
     <div>
-      {/* full-bleed banner placeholder, pulled up behind the header like the real one */}
-      <div className="-mt-14 h-64 w-full sm:h-72 md:-mt-16 md:h-80">
+      {/* full-bleed banner placeholder, pulled up behind the header like the
+          real one — these offsets track the header's height, so they move
+          with it (see components/store/header.tsx) */}
+      <div className="-mt-16 h-64 w-full sm:h-72 md:-mt-20 md:h-80">
         <Skeleton className="h-full w-full rounded-none" />
       </div>
 

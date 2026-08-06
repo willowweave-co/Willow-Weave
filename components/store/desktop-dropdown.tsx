@@ -41,7 +41,7 @@ export function DesktopDropdown({
       <button
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}
-        className="heading-display flex items-center gap-1.5 px-3.5 py-2 text-base font-medium text-bark transition-colors hover:text-walnut"
+        className="heading-display flex items-center gap-1.5 px-3.5 py-2 text-[1.0625rem] font-medium text-bark transition-colors hover:text-walnut"
       >
         {label}
         <ChevronDown

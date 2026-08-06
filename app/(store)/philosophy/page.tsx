@@ -26,7 +26,7 @@ export default async function PhilosophyPage() {
             alt="The Willow Weave logo — a willow tree with deep roots"
             width={512}
             height={512}
-            className="h-auto w-full object-contain"
+            className="logo-shadow h-auto w-full object-contain"
             priority
           />
         </div>

@@ -36,11 +36,14 @@ export function ProductCard({
   const quickAdd = product.variants.find((v) => v.stock > 0);
 
   return (
-    // default prefetch on purpose: product pages are prerendered (SSG), so
-    // cards fetch them as they scroll into view and a tap opens instantly —
-    // prefetch={false} here made every click wait a full round trip with no
-    // skeleton, which read as "the site is broken"
-    <Link href={`/products/${product.handle}`} className={cn("group block", className)}>
+    // The card is a <div>, not a <Link>: the quick-add button lives inside it,
+    // and an <a> may not contain a <button> — browsers and screen readers each
+    // recover from that differently, so keyboard traversal was unpredictable.
+    // The anchor now wraps only the title (a far better accessible name than
+    // the whole card's contents) and stretches over the card via a ::before
+    // overlay, so the entire card stays clickable exactly as before. Quick-add
+    // sits at z-10, above that overlay, and keeps working.
+    <div className={cn("group relative", className)}>
       <div className="relative aspect-[4/5] overflow-hidden rounded-xl bg-linen">
         {img1 ? (
           <>
@@ -68,7 +71,7 @@ export function ProductCard({
             )}
           </>
         ) : (
-          <div className="flex h-full items-center justify-center text-umber/40">No image</div>
+          <div className="flex h-full items-center justify-center text-umber">No image</div>
         )}
         <div className="absolute top-3 left-3 flex flex-col gap-1.5">
           {pct != null && <Badge tone="sale">−{pct}%</Badge>}
@@ -102,12 +105,27 @@ export function ProductCard({
             {product.fabrics.length > 0 && ` · ${product.fabrics[0]}`}
           </p>
         )}
-        <h3 className="line-clamp-2 text-sm leading-snug font-medium text-ink group-hover:underline group-hover:underline-offset-4">
-          {product.title}
-        </h3>
+        {/* The anchor wraps the <h3> rather than sitting inside it: line-clamp
+            puts `overflow: hidden` on the heading, which would clip the
+            ::before overlay down to the title's own box and stop the image
+            from being clickable. `block` so `space-y-1` still applies its
+            margin — margin-top is ignored on an inline box.
+
+            default prefetch on purpose: product pages are prerendered (SSG),
+            so cards fetch them as they scroll into view and a tap opens
+            instantly — prefetch={false} here made every click wait a full
+            round trip with no skeleton, which read as "the site is broken" */}
+        <Link
+          href={`/products/${product.handle}`}
+          className="focus-ring block rounded-sm before:absolute before:inset-0 before:content-['']"
+        >
+          <h3 className="line-clamp-2 text-sm leading-snug font-medium text-ink group-hover:underline group-hover:underline-offset-4">
+            {product.title}
+          </h3>
+        </Link>
         <Price price={min} compareAtPrice={compareAt} prefix={max > min ? "from" : undefined} size="sm" />
       </div>
-    </Link>
+    </div>
   );
 }
 

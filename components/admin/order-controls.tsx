@@ -10,6 +10,7 @@ import {
   deleteOrderAction,
 } from "@/app/actions/admin";
 import { useToast } from "@/components/ui/toast";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/fields";
 import { cn } from "@/lib/utils";
@@ -32,15 +33,20 @@ export function OrderStatusControls({
   const [pending, startTransition] = useTransition();
   const [busy, setBusy] = useState<OrderStatus | null>(null);
   const { toast } = useToast();
+  const confirm = useConfirm();
   const router = useRouter();
 
-  const setStatus = (status: OrderStatus) => {
+  const setStatus = async (status: OrderStatus) => {
     if (status === current) return;
-    if (
-      status === "cancelled" &&
-      !confirm("Cancel this order? Its stock will be returned to inventory.")
-    ) {
-      return;
+    if (status === "cancelled") {
+      const ok = await confirm({
+        title: "Cancel this order?",
+        body: "Its stock goes back into inventory and the customer is no longer expecting a delivery.",
+        confirmLabel: "Cancel order",
+        cancelLabel: "Keep it",
+        danger: true,
+      });
+      if (!ok) return;
     }
     setBusy(status);
     startTransition(async () => {
@@ -92,15 +98,27 @@ export function DeleteOrderButton({
 }) {
   const [pending, startTransition] = useTransition();
   const { toast } = useToast();
+  const confirm = useConfirm();
   const router = useRouter();
 
-  const remove = () => {
-    if (
-      !confirm(
-        `Delete ${orderNumber} permanently?\n\nUse this for fake or bogus orders. The order disappears from every list and its stock is NOT returned — cancel the order first if you want the stock back. This can't be undone.`
-      )
-    )
-      return;
+  const remove = async () => {
+    const ok = await confirm({
+      title: `Delete ${orderNumber} permanently?`,
+      body: (
+        <>
+          <p>Use this for fake or bogus orders only.</p>
+          <p className="mt-2">
+            The order disappears from every list and its stock is{" "}
+            <strong className="font-semibold text-ink">not</strong> returned — cancel the order
+            first if you want the stock back. This can&rsquo;t be undone.
+          </p>
+        </>
+      ),
+      confirmLabel: "Delete order",
+      danger: true,
+      typeToConfirm: orderNumber,
+    });
+    if (!ok) return;
     startTransition(async () => {
       const res = await deleteOrderAction(orderId);
       if (res.ok) {

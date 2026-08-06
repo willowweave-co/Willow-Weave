@@ -14,8 +14,10 @@ import { cn } from "@/lib/utils";
 function Section({ label, links }: { label: string; links: NavLink[] }) {
   if (!links.length) return null;
   return (
-    <details className="group border-b border-line">
-      <summary className="flex cursor-pointer list-none items-center justify-between py-4 text-[0.95rem] font-medium text-ink select-none [&::-webkit-details-marker]:hidden">
+    // details-animated: the header's desktop shelves animate open, but these
+    // snapped. Same disclosure, same expectation.
+    <details className="details-animated group border-b border-line">
+      <summary className="focus-ring flex cursor-pointer list-none items-center justify-between py-4 text-[0.95rem] font-medium text-ink select-none [&::-webkit-details-marker]:hidden">
         {label}
         {/* -m/p: grow the chevron's touch area without shifting the layout */}
         <ChevronDown className="-m-2 box-content h-4 w-4 p-2 text-umber transition-transform group-open:rotate-180" />
@@ -83,17 +85,19 @@ export function MobileMenu({ nav }: { nav: NavData }) {
         )}
       >
         <div className="flex items-center justify-between border-b border-line px-5 py-4">
+          {/* h-16 to match the header's mark on a phone — at h-11 it read as
+              a different, smaller brand than the one just behind the drawer */}
           <Image
             src={THEME_IMAGES.logo}
             alt="Willow Weave"
-            width={44}
-            height={44}
-            className="h-11 w-11 object-contain"
+            width={64}
+            height={64}
+            className="logo-shadow h-16 w-16 object-contain"
           />
           <button
             onClick={() => setOpen(false)}
             aria-label="Close menu"
-            className="rounded-full p-2.5 text-bark hover:bg-linen"
+            className="focus-ring tap-44 rounded-full p-2.5 text-bark hover:bg-linen"
           >
             <X className="h-6 w-6" />
           </button>
