@@ -7,7 +7,7 @@ export default function CollectionLoading() {
       {/* full-bleed banner placeholder, pulled up behind the header like the
           real one — these offsets track the header's height, so they move
           with it (see components/store/header.tsx) */}
-      <div className="-mt-16 h-64 w-full sm:h-72 md:-mt-20 md:h-80">
+      <div className="-mt-16 h-[16.5rem] w-full sm:h-[18.5rem] md:-mt-20 md:h-[21rem]">
         <Skeleton className="h-full w-full rounded-none" />
       </div>
 

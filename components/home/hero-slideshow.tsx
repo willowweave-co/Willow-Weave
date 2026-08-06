@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { HeroSlide } from "@/lib/types";
 import { BottomMelt } from "@/components/store/bottom-melt";
 import { cn, focalCrop } from "@/lib/utils";
@@ -219,14 +219,14 @@ export function HeroSlideshow({ slides }: { slides: HeroSlide[] }) {
           <button
             onClick={() => goTo(index - 1)}
             aria-label="Previous slide"
-            className="focus-ring absolute top-[calc(50%+2rem)] left-2 z-20 hidden -translate-y-1/2 rounded-full p-2 text-ivory drop-shadow-[0_1px_10px_rgba(41,33,26,0.8)] transition-transform hover:scale-110 md:flex lg:left-4"
+            className="focus-ring absolute top-[calc(50%+2rem)] left-2 z-20 hidden -translate-y-1/2 rounded-full p-2 text-ivory icon-on-image transition-transform hover:scale-110 md:flex lg:left-4"
           >
             <ChevronLeft className="h-8 w-8" />
           </button>
           <button
             onClick={() => goTo(index + 1)}
             aria-label="Next slide"
-            className="focus-ring absolute top-[calc(50%+2rem)] right-2 z-20 hidden -translate-y-1/2 rounded-full p-2 text-ivory drop-shadow-[0_1px_10px_rgba(41,33,26,0.8)] transition-transform hover:scale-110 md:flex lg:right-4"
+            className="focus-ring absolute top-[calc(50%+2rem)] right-2 z-20 hidden -translate-y-1/2 rounded-full p-2 text-ivory icon-on-image transition-transform hover:scale-110 md:flex lg:right-4"
           >
             <ChevronRight className="h-8 w-8" />
           </button>
@@ -236,12 +236,25 @@ export function HeroSlideshow({ slides }: { slides: HeroSlide[] }) {
       {/* dots + the pause control, on one row so they read as one control set */}
       {count > 1 && (
         <div className="absolute inset-x-0 bottom-6 z-20 flex items-center justify-center gap-2 md:bottom-7">
+          {/* Drawn rather than iconed, so it belongs to the dots: same 8px
+              height, same ink/25 → ink/45 colour, same filled-and-rounded
+              language. A lucide glyph here read as a stray UI control
+              borrowed from another site. */}
           <button
             onClick={() => setStopped((s) => !s)}
             aria-label={stopped ? "Resume the slideshow" : "Pause the slideshow"}
-            className="focus-ring tap-tall mr-1 rounded-full p-1 text-ink/55 transition-colors hover:text-ink"
+            className="focus-ring tap-tall mr-1.5 flex items-center text-ink/25 transition-colors hover:text-ink/45"
           >
-            {stopped ? <Play className="h-3 w-3" /> : <Pause className="h-3 w-3" />}
+            {stopped ? (
+              <svg viewBox="0 0 8 8" className="h-2 w-2" aria-hidden>
+                <path d="M1 0.4 L7.4 4 L1 7.6 Z" fill="currentColor" />
+              </svg>
+            ) : (
+              <svg viewBox="0 0 8 8" className="h-2 w-2" aria-hidden>
+                <rect x="0.5" y="0" width="2.6" height="8" rx="1.3" fill="currentColor" />
+                <rect x="4.9" y="0" width="2.6" height="8" rx="1.3" fill="currentColor" />
+              </svg>
+            )}
           </button>
           {slides.map((s, i) => (
             <button

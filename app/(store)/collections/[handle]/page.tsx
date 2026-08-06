@@ -48,10 +48,16 @@ export default async function CollectionPage({ params, searchParams }: Props) {
 
   return (
     <div>
-      {/* banner — full-bleed like the homepage hero: runs under the
+      {/* Banner — full-bleed like the homepage hero: runs under the
           translucent header and melts into the page. Deliberately shorter
-          so the products keep the focus. */}
-      <section className="relative -mt-16 h-64 w-full overflow-hidden sm:h-72 md:-mt-20 md:h-80">
+          so the products keep the focus.
+
+          The heights carry the header's height inside them. Visible image =
+          height − header, and the melt eats 192px of that from the bottom,
+          so on desktop 336 − 80 − 192 leaves a 64px band of actual, crisp
+          photograph. Grow the header and these have to grow with it or that
+          band closes up and the banner reads as pure haze. */}
+      <section className="relative -mt-16 h-[16.5rem] w-full overflow-hidden sm:h-[18.5rem] md:-mt-20 md:h-[21rem]">
         {collection.image ? (
           <Image
             src={collection.image}
@@ -76,14 +82,16 @@ export default async function CollectionPage({ params, searchParams }: Props) {
       {/* title block sits in the melt zone below the image — in normal flow,
           so it can never cover the banner or get clipped on small screens */}
       <div className="relative z-20 -mt-16 sm:-mt-20 md:-mt-24">
-        {/* The melt is only ~50% opaque this high up, so the breadcrumb and
+        {/* The melt is only ~30% opaque this high up, so the breadcrumb and
             title were landing on whatever the banner happened to be — pale
             fabric washed the brown text out, dark fabric swallowed it. This
-            carries the ivory the rest of the way to solid behind the copy
-            only, leaving the banner above it untouched. */}
+            carries the ivory the rest of the way to solid behind the copy.
+            The ramp is long and starts weak on purpose: a short, strong one
+            reads as a hard horizontal edge sitting on top of the melt
+            instead of continuing it. */}
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-x-0 -top-6 bottom-0 bg-gradient-to-b from-transparent via-ivory/90 to-ivory"
+          className="pointer-events-none absolute inset-x-0 -top-14 bottom-0 bg-gradient-to-b from-transparent via-ivory/75 to-ivory"
         />
         <div className="container-site relative">
           <nav aria-label="Breadcrumb" className="mb-2 flex items-center gap-1 text-xs text-umber">
