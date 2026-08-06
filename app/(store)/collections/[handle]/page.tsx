@@ -79,35 +79,31 @@ export default async function CollectionPage({ params, searchParams }: Props) {
         <BottomMelt className="h-40 md:h-48" />
       </section>
 
-      {/* title block sits in the melt zone below the image — in normal flow,
-          so it can never cover the banner or get clipped on small screens */}
-      <div className="relative z-20 -mt-16 sm:-mt-20 md:-mt-24">
-        {/* The melt is only ~30% opaque this high up, so the breadcrumb and
-            title were landing on whatever the banner happened to be — pale
-            fabric washed the brown text out, dark fabric swallowed it. This
-            carries the ivory the rest of the way to solid behind the copy.
-            The ramp is long and starts weak on purpose: a short, strong one
-            reads as a hard horizontal edge sitting on top of the melt
-            instead of continuing it. */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-x-0 -top-14 bottom-0 bg-gradient-to-b from-transparent via-ivory/75 to-ivory"
-        />
-        <div className="container-site relative">
-          <nav aria-label="Breadcrumb" className="mb-2 flex items-center gap-1 text-xs text-umber">
-            <Link href="/" className="hover:text-ink">Home</Link>
-            <ChevronRight className="h-3 w-3" />
-            <Link href="/collections" className="hover:text-ink">Collections</Link>
-          </nav>
-          <h1 className="heading-display text-3xl font-semibold text-ink sm:text-4xl">
-            {collection.title}
-          </h1>
-          {collection.descriptionHtml && (
-            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-bark">
-              {stripHtml(collection.descriptionHtml)}
-            </p>
-          )}
-        </div>
+      {/* Title block sits in the melt zone below the image — in normal flow,
+          so it can never cover the banner or get clipped on small screens.
+
+          The overlap is deliberately shallow. It used to reach 96px up,
+          where the melt's fade is only ~30% opaque, so the breadcrumb and
+          title landed on whatever the banner happened to be — pale fabric
+          washed the brown text out, dark fabric swallowed it. Painting a
+          second ivory gradient over the melt to compensate just drew a
+          visible band across the banner; the melt is a carefully eased ramp
+          and anything layered on top of it reads as a seam. Sitting the copy
+          at ~85-95% instead lets the melt do the whole job on its own. */}
+      <div className="container-site relative z-20 -mt-4 sm:-mt-6 md:-mt-8">
+        <nav aria-label="Breadcrumb" className="mb-2 flex items-center gap-1 text-xs text-umber">
+          <Link href="/" className="hover:text-ink">Home</Link>
+          <ChevronRight className="h-3 w-3" />
+          <Link href="/collections" className="hover:text-ink">Collections</Link>
+        </nav>
+        <h1 className="heading-display text-3xl font-semibold text-ink sm:text-4xl">
+          {collection.title}
+        </h1>
+        {collection.descriptionHtml && (
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-bark">
+            {stripHtml(collection.descriptionHtml)}
+          </p>
+        )}
       </div>
 
       <section className="container-site py-8">

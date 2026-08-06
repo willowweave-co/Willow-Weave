@@ -236,23 +236,33 @@ export function HeroSlideshow({ slides }: { slides: HeroSlide[] }) {
       {/* dots + the pause control, on one row so they read as one control set */}
       {count > 1 && (
         <div className="absolute inset-x-0 bottom-6 z-20 flex items-center justify-center gap-2 md:bottom-7">
-          {/* Drawn rather than iconed, so it belongs to the dots: same 8px
-              height, same ink/25 → ink/45 colour, same filled-and-rounded
-              language. A lucide glyph here read as a stray UI control
-              borrowed from another site. */}
+          {/* Drawn rather than iconed, so it belongs to the dots it sits
+              with: same ink/25 → ink/45 colour, same filled, fully-rounded
+              language. Sized 10px against the dots' 8px on purpose — a
+              circle is solid where a triangle and a pair of bars are mostly
+              negative space, so matching the raw number made it read as the
+              smaller element. The play triangle is rounded by stroking its
+              own path with a round line-join; sharp corners were the other
+              half of why it looked borrowed. */}
           <button
             onClick={() => setStopped((s) => !s)}
             aria-label={stopped ? "Resume the slideshow" : "Pause the slideshow"}
             className="focus-ring tap-tall mr-1.5 flex items-center text-ink/25 transition-colors hover:text-ink/45"
           >
             {stopped ? (
-              <svg viewBox="0 0 8 8" className="h-2 w-2" aria-hidden>
-                <path d="M1 0.4 L7.4 4 L1 7.6 Z" fill="currentColor" />
+              <svg viewBox="0 0 10 10" className="h-2.5 w-2.5" aria-hidden>
+                <path
+                  d="M2.6 2.5 L7.4 5 L2.6 7.5 Z"
+                  fill="currentColor"
+                  stroke="currentColor"
+                  strokeWidth="2.4"
+                  strokeLinejoin="round"
+                />
               </svg>
             ) : (
-              <svg viewBox="0 0 8 8" className="h-2 w-2" aria-hidden>
-                <rect x="0.5" y="0" width="2.6" height="8" rx="1.3" fill="currentColor" />
-                <rect x="4.9" y="0" width="2.6" height="8" rx="1.3" fill="currentColor" />
+              <svg viewBox="0 0 10 10" className="h-2.5 w-2.5" aria-hidden>
+                <rect x="0.6" y="0" width="3.4" height="10" rx="1.7" fill="currentColor" />
+                <rect x="6" y="0" width="3.4" height="10" rx="1.7" fill="currentColor" />
               </svg>
             )}
           </button>
