@@ -42,7 +42,20 @@ npm run dev        →  http://localhost:3000        (the store)
    npm run verify     ← accuracy report: must print "PERFECT MATCH"
    ```
 6. Restart `npm run dev` — the site now serves from Supabase and
-   `/admin` requires your login.
+   `/admin` requires your login: **password, then a 6-digit code emailed to
+   you** (two-factor). The password is checked on the server and no session is
+   issued until the code is confirmed, so a stolen password on its own gets
+   nobody in.
+
+   > Two things this depends on, both of which fail closed rather than letting
+   > a password through alone:
+   > - `0013_admin_login_2fa.sql` must be applied (it's in the migration run
+   >   above). Until then sign-in stops at *"two-step sign-in isn't ready on
+   >   this deployment"*.
+   > - `RESEND_API_KEY` must be set and working — see §3.
+   >
+   > In local dev with no `RESEND_API_KEY`, the code is printed to the terminal
+   > instead, so the flow stays testable.
 
 7. **Turn off public sign-ups** (do this before going live).
    **Authentication → Sign In / Providers** → on the page itself (NOT inside
@@ -106,9 +119,19 @@ npm run dev        →  http://localhost:3000        (the store)
 > product edits and settings changes you've made since. Once you start
 > managing the store in the dashboard, don't re-run the seed.
 
-## 3 · Resend (order emails) — recommended
+## 3 · Resend (order emails + dashboard sign-in codes) — required for production
 
 1. Free account at [resend.com](https://resend.com) → **API Keys** → create one → `RESEND_API_KEY` in `.env.local`.
+
+   > 🔑 **This is a login dependency, not just an email one.** Signing in to
+   > `/admin` needs a 6-digit code delivered by Resend (see §1 step 6). With no
+   > key — or during a Resend/DNS outage — sign-in fails closed and **nobody,
+   > including you, can reach the dashboard**. That is deliberate: the
+   > alternative is letting a stolen password straight in. If you're ever locked
+   > out because the domain's DNS is broken, temporarily set
+   > `EMAIL_FROM="Willow Weave <onboarding@resend.dev>"` in Vercel and redeploy —
+   > that delivers to the Resend account owner's inbox without needing your
+   > domain's records.
 2. Quick start: keep `EMAIL_FROM="Willow Weave <onboarding@resend.dev>"` —
    Resend then only delivers to **your own** inbox (owner notifications work;
    customer confirmations don't).
@@ -138,8 +161,15 @@ npm run dev        →  http://localhost:3000        (the store)
 Only when you're happy with the Vercel preview:
 
 1. Vercel project → **Settings → Domains** → add `willowweave.co` and `www.willowweave.co`.
-2. At your domain registrar, replace the Shopify DNS records with what Vercel
-   shows (an `A` record `76.76.21.21` for the apex + `CNAME` for `www`).
+2. At your domain registrar, replace the Shopify DNS records with **whatever
+   Vercel actually shows on that Domains page** — it is authoritative, differs
+   per project, and changes over time. What it showed for this project:
+   - apex `@` → **A** `216.198.79.1`
+   - `www` → **CNAME** `c7aee5ab327ab091.vercel-dns-017.com`
+
+   > Vercel's older generic values were `76.76.21.21` and `cname.vercel-dns.com`.
+   > They still appear in a lot of tutorials. Don't "correct" a working record
+   > back to them — copy what the Vercel dashboard displays.
 3. Wait for DNS to propagate (minutes to a few hours). Shopify keeps working
    until the switch completes — there is no downtime window.
 4. After a week of smooth sailing, cancel the Shopify subscription. 🎉
