@@ -64,7 +64,26 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
-export function AdminNav({ mobile }: { role: "owner" | "staff"; mobile?: boolean }) {
+export interface AdminNavAccount {
+  name: string;
+  email: string;
+  role: "owner" | "staff";
+  localMode: boolean;
+}
+
+export function AdminNav({
+  mobile,
+  account,
+}: {
+  role: "owner" | "staff";
+  mobile?: boolean;
+  /**
+   * Who's signed in. Only the mobile drawer needs it: the sidebar that carries
+   * this block on desktop is `hidden md:flex`, so without it there is no sign
+   * out — or any indication of which account you're in — on a phone.
+   */
+  account?: AdminNavAccount;
+}) {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -91,6 +110,24 @@ export function AdminNav({ mobile }: { role: "owner" | "staff"; mobile?: boolean
           </button>
         </div>
         <NavLinks onNavigate={() => setOpen(false)} />
+        {account && (
+          <div className="border-t border-line px-5 py-4">
+            <p className="truncate text-xs font-medium text-ink">{account.name}</p>
+            <p className="truncate text-[0.7rem] text-umber">
+              {account.email} · {account.role}
+            </p>
+            <div className="mt-2.5 flex items-center gap-3">
+              <Link
+                href="/"
+                onClick={() => setOpen(false)}
+                className="text-xs text-walnut hover:underline"
+              >
+                View store ↗
+              </Link>
+              {!account.localMode && <AdminSignOut />}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

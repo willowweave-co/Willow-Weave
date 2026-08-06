@@ -88,7 +88,16 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <Link href="/admin" className="heading-display font-semibold text-ink">
             WW Dashboard
           </Link>
-          <AdminNav role={user.role} mobile />
+          <AdminNav
+            role={user.role}
+            mobile
+            account={{
+              name: user.name,
+              email: user.email,
+              role: user.role,
+              localMode: user.localMode,
+            }}
+          />
         </div>
         <main className="p-4 sm:p-6 lg:p-8">{children}</main>
       </div>
