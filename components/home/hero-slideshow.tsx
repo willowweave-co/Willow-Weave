@@ -5,10 +5,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { HeroSlide } from "@/lib/types";
+import { DEFAULT_HERO_INTERVAL_MS } from "@/lib/data/hero-defaults";
 import { BottomMelt } from "@/components/store/bottom-melt";
 import { cn, focalCrop } from "@/lib/utils";
 
-const AUTOPLAY_MS = 6500;
 const SWIPE_PX = 45;
 
 /**
@@ -16,9 +16,21 @@ const SWIPE_PX = 45;
  * Crossfades between slides; the edges melt into the ivory page background
  * with a blur + colour-matched gradient instead of a hard border.
  */
-export function HeroSlideshow({ slides }: { slides: HeroSlide[] }) {
+export function HeroSlideshow({
+  slides,
+  intervalMs = DEFAULT_HERO_INTERVAL_MS,
+}: {
+  slides: HeroSlide[];
+  /** Set in Admin → Homepage → Hero. */
+  intervalMs?: number;
+}) {
   const [index, setIndex] = useState(0);
+  // `paused` is transient (hover, touch, focus). `stopped` is the visitor's
+  // explicit decision via the pause button and outlives any of those — WCAG
+  // 2.2.2 wants a real control, not just "it happens to pause while you
+  // hover", and a hover pause that silently resumes is worse than none.
   const [paused, setPaused] = useState(false);
+  const [stopped, setStopped] = useState(false);
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
   const touchX = useRef<number | null>(null);
   const count = slides.length;
@@ -31,13 +43,13 @@ export function HeroSlideshow({ slides }: { slides: HeroSlide[] }) {
   // Autoplay — recreated whenever the index changes, so manual navigation
   // naturally resets the timer. Respects reduced-motion and hidden tabs.
   useEffect(() => {
-    if (count < 2 || paused) return;
+    if (count < 2 || paused || stopped) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const t = setInterval(() => {
       if (!document.hidden) setIndex((i) => (i + 1) % count);
-    }, AUTOPLAY_MS);
+    }, intervalMs);
     return () => clearInterval(t);
-  }, [count, paused, index]);
+  }, [count, paused, stopped, index, intervalMs]);
 
   // Only the visible slide's video should play.
   useEffect(() => {
@@ -54,11 +66,22 @@ export function HeroSlideshow({ slides }: { slides: HeroSlide[] }) {
     <section
       aria-roledescription="carousel"
       aria-label="Featured collections and offers"
-      // pulled up behind the translucent sticky header (h-16 / md:h-[4.5rem])
-      // so the slide shows through it, as in the owner's mockup
-      className="group/hero relative -mt-14 h-[480px] w-full overflow-hidden md:-mt-16 md:h-[540px]"
+      // pulled up behind the translucent sticky header (h-16 / md:h-20) so
+      // the slide shows through it, as in the owner's mockup. These offsets
+      // must stay in step with the header's height.
+      className="group/hero relative -mt-16 h-[480px] w-full overflow-hidden md:-mt-20 md:h-[540px]"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
+      // Keyboard users got no equivalent of the hover pause: tabbing to the
+      // dots or the slide's own link left the carousel rotating, so the
+      // target moved out from under them mid-decision. Focus anywhere inside
+      // the hero now holds it still, and releases when focus leaves.
+      onFocusCapture={() => setPaused(true)}
+      onBlurCapture={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+          setPaused(false);
+        }
+      }}
       // a slide advancing mid-tap would swap the link under the finger —
       // freeze the rotation the instant any pointer touches the hero
       onPointerDown={() => setPaused(true)}
@@ -119,21 +142,32 @@ export function HeroSlideshow({ slides }: { slides: HeroSlide[] }) {
             {/* whole slide is clickable */}
             <Link href={s.href as never} aria-label={s.heading} className="absolute inset-0 z-[5]" />
 
-            {/* soft legibility wash behind the copy — kept gentle on purpose */}
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-ink/35 via-ink/10 to-transparent" />
+            {/* Legibility wash. Strengthened from ink/35 → ink/10: the copy
+                sits on whatever the merchandiser uploads, and on pale fabric
+                shots the old ramp left the eyebrow at roughly 1.7:1. The
+                weight is concentrated on the left third where the copy
+                actually lives, so the right side of the image — usually the
+                garment — stays as open as before. */}
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-ink/60 via-ink/25 to-transparent" />
 
             {/* copy — left-aligned, vertically centred in the visible band below the header */}
             <div className="pointer-events-none absolute inset-0 z-[6]">
-              <div className="container-site flex h-full items-center pt-14 md:pt-16">
+              <div className="container-site flex h-full items-center pt-16 md:pt-20">
                 {/* extra left padding on md–xl clears the edge arrows; at 2xl
                     the centred container's gutter already does */}
                 <div className="max-w-xl pb-16 md:pb-10 md:pl-10 lg:pl-12 2xl:pl-0">
+                  {/* gold-light + .on-image: plain `gold` cannot be made
+                      readable over arbitrary photography — even under a
+                      heavy scrim it tops out near 1.7:1 on a bright frame.
+                      The lighter champagne tone keeps the hue while
+                      carrying the luminance the job needs, and .on-image
+                      adds a tight halo that holds the glyph edges. */}
                   {s.eyebrow && (
-                    <p className="text-xs font-medium tracking-[0.28em] text-gold uppercase drop-shadow-[0_1px_10px_rgba(41,33,26,0.55)] md:text-sm">
+                    <p className="on-image text-xs font-medium tracking-[0.28em] text-gold-light uppercase md:text-sm">
                       {s.eyebrow}
                     </p>
                   )}
-                  <Heading className="heading-display mt-2 text-4xl font-semibold text-ivory drop-shadow-[0_2px_18px_rgba(41,33,26,0.5)] text-balance sm:text-5xl lg:text-6xl">
+                  <Heading className="heading-display on-image mt-2 text-4xl font-semibold text-ivory text-balance sm:text-5xl lg:text-6xl">
                     {s.heading}
                   </Heading>
                 </div>
@@ -192,31 +226,65 @@ export function HeroSlideshow({ slides }: { slides: HeroSlide[] }) {
           <button
             onClick={() => goTo(index - 1)}
             aria-label="Previous slide"
-            className="absolute top-[calc(50%+2rem)] left-2 z-20 hidden -translate-y-1/2 p-2 text-ivory drop-shadow-[0_1px_10px_rgba(41,33,26,0.8)] transition-transform hover:scale-110 md:flex lg:left-4"
+            className="focus-ring absolute top-[calc(50%+2rem)] left-2 z-20 hidden -translate-y-1/2 rounded-full p-2 text-ivory icon-on-image transition-transform hover:scale-110 md:flex lg:left-4"
           >
             <ChevronLeft className="h-8 w-8" />
           </button>
           <button
             onClick={() => goTo(index + 1)}
             aria-label="Next slide"
-            className="absolute top-[calc(50%+2rem)] right-2 z-20 hidden -translate-y-1/2 p-2 text-ivory drop-shadow-[0_1px_10px_rgba(41,33,26,0.8)] transition-transform hover:scale-110 md:flex lg:right-4"
+            className="focus-ring absolute top-[calc(50%+2rem)] right-2 z-20 hidden -translate-y-1/2 rounded-full p-2 text-ivory icon-on-image transition-transform hover:scale-110 md:flex lg:right-4"
           >
             <ChevronRight className="h-8 w-8" />
           </button>
         </>
       )}
 
-      {/* dots */}
+      {/* dots + the pause control, on one row so they read as one control set */}
       {count > 1 && (
-        <div className="absolute inset-x-0 bottom-6 z-20 flex justify-center gap-2 md:bottom-7">
+        <div className="absolute inset-x-0 bottom-6 z-20 flex items-center justify-center gap-2 md:bottom-7">
+          {/* Drawn rather than iconed, so it belongs to the dots it sits
+              with: same ink/25 → ink/45 colour, same filled, fully-rounded
+              language. Sized 10px against the dots' 8px on purpose — a
+              circle is solid where a triangle and a pair of bars are mostly
+              negative space, so matching the raw number made it read as the
+              smaller element. The play triangle is rounded by stroking its
+              own path with a round line-join; sharp corners were the other
+              half of why it looked borrowed. */}
+          <button
+            onClick={() => setStopped((s) => !s)}
+            aria-label={stopped ? "Resume the slideshow" : "Pause the slideshow"}
+            className="focus-ring tap-tall mr-1.5 flex items-center text-ink/25 transition-colors hover:text-ink/45"
+          >
+            {stopped ? (
+              <svg viewBox="0 0 10 10" className="h-2.5 w-2.5" aria-hidden>
+                <path
+                  d="M2.6 2.5 L7.4 5 L2.6 7.5 Z"
+                  fill="currentColor"
+                  stroke="currentColor"
+                  strokeWidth="2.4"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            ) : (
+              <svg viewBox="0 0 10 10" className="h-2.5 w-2.5" aria-hidden>
+                <rect x="0.6" y="0" width="3.4" height="10" rx="1.7" fill="currentColor" />
+                <rect x="6" y="0" width="3.4" height="10" rx="1.7" fill="currentColor" />
+              </svg>
+            )}
+          </button>
           {slides.map((s, i) => (
             <button
               key={s.id}
               onClick={() => goTo(i)}
               aria-label={`Go to slide ${i + 1}`}
               aria-current={i === index}
+              // tap-tall: the painted dot stays 8px, but the tappable area
+              // becomes 44px tall — these were the hardest thing on the page
+              // to hit with a thumb, and they are the only way to reach
+              // slides 2+ on a phone.
               className={cn(
-                "h-2 rounded-full transition-all duration-300",
+                "focus-ring tap-tall h-2 rounded-full transition-all duration-300",
                 i === index ? "w-7 bg-walnut" : "w-2 bg-ink/25 hover:bg-ink/45"
               )}
             />

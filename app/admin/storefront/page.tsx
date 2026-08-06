@@ -1,26 +1,36 @@
 import Link from "next/link";
-import { GalleryHorizontalEnd, LayoutGrid, ChevronRight } from "lucide-react";
+import { GalleryHorizontalEnd, LayoutGrid, Menu, ChevronRight } from "lucide-react";
 import { repo } from "@/lib/data";
 
-export const metadata = { title: "Homepage" };
+export const metadata = { title: "Store front" };
 
-export default async function AdminHomepagePage() {
-  const [slides, homepageCollections] = await Promise.all([
+export default async function AdminStorefrontPage() {
+  const [slides, homepageCollections, navConfig] = await Promise.all([
     repo.getHeroSlides(),
     repo.getHomepageCollections(),
+    repo.getNavConfig(),
   ]);
   const enabledSlides = slides.filter((s) => s.enabled).length;
+  const navItems = navConfig?.filter((i) => !i.hidden).length ?? 0;
 
   const sections = [
     {
-      href: "/admin/homepage/hero",
+      href: "/admin/storefront/nav",
+      icon: Menu,
+      title: "Header menu",
+      description:
+        "The buttons and dropdowns across the top — rename, reorder, hide or remove them.",
+      status: navItems ? `${navItems} items` : "Automatic",
+    },
+    {
+      href: "/admin/storefront/hero",
       icon: GalleryHorizontalEnd,
       title: "Hero slideshow",
       description: "The rotating banner at the top — slides, headings, buttons and links.",
       status: `${enabledSlides} slide${enabledSlides === 1 ? "" : "s"} live`,
     },
     {
-      href: "/admin/homepage/collections",
+      href: "/admin/storefront/collections",
       icon: LayoutGrid,
       title: "“The Collections” grid",
       description: "Which collections show in the grid under the hero, and their image focus.",
@@ -33,10 +43,9 @@ export default async function AdminHomepagePage() {
   return (
     <div className="mx-auto max-w-3xl">
       <header className="mb-6">
-        <h1 className="heading-display text-2xl font-semibold text-ink">Homepage</h1>
+        <h1 className="heading-display text-2xl font-semibold text-ink">Store front</h1>
         <p className="mt-1 text-sm text-umber">
-          Each section of the store&rsquo;s front page is managed on its own page — pick one to
-          edit.
+          Everything a shopper sees, managed one piece at a time — pick something to edit.
         </p>
       </header>
 

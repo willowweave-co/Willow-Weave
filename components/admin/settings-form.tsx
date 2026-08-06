@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/fields";
 import { useToast } from "@/components/ui/toast";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { SHIPPABLE_COUNTRIES } from "@/lib/countries";
 import { DEFAULT_ANNOUNCEMENT_COLOR, announcementTextColor } from "@/lib/announcement";
 
@@ -416,6 +417,7 @@ export function StaffManager({
 }) {
   const router = useRouter();
   const { toast } = useToast();
+  const confirm = useConfirm();
   const [pending, startTransition] = useTransition();
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
@@ -437,8 +439,14 @@ export function StaffManager({
       }
     });
 
-  const resetPassword = (member: StaffMember) => {
-    if (!confirm(`Reset the password for ${member.email}? Their current one stops working.`)) return;
+  const resetPassword = async (member: StaffMember) => {
+    const ok = await confirm({
+      title: "Reset this password?",
+      body: `${member.email} will be signed out and their current password stops working immediately. You'll get a temporary one to pass on.`,
+      confirmLabel: "Reset password",
+      danger: true,
+    });
+    if (!ok) return;
     startTransition(async () => {
       const res = await resetStaffPasswordAction(member.id);
       if (res.ok && res.tempPassword) {
@@ -463,10 +471,15 @@ export function StaffManager({
     });
   };
 
-  const remove = (member: StaffMember) => {
-    if (!confirm(`Remove ${member.email} from the team? They won't be able to sign in anymore.`)) {
-      return;
-    }
+  const remove = async (member: StaffMember) => {
+    const ok = await confirm({
+      title: "Remove this team member?",
+      body: `${member.email} won't be able to sign in anymore. Orders and changes they've already made stay exactly as they are.`,
+      confirmLabel: "Remove from team",
+      danger: true,
+      typeToConfirm: member.email,
+    });
+    if (!ok) return;
     startTransition(async () => {
       const res = await removeStaffAction(member.id);
       if (res.ok) {

@@ -48,10 +48,16 @@ export default async function CollectionPage({ params, searchParams }: Props) {
 
   return (
     <div>
-      {/* banner — full-bleed like the homepage hero: runs under the
+      {/* Banner — full-bleed like the homepage hero: runs under the
           translucent header and melts into the page. Deliberately shorter
-          so the products keep the focus. */}
-      <section className="relative -mt-14 h-64 w-full overflow-hidden sm:h-72 md:-mt-16 md:h-80">
+          so the products keep the focus.
+
+          The heights carry the header's height inside them. Visible image =
+          height − header, and the melt eats 192px of that from the bottom,
+          so on desktop 336 − 80 − 192 leaves a 64px band of actual, crisp
+          photograph. Grow the header and these have to grow with it or that
+          band closes up and the banner reads as pure haze. */}
+      <section className="relative -mt-16 h-[16.5rem] w-full overflow-hidden sm:h-[18.5rem] md:-mt-20 md:h-[21rem]">
         {collection.image ? (
           <Image
             src={collection.image}
@@ -73,9 +79,18 @@ export default async function CollectionPage({ params, searchParams }: Props) {
         <BottomMelt className="h-40 md:h-48" />
       </section>
 
-      {/* title block sits in the melt zone below the image — in normal flow,
-          so it can never cover the banner or get clipped on small screens */}
-      <div className="container-site relative z-20 -mt-16 sm:-mt-20 md:-mt-24">
+      {/* Title block sits in the melt zone below the image — in normal flow,
+          so it can never cover the banner or get clipped on small screens.
+
+          The overlap is deliberately shallow. It used to reach 96px up,
+          where the melt's fade is only ~30% opaque, so the breadcrumb and
+          title landed on whatever the banner happened to be — pale fabric
+          washed the brown text out, dark fabric swallowed it. Painting a
+          second ivory gradient over the melt to compensate just drew a
+          visible band across the banner; the melt is a carefully eased ramp
+          and anything layered on top of it reads as a seam. Sitting the copy
+          at ~85-95% instead lets the melt do the whole job on its own. */}
+      <div className="container-site relative z-20 -mt-4 sm:-mt-6 md:-mt-8">
         <nav aria-label="Breadcrumb" className="mb-2 flex items-center gap-1 text-xs text-umber">
           <Link href="/" className="hover:text-ink">Home</Link>
           <ChevronRight className="h-3 w-3" />

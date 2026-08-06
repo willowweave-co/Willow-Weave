@@ -12,16 +12,16 @@ export function HeaderActions() {
       <button
         onClick={() => window.dispatchEvent(new CustomEvent(OPEN_SEARCH_EVENT))}
         aria-label="Search the store (Ctrl+K)"
-        className="rounded-full p-2.5 text-bark transition-colors hover:bg-linen hover:text-walnut"
+        className="focus-ring tap-44 rounded-full p-2.5 text-bark transition-colors hover:bg-linen hover:text-walnut"
       >
-        <Search className="h-5 w-5" />
+        <Search className="h-[1.375rem] w-[1.375rem]" />
       </button>
       <button
         onClick={openCart}
         aria-label={`Open cart, ${count} items`}
-        className="relative rounded-full p-2.5 text-bark transition-colors hover:bg-linen hover:text-walnut"
+        className="focus-ring tap-44 relative rounded-full p-2.5 text-bark transition-colors hover:bg-linen hover:text-walnut"
       >
-        <ShoppingBag className="h-5 w-5" />
+        <ShoppingBag className="h-[1.375rem] w-[1.375rem]" />
         {hydrated && count > 0 && (
           <span className="absolute -top-0.5 -right-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-walnut px-1 text-[0.65rem] font-semibold text-ivory">
             {count > 99 ? "99+" : count}

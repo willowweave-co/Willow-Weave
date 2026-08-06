@@ -1,9 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 import { X } from "lucide-react";
+
+const FOCUSABLE = [
+  "a[href]",
+  "button:not([disabled])",
+  "input:not([disabled])",
+  "select:not([disabled])",
+  "textarea:not([disabled])",
+  '[tabindex]:not([tabindex="-1"])',
+].join(",");
 
 interface DialogProps {
   open: boolean;
@@ -32,16 +41,54 @@ export function Dialog({ open, onClose, title, children, side = "center", classN
     return () => clearTimeout(t);
   }, [open]);
 
+  // `aria-modal` promises the rest of the page is unreachable, so the focus
+  // has to actually be held here: move it in on open, keep Tab inside, and
+  // hand it back to whatever opened us on close. Without this, keyboard and
+  // screen-reader users tabbed straight out into the page behind the dialog
+  // while still being announced as inside it.
+  const panelRef = useRef<HTMLDivElement>(null);
+  const restoreRef = useRef<HTMLElement | null>(null);
+
   useEffect(() => {
     if (!open) return;
+    restoreRef.current = document.activeElement as HTMLElement | null;
+
+    const panel = panelRef.current;
+    const focusables = () =>
+      panel ? Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE)) : [];
+
+    // the close button leads the panel, so this lands somewhere harmless
+    (focusables()[0] ?? panel)?.focus();
+
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        onClose();
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const items = focusables();
+      if (!items.length) {
+        e.preventDefault();
+        return;
+      }
+      const first = items[0];
+      const last = items[items.length - 1];
+      const active = document.activeElement;
+      if (e.shiftKey && (active === first || active === panel)) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && active === last) {
+        e.preventDefault();
+        first.focus();
+      }
     };
+
     document.addEventListener("keydown", onKey);
     document.body.style.overflow = "hidden";
     return () => {
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = "";
+      restoreRef.current?.focus?.();
     };
   }, [open, onClose]);
 
@@ -59,8 +106,10 @@ export function Dialog({ open, onClose, title, children, side = "center", classN
         aria-hidden
       />
       <div
+        ref={panelRef}
+        tabIndex={-1}
         className={cn(
-          "absolute bg-ivory shadow-2xl",
+          "absolute bg-ivory shadow-2xl outline-none",
           side === "center" && [
             "top-1/2 left-1/2 max-h-[85vh] w-[calc(100vw-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl",
             closing ? "animate-pop-out" : "animate-pop-in",
@@ -77,7 +126,7 @@ export function Dialog({ open, onClose, title, children, side = "center", classN
           <button
             onClick={onClose}
             aria-label="Close"
-            className="rounded-full p-1.5 text-bark transition-colors hover:bg-linen"
+            className="focus-ring tap-44 rounded-full p-1.5 text-bark transition-colors hover:bg-linen"
           >
             <X className="h-5 w-5" />
           </button>

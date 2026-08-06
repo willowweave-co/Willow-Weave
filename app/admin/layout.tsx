@@ -49,7 +49,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       {/* sidebar */}
       <aside className="no-print sticky top-0 hidden h-dvh w-60 shrink-0 flex-col border-r border-line bg-parchment/40 md:flex">
         <Link href="/admin" className="flex items-center gap-2.5 border-b border-line px-5 py-4">
-          <Image src={THEME_IMAGES.logo} alt="" width={36} height={36} className="h-9 w-9 object-contain" />
+          <Image src={THEME_IMAGES.logo} alt="" width={36} height={36} className="logo-shadow h-9 w-9 object-contain" />
           <span>
             <span className="heading-display block text-[0.95rem] leading-tight font-semibold text-ink">
               Willow Weave

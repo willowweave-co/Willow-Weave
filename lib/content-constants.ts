@@ -24,7 +24,13 @@ export const HOME = {
  * small and stays in public/theme/.
  */
 export const THEME_IMAGES = {
-  logo: "/theme/logo-opt.png",
+  // logo-mark.png is logo-opt.png with its dead canvas cropped off. The
+  // original was 512×512 with the artwork occupying only 315×374 of it, and
+  // offset (114px of empty space on the left, 83px on the right), so every
+  // fixed-size box on the site rendered a mark ~27% smaller than it looked
+  // like it should — and slightly off-centre. Same artwork, no recolouring.
+  // logo-opt.png is kept as the untouched original.
+  logo: "/theme/logo-mark.png",
   heroNewArrivals:
     "https://res.cloudinary.com/mgxsgjfs/image/upload/v1783434448/willow-weave/theme/hero-new-arrivals.jpg",
   heroBestsellers:

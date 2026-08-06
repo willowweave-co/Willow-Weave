@@ -1,7 +1,16 @@
 import { cn } from "@/lib/utils";
 
+// placeholder:text-umber/90 — /50 measured 2.18:1 against the field's
+// bg-white/70, well under the 4.5:1 AA floor. /90 is the lightest step that
+// clears it (4.93:1), so the hint text stays visibly secondary to the value
+// the customer types while remaining readable. These placeholders teach
+// address and phone format, so they have to be legible to do their job.
+// border-line-strong, not border-line: a field's edge is what tells you where
+// the field is, so WCAG 1.4.11 wants it discernible at 3:1. `line` managed
+// 1.28:1 — the boxes effectively had no visible boundary for anyone with
+// low vision. Decorative rules elsewhere keep the softer `line`.
 const fieldBase =
-  "w-full rounded-lg border border-line bg-white/70 px-3.5 py-2.5 text-sm text-ink placeholder:text-umber/50 transition-colors focus:border-walnut focus:outline-none focus:ring-2 focus:ring-walnut/15 disabled:opacity-50";
+  "w-full rounded-lg border border-line-strong bg-white/70 px-3.5 py-2.5 text-sm text-ink placeholder:text-umber/90 transition-colors focus:border-walnut focus:outline-none focus:ring-2 focus:ring-walnut/15 disabled:opacity-50";
 
 export function Label({
   className,
@@ -58,7 +67,7 @@ export function Checkbox({
       <input
         type="checkbox"
         className={cn(
-          "h-4 w-4 rounded border-line text-walnut accent-walnut focus:ring-walnut/30",
+          "h-4 w-4 rounded border-line-strong text-walnut accent-walnut focus:ring-walnut/30",
           className
         )}
         {...props}

@@ -164,14 +164,12 @@ export default async function ProductPage({ params }: Props) {
                   />
                 </AccordionItem>
               )}
-              {content.accordions.design && (
-                <AccordionItem label={content.accordions.design.label}>
-                  <div
-                    className="rte"
-                    dangerouslySetInnerHTML={{ __html: content.accordions.design.bodyHtml }}
-                  />
-                </AccordionItem>
-              )}
+              {/* The "Design" accordion is deliberately not rendered: it was
+                  identical boilerplate on every product, so it read as
+                  filler and pushed Delivery & Returns further down. What it
+                  claimed to say is already in each product's own
+                  description. The content entry is left in place so it can
+                  be restored from the dashboard if that ever changes. */}
               <AccordionItem label="Delivery & Returns">
                 <div className="rte">
                   <p>

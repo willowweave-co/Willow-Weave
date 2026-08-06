@@ -4,11 +4,12 @@ import { repo } from "@/lib/data";
 import { EDITABLE_PAGES } from "@/lib/site-pages";
 import { HeroSlidesManager } from "@/components/admin/hero-slides-manager";
 
-export const metadata = { title: "Homepage · Hero" };
+export const metadata = { title: "Store front · Hero" };
 
-export default async function AdminHomepageHeroPage() {
-  const [slides, collections] = await Promise.all([
+export default async function AdminStorefrontHeroPage() {
+  const [slides, intervalMs, collections] = await Promise.all([
     repo.getHeroSlides(),
+    repo.getHeroIntervalMs(),
     repo.getCollections(),
   ]);
 
@@ -28,10 +29,10 @@ export default async function AdminHomepageHeroPage() {
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
         <Link
-          href="/admin/homepage"
+          href="/admin/storefront"
           className="mb-4 inline-flex items-center gap-1.5 text-sm text-umber hover:text-walnut"
         >
-          <ArrowLeft className="h-4 w-4" /> Homepage sections
+          <ArrowLeft className="h-4 w-4" /> Store front
         </Link>
         <h1 className="heading-display text-2xl font-semibold text-ink">Hero slideshow</h1>
         <p className="mt-1 text-sm text-umber">
@@ -40,7 +41,11 @@ export default async function AdminHomepageHeroPage() {
         </p>
       </div>
 
-      <HeroSlidesManager initial={slides} linkOptions={linkOptions} />
+      <HeroSlidesManager
+        initial={slides}
+        initialIntervalMs={intervalMs}
+        linkOptions={linkOptions}
+      />
     </div>
   );
 }

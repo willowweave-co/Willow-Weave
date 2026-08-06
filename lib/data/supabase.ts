@@ -6,6 +6,7 @@ import type {
   IntlShippingSettings,
   DiscountCode,
   HeroSlide,
+  NavConfig,
   Order,
   OrderItem,
   OrderStatus,
@@ -20,7 +21,7 @@ import type { BankTransferSettings } from "@/lib/types";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { createSupabaseServer } from "@/lib/supabase/server";
 import { computeStats } from "@/lib/stats";
-import { DEFAULT_HERO_SLIDES } from "./hero-defaults";
+import { DEFAULT_HERO_SLIDES, DEFAULT_HERO_INTERVAL_MS } from "./hero-defaults";
 
 /**
  * Supabase adapter (production). Reads/writes run under the caller's session:
@@ -366,6 +367,20 @@ export const supabaseRepo: Repo = {
     }
   },
 
+  async getHeroIntervalMs(): Promise<number> {
+    try {
+      // fallback column set: the view's whitelist is frozen at creation, so
+      // before 0014 runs it still answers for "id, hero_slides" alone
+      const data = await publicSettingsRow("id, hero_interval_ms", "id, hero_slides");
+      const ms = data.hero_interval_ms as number | null | undefined;
+      return typeof ms === "number" ? ms : DEFAULT_HERO_INTERVAL_MS;
+    } catch (e) {
+      // migration 0014 not applied — the slideshow keeps its old cadence
+      if (isMissingRelation(e as { code?: string })) return DEFAULT_HERO_INTERVAL_MS;
+      throw e;
+    }
+  },
+
   async getSitePages(): Promise<Record<string, { title: string; bodyHtml: string }>> {
     const { data, error } = await publicDb().from("site_pages").select("*");
     // Table doesn't exist yet (migration 0007 not applied) — the storefront
@@ -378,6 +393,29 @@ export const supabaseRepo: Repo = {
       out[row.handle] = { title: row.title, bodyHtml: row.body_html ?? "" };
     }
     return out;
+  },
+
+  async getNavConfig(): Promise<NavConfig | null> {
+    try {
+      // fallback column set: the view's whitelist is frozen at creation, so
+      // before 0015 runs it still answers for the older columns alone
+      const data = await publicSettingsRow("id, nav_config", "id, hero_slides");
+      return (data.nav_config as NavConfig | null) ?? null;
+    } catch (e) {
+      // migration 0015 not applied — the header follows the collections, as
+      // it always did
+      if (isMissingRelation(e as { code?: string })) return null;
+      throw e;
+    }
+  },
+
+  async saveNavConfig(config: NavConfig | null) {
+    const client = await db();
+    const { error } = await client
+      .from("store_settings")
+      .update({ nav_config: config })
+      .eq("id", 1);
+    if (error) throw error;
   },
 
   async getHomepageCollections(): Promise<string[] | null> {
@@ -750,13 +788,29 @@ export const supabaseRepo: Repo = {
     if (error) throw error;
   },
 
-  async saveHeroSlides(slides: HeroSlide[]) {
+  async saveHeroSlides(slides: HeroSlide[], intervalMs?: number) {
     const client = await db();
-    const { error } = await client
-      .from("store_settings")
-      .update({ hero_slides: slides })
-      .eq("id", 1);
-    if (error) throw error;
+    const wantsInterval = typeof intervalMs === "number";
+    const patch: Record<string, unknown> = { hero_slides: slides };
+    if (wantsInterval) patch.hero_interval_ms = intervalMs;
+
+    const first = await client.from("store_settings").update(patch).eq("id", 1);
+    if (!first.error) return { intervalSaved: wantsInterval };
+
+    // Pre-0014 database: hero_interval_ms doesn't exist yet. PostgREST reports
+    // an unknown column on a WRITE as PGRST204 (schema-cache miss), not the
+    // 42703 that a read raises — so this has to be caught by shape, not by
+    // guessing the code. Retry without the timing rather than losing the
+    // owner's slide edits to a column they haven't migrated in yet.
+    if (wantsInterval && isMissingRelation(first.error)) {
+      const retry = await client
+        .from("store_settings")
+        .update({ hero_slides: slides })
+        .eq("id", 1);
+      if (retry.error) throw retry.error;
+      return { intervalSaved: false };
+    }
+    throw first.error;
   },
 
   async saveHomepageCollections(ids: string[] | null) {

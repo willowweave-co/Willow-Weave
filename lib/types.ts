@@ -311,3 +311,42 @@ export interface SalesStats {
   topProducts: { title: string; handle: string; units: number; revenue: number }[];
   lowStock: { productTitle: string; handle: string; variantLabel: string; stock: number }[];
 }
+
+// ── Storefront navigation ────────────────────────────────────────────────────
+
+/** A single link inside a dropdown column. */
+export interface NavChild {
+  id: string;
+  label: string;
+  href: string;
+  hidden?: boolean;
+}
+
+/** One column of a dropdown panel. An empty heading renders no heading. */
+export interface NavColumn {
+  id: string;
+  heading: string;
+  links: NavChild[];
+}
+
+/**
+ * A top-level entry in the header bar. `href` set = a plain link; otherwise a
+ * dropdown driven by `columns`.
+ */
+export interface NavItem {
+  id: string;
+  label: string;
+  hidden?: boolean;
+  /** set = plain link in the bar; empty/absent = dropdown */
+  href?: string;
+  columns?: NavColumn[];
+  /**
+   * How the dropdown panel lays itself out. Preserves the three shapes the
+   * header already used: side-by-side headed columns, a two-up grid of bare
+   * links, and a plain stacked list.
+   */
+  layout?: "columns" | "grid" | "list";
+}
+
+/** null = follow the collections automatically (the pre-editor behaviour). */
+export type NavConfig = NavItem[];

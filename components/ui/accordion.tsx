@@ -15,10 +15,10 @@ export function AccordionItem({
 }) {
   return (
     <details
-      className={cn("group border-b border-line", className)}
+      className={cn("details-animated group border-b border-line", className)}
       open={defaultOpen}
     >
-      <summary className="flex cursor-pointer list-none items-center justify-between py-4 text-sm font-medium tracking-wide text-ink uppercase select-none [&::-webkit-details-marker]:hidden">
+      <summary className="focus-ring flex cursor-pointer list-none items-center justify-between py-4 text-sm font-medium tracking-wide text-ink uppercase select-none [&::-webkit-details-marker]:hidden">
         {label}
         <ChevronDown className="h-4 w-4 text-umber transition-transform duration-200 group-open:rotate-180" />
       </summary>

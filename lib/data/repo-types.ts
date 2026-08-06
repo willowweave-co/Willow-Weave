@@ -3,6 +3,7 @@ export type {
   Collection,
   DiscountCode,
   HeroSlide,
+  NavConfig,
   Order,
   OrderItem,
   OrderStatus,

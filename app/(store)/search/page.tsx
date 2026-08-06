@@ -105,7 +105,7 @@ export default async function SearchPage({ searchParams }: Props) {
                     </div>
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-ink/55 to-transparent" />
-                  <p className="heading-display absolute right-3 bottom-2.5 left-3 text-[0.95rem] leading-tight font-semibold text-ivory">
+                  <p className="heading-display on-image absolute right-3 bottom-2.5 left-3 text-[0.95rem] leading-tight font-semibold text-ivory">
                     {c.title}
                   </p>
                 </div>

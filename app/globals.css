@@ -9,14 +9,30 @@
   --color-ink: #29211a;
   --color-bark: #4a3b2e;
   --color-umber: #6e5c4b;
-  --color-clay: #8c6d4f;
+  /* was #8c6d4f — 4.41:1 on ivory, a hair under the 4.5 AA floor. Nothing
+     used it yet, so correcting it now costs nothing and stops it becoming a
+     trap the first time someone reaches for it. */
+  --color-clay: #836547;
   --color-walnut: #6b4a2f;
   --color-walnut-dark: #52381f;
   --color-gold: #c2a16b;
+  /* Gold, lightened, for the one job plain gold can't do: sitting on top of
+     photography. #c2a16b manages 1.74:1 over a bright image even under a
+     heavy scrim — unreadable. This keeps the hue and reads as the same
+     champagne gold while carrying far more luminance. Use ONLY over imagery;
+     on ivory it is far too light. */
+  --color-gold-light: #d9c08f;
   --color-madder: #a23e2e;
   --color-moss: #5f6b4f;
   --color-blush: #e9d5c5;
   --color-line: #e5daca;
+  /* Functional borders only — the edges of inputs, selects and outline
+     buttons, which WCAG 1.4.11 requires to be discernible at 3:1. `line`
+     manages 1.28:1, so a low-vision customer cannot see where a field
+     begins. Decorative rules (card edges, dividers, section separators)
+     keep using `line`: 1.4.11 covers boundaries you must perceive to
+     operate the control, not every hairline in the design. */
+  --color-line-strong: #9d8a6d;
 
   --font-display: var(--font-fraunces), "Georgia", serif;
   --font-sans: var(--font-jost), system-ui, sans-serif;
@@ -79,6 +95,16 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+    /* Reserve the scrollbar's gutter permanently. Locking the body when a
+       drawer or the search palette opens used to remove the scrollbar, and
+       the page snapped ~15px wider underneath the overlay. With the gutter
+       always reserved there is nothing to reclaim, so the jump is gone. */
+    scrollbar-gutter: stable;
+    /* Firefox + the standard property. Thumb in sand, track in parchment. */
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-sand) transparent;
+    /* lets `block-size: auto` be animated, for the <details> disclosures */
+    interpolate-size: allow-keywords;
   }
   body {
     @apply bg-ivory text-ink font-sans antialiased;
@@ -86,11 +112,139 @@
   ::selection {
     @apply bg-walnut text-ivory;
   }
+
+  /* WebKit/Blink scrollbars, themed to match. The default chrome — grey
+     track, stepper arrows — read as a rendering bug inside our own ivory
+     panels, especially in the size-chart dialog. */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--color-sand);
+    border-radius: 9999px;
+    /* transparent border + background-clip keeps the thumb visually slim
+       while leaving the full 10px as the grab target */
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-clay);
+    background-clip: content-box;
+  }
+  /* the little square where the two bars meet */
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
 }
 
 @layer components {
   .container-site {
     @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+  /* The keyboard focus ring, in one place. `Button` had this inline and
+     nothing else did, so every hand-rolled control (variant pills, hero dots,
+     payment cards, qty steppers) was invisible to keyboard users. */
+  .focus-ring {
+    @apply focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-walnut;
+  }
+  /* ── Touch targets ────────────────────────────────────────────────────
+     Both classes lift an undersized control to a comfortable tap size
+     WITHOUT changing a single painted pixel: a transparent ::after overlay
+     absorbs the tap instead. The visual stays exactly as designed. */
+
+  /* Full 44×44 — for isolated icon buttons with clear space around them. */
+  .tap-44 {
+    position: relative;
+  }
+  .tap-44::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    height: 100%;
+    width: 100%;
+    min-height: 44px;
+    min-width: 44px;
+    transform: translate(-50%, -50%);
+  }
+  /* Height only — for controls sitting in a tight horizontal row, where a
+     44px-wide overlay on every sibling would overlap and swallow each
+     other's taps. Grows into the vertical space, which is always free. */
+  /* The mark carries a willow tree whose lighter leaves all but vanish
+     against the cream page. A soft shadow lifts it off the background
+     without putting a plate or border behind it. */
+  /* Reads as height rather than as an outline: a longer drop and a wider,
+     softer spread put more apparent distance between the mark and the page.
+     The tight contact shadow stays — without it the mark floats free of any
+     surface and the whole thing reads as a sticker. */
+  .logo-shadow {
+    filter: drop-shadow(0 1px 1px rgba(41, 33, 26, 0.14))
+      drop-shadow(0 4px 6px rgba(41, 33, 26, 0.16))
+      drop-shadow(0 10px 20px rgba(41, 33, 26, 0.14));
+  }
+
+  /* Text sitting directly on photography. A wide soft shadow alone washes
+     out on bright images; what actually holds up is a tight dark halo
+     hugging the glyphs, backed by a broader soft one for separation. */
+  .on-image {
+    text-shadow:
+      0 1px 1px rgba(41, 33, 26, 0.95),
+      0 0 3px rgba(41, 33, 26, 0.8),
+      0 2px 14px rgba(41, 33, 26, 0.65);
+  }
+
+  /* The icon equivalent of .on-image, for the ivory hero chevrons. A single
+     wide soft shadow — what they had — dissolves against a pale frame; the
+     tight 1px pass is what actually keeps a white arrow visible on white
+     fabric. */
+  .icon-on-image {
+    filter: drop-shadow(0 1px 1px rgba(41, 33, 26, 0.5))
+      drop-shadow(0 0 3px rgba(41, 33, 26, 0.32))
+      drop-shadow(0 2px 10px rgba(41, 33, 26, 0.26));
+  }
+
+  /* Animates the native <details> disclosure. Browsers without
+     ::details-content support simply snap open, exactly as they do today —
+     the animation is additive, never load-bearing. */
+  /* `allow-discrete` has to ride inside the shorthand, on content-visibility
+     itself. Declared separately it gets reset by the `transition` shorthand,
+     and the symptom is one-sided: opening still animates (visibility flips
+     to visible at 0%, so the height has something to reveal) while closing
+     just vanishes, because visibility flips to hidden immediately instead of
+     holding until 100%. Same easing and duration both ways. */
+  .details-animated::details-content {
+    block-size: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition:
+      content-visibility 0.28s allow-discrete,
+      block-size 0.28s ease,
+      opacity 0.2s ease;
+  }
+  .details-animated[open]::details-content {
+    block-size: auto;
+    opacity: 1;
+    overflow: hidden;
+  }
+
+  .tap-tall {
+    position: relative;
+  }
+  .tap-tall::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    /* 4px of horizontal bleed claims exactly half of a `gap-2` row's spacing
+       on each side, so neighbouring targets meet but never overlap — an
+       overlap would hand the tap to the wrong control. */
+    left: -4px;
+    right: -4px;
+    height: 44px;
+    transform: translateY(-50%);
   }
   .heading-display {
     font-family: var(--font-display);
@@ -132,6 +286,80 @@
 
 @utility text-balance {
   text-wrap: balance;
+}
+
+/* ── Reduced motion ───────────────────────────────────────────────────────
+   Movement out, feedback in. Every animation that translated, scaled or
+   looped is remapped to a plain opacity fade of the same duration, so state
+   changes still register — drawers still announce themselves, toasts still
+   appear — they just stop moving. Deliberately NOT a blanket
+   `animation: none`, which would strip the feedback along with the motion.
+   `!important` because these must beat the utility classes unconditionally. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .animate-fade-up {
+    animation: fade-in 0.5s ease-out both !important;
+  }
+  .animate-fade-down {
+    animation: fade-out 0.2s ease-in both !important;
+  }
+  .animate-slide-in-right {
+    animation: fade-in 0.28s ease-out both !important;
+  }
+  .animate-slide-out-right {
+    animation: fade-out 0.24s ease-in both !important;
+  }
+  .animate-pop-in {
+    animation: fade-in 0.22s ease-out both !important;
+  }
+  .animate-pop-out {
+    animation: fade-out 0.18s ease-in both !important;
+  }
+
+  /* The sweep IS the shimmer; the skeleton block reads as "loading" without
+     it, so drop the loop and keep the shape. */
+  .skeleton {
+    animation: none !important;
+    background-image: none !important;
+  }
+
+  /* The nav bar is the only cue that a page transition is in flight, so it
+     keeps animating — a stationary pulse instead of a sweep across the
+     viewport. Opacity is safe; the travel was the problem. */
+  .animate-nav-progress {
+    animation: reduced-pulse 1.4s ease-in-out infinite !important;
+    transform: none !important;
+    width: 100% !important;
+  }
+
+  /* Disclosures open instantly rather than unrolling. */
+  .details-animated::details-content,
+  .details-animated[open]::details-content {
+    transition: none !important;
+  }
+
+  /* Transitions keep running for colour, opacity and shadow — the things
+     that carry meaning — and stop running for transforms, which is where
+     the movement lives. */
+  *,
+  *::before,
+  *::after {
+    transition-property: opacity, color, background-color, border-color,
+      text-decoration-color, fill, stroke, box-shadow, outline-color !important;
+  }
+}
+
+@keyframes reduced-pulse {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 /* Print styles for the admin packing slip */

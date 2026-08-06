@@ -2,8 +2,13 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowDown, ArrowUp, Crosshair, ImagePlus, Trash2, Film } from "lucide-react";
+import { ArrowDown, ArrowUp, Crosshair, ImagePlus, Trash2, Film, Timer } from "lucide-react";
 import type { HeroSlide } from "@/lib/types";
+import {
+  DEFAULT_HERO_INTERVAL_MS,
+  MIN_HERO_INTERVAL_MS,
+  MAX_HERO_INTERVAL_MS,
+} from "@/lib/data/hero-defaults";
 import { saveHeroSlidesAction } from "@/app/actions/admin";
 import { MediaPickerDialog, type MediaItem } from "@/components/admin/media-library";
 import { FocalPointDialog } from "@/components/admin/focal-point-dialog";
@@ -13,6 +18,18 @@ import { useToast } from "@/components/ui/toast";
 import { focalCrop } from "@/lib/utils";
 
 const MAX_SLIDES = 8;
+
+/** Keep a half-typed or out-of-range entry from reaching the server. */
+function clampSeconds(value: string): string {
+  const n = Number.parseFloat(value);
+  if (!Number.isFinite(n)) return String(DEFAULT_HERO_INTERVAL_MS / 1000);
+  const clamped = Math.min(
+    MAX_HERO_INTERVAL_MS / 1000,
+    Math.max(MIN_HERO_INTERVAL_MS / 1000, n)
+  );
+  // drop a trailing ".0" so the field reads "6" rather than "6.0"
+  return String(Math.round(clamped * 2) / 2);
+}
 
 interface LinkOption {
   label: string;
@@ -45,15 +62,21 @@ function MediaThumb({ slide }: { slide: HeroSlide }) {
 
 export function HeroSlidesManager({
   initial,
+  initialIntervalMs,
   linkOptions,
 }: {
   initial: HeroSlide[];
+  initialIntervalMs: number;
   linkOptions: LinkOption[];
 }) {
   const router = useRouter();
   const { toast } = useToast();
   const [pending, startTransition] = useTransition();
   const [slides, setSlides] = useState<HeroSlide[]>(initial);
+  // held as a string so the field can be cleared mid-edit without snapping
+  // back to a number under the owner's cursor
+  const [seconds, setSeconds] = useState(String(initialIntervalMs / 1000));
+  const enabledCount = slides.filter((s) => s.enabled).length;
   /** "add" = new slide, otherwise the id of the slide whose media to replace */
   const [pickerFor, setPickerFor] = useState<"add" | string | null>(null);
   /** id of the slide whose focal point is being adjusted */
@@ -109,9 +132,11 @@ export function HeroSlidesManager({
 
   const save = () =>
     startTransition(async () => {
-      const res = await saveHeroSlidesAction(slides);
+      const res = await saveHeroSlidesAction(slides, Number(clampSeconds(seconds)) * 1000);
       if (res.ok) {
-        toast("Homepage hero saved.");
+        // a warning means it saved but something needs the owner's attention,
+        // so it gets the louder tone rather than a green "all done"
+        toast(res.warning ?? "Hero saved.", res.warning ? "error" : "success");
         router.refresh();
       } else {
         toast(res.error ?? "Couldn't save the slides.", "error");
@@ -253,6 +278,43 @@ export function HeroSlidesManager({
         ))}
       </ul>
 
+      {/* Timing. Shown in seconds because that's how the owner thinks about
+          it; stored in ms because that's what setInterval takes. Only
+          meaningful with more than one slide, so it says so rather than
+          sitting there looking broken. */}
+      <div className="mt-5 flex flex-wrap items-center gap-3 rounded-xl border border-line bg-parchment/40 px-4 py-3.5">
+        <div className="flex items-center gap-2.5">
+          <Timer className="h-4 w-4 shrink-0 text-umber" />
+          <Label htmlFor="hero-interval" className="mb-0 whitespace-nowrap">
+            Seconds per slide
+          </Label>
+          <Input
+            id="hero-interval"
+            type="number"
+            min={MIN_HERO_INTERVAL_MS / 1000}
+            max={MAX_HERO_INTERVAL_MS / 1000}
+            step={0.5}
+            value={seconds}
+            onChange={(e) => setSeconds(e.target.value)}
+            onBlur={() => setSeconds(clampSeconds(seconds))}
+            className="w-24"
+          />
+        </div>
+        <p className="min-w-48 flex-1 text-xs leading-relaxed text-umber">
+          {enabledCount > 1 ? (
+            <>
+              How long each slide holds before the next one.{" "}
+              {MIN_HERO_INTERVAL_MS / 1000}–{MAX_HERO_INTERVAL_MS / 1000} seconds.
+            </>
+          ) : (
+            <>
+              Only takes effect with more than one slide switched on — right now the hero
+              shows a single, static slide.
+            </>
+          )}
+        </p>
+      </div>
+
       <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
         <div>
           <Button
@@ -267,7 +329,7 @@ export function HeroSlidesManager({
           </p>
         </div>
         <Button onClick={save} loading={pending}>
-          Save homepage
+          Save hero
         </Button>
       </div>
 

@@ -10,6 +10,7 @@ import { Input, Label, Select, Checkbox } from "@/components/ui/fields";
 import { Dialog } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/toast";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { formatPKR } from "@/lib/money";
 import { formatDate } from "@/lib/utils";
 
@@ -51,6 +52,7 @@ const fromDateInput = (v: string, endOfDay = false) =>
 export function DiscountsManager({ discounts }: { discounts: DiscountCode[] }) {
   const router = useRouter();
   const { toast } = useToast();
+  const confirm = useConfirm();
   const [pending, startTransition] = useTransition();
   const [editing, setEditing] = useState<DiscountCode | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -70,8 +72,14 @@ export function DiscountsManager({ discounts }: { discounts: DiscountCode[] }) {
     });
   };
 
-  const remove = (d: DiscountCode) => {
-    if (!confirm(`Delete code ${d.code}?`)) return;
+  const remove = async (d: DiscountCode) => {
+    const ok = await confirm({
+      title: `Delete code ${d.code}?`,
+      body: "Customers who try it at checkout will be told it isn't valid. Orders that already used it keep their discount.",
+      confirmLabel: "Delete code",
+      danger: true,
+    });
+    if (!ok) return;
     startTransition(async () => {
       const res = await deleteDiscountAction(d.id);
       if (res.ok) {

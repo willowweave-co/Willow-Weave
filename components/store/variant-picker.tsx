@@ -87,7 +87,7 @@ export function VariantPicker({ product }: { product: Product }) {
                   key={c}
                   onClick={() => setColor(c)}
                   className={cn(
-                    "rounded-full border px-4 py-2 text-sm transition-colors",
+                    "focus-ring tap-tall rounded-full border px-4 py-2 text-sm transition-colors",
                     color === c
                       ? "border-walnut bg-walnut text-ivory"
                       : "border-line bg-white/60 text-bark hover:border-walnut/50",
@@ -120,11 +120,16 @@ export function VariantPicker({ product }: { product: Product }) {
                   onClick={() => setSize(s)}
                   aria-label={out ? `Size ${s} — out of stock` : `Size ${s}`}
                   className={cn(
-                    "relative min-w-12 rounded-full border px-4 py-2 text-sm transition-colors",
+                    "focus-ring tap-tall relative min-w-12 rounded-full border px-4 py-2 text-sm transition-colors",
                     size === s
                       ? "border-walnut bg-walnut text-ivory"
                       : "border-line bg-white/60 text-bark hover:border-walnut/50",
-                    out && "text-umber/50 line-through decoration-umber/50"
+                    // /90 not /50: this is state, not decoration — at 2.16:1 a
+                    // sold-out size was almost indistinguishable from an
+                    // available one, which costs a tap at the buying moment.
+                    // The strikethrough already carries the meaning without
+                    // relying on colour alone; this just makes it readable.
+                    out && "text-umber/90 line-through decoration-umber/90"
                   )}
                 >
                   {s}
@@ -157,7 +162,7 @@ export function VariantPicker({ product }: { product: Product }) {
           <button
             aria-label="Decrease quantity"
             onClick={() => setQty((q) => Math.max(1, q - 1))}
-            className="px-3.5 py-3 text-bark hover:text-walnut"
+            className="focus-ring tap-tall rounded-full px-3.5 py-3 text-bark hover:text-walnut"
           >
             <Minus className="h-4 w-4" />
           </button>
@@ -165,7 +170,7 @@ export function VariantPicker({ product }: { product: Product }) {
           <button
             aria-label="Increase quantity"
             onClick={() => setQty((q) => Math.min(stock || 1, q + 1))}
-            className="px-3.5 py-3 text-bark hover:text-walnut disabled:opacity-30"
+            className="focus-ring tap-tall rounded-full px-3.5 py-3 text-bark hover:text-walnut disabled:opacity-30"
             disabled={qty >= stock}
           >
             <Plus className="h-4 w-4" />

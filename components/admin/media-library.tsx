@@ -16,6 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/fields";
 import { useToast } from "@/components/ui/toast";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { cn } from "@/lib/utils";
 
 export interface MediaItem {
@@ -163,6 +164,7 @@ export function MediaLibrary({
   className,
 }: MediaLibraryProps) {
   const { toast } = useToast();
+  const confirm = useConfirm();
   const [items, setItems] = useState<MediaItem[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -242,12 +244,13 @@ export function MediaLibrary({
   };
 
   const remove = async (item: MediaItem) => {
-    if (
-      !confirm(
-        `Delete “${item.filename}” permanently?\n\nAny product, collection or page still using it will show a broken image.`
-      )
-    )
-      return;
+    const ok = await confirm({
+      title: `Delete “${item.filename}” permanently?`,
+      body: "Any product, collection or page still using this image will show a broken image instead.",
+      confirmLabel: "Delete image",
+      danger: true,
+    });
+    if (!ok) return;
     try {
       const res = await fetch("/api/admin/media", {
         method: "DELETE",

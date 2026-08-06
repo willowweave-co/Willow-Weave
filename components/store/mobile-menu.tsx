@@ -6,25 +6,27 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X, ChevronDown } from "lucide-react";
-import type { NavData, NavLink } from "./nav-data";
-import { ABOUT_LINKS } from "./nav-data";
+import type { NavChild, NavConfig } from "./nav-data";
+import { isDropdown } from "./nav-data";
 import { THEME_IMAGES } from "@/lib/content-constants";
 import { cn } from "@/lib/utils";
 
-function Section({ label, links }: { label: string; links: NavLink[] }) {
+function Section({ label, links }: { label: string; links: NavChild[] }) {
   if (!links.length) return null;
   return (
-    <details className="group border-b border-line">
-      <summary className="flex cursor-pointer list-none items-center justify-between py-4 text-[0.95rem] font-medium text-ink select-none [&::-webkit-details-marker]:hidden">
+    // details-animated: the header's desktop shelves animate open, but these
+    // snapped. Same disclosure, same expectation.
+    <details className="details-animated group border-b border-line">
+      <summary className="focus-ring flex cursor-pointer list-none items-center justify-between py-4 text-[0.95rem] font-medium text-ink select-none [&::-webkit-details-marker]:hidden">
         {label}
         {/* -m/p: grow the chevron's touch area without shifting the layout */}
         <ChevronDown className="-m-2 box-content h-4 w-4 p-2 text-umber transition-transform group-open:rotate-180" />
       </summary>
       <ul className="pb-3 pl-2">
         {links.map((l) => (
-          <li key={l.href}>
-            <Link href={l.href} className="block py-2 text-sm text-bark hover:text-walnut">
-              {l.title}
+          <li key={l.id}>
+            <Link href={l.href as never} className="block py-2 text-sm text-bark hover:text-walnut">
+              {l.label}
             </Link>
           </li>
         ))}
@@ -33,7 +35,7 @@ function Section({ label, links }: { label: string; links: NavLink[] }) {
   );
 }
 
-export function MobileMenu({ nav }: { nav: NavData }) {
+export function MobileMenu({ nav }: { nav: NavConfig }) {
   const [open, setOpen] = useState(false);
   // Portal only after mount so server and first client render agree.
   const [mounted, setMounted] = useState(false);
@@ -83,45 +85,56 @@ export function MobileMenu({ nav }: { nav: NavData }) {
         )}
       >
         <div className="flex items-center justify-between border-b border-line px-5 py-4">
+          {/* h-16 to match the header's mark on a phone — at h-11 it read as
+              a different, smaller brand than the one just behind the drawer */}
           <Image
             src={THEME_IMAGES.logo}
             alt="Willow Weave"
-            width={44}
-            height={44}
-            className="h-11 w-11 object-contain"
+            width={64}
+            height={64}
+            className="logo-shadow h-16 w-16 p-1.5 object-contain"
           />
           <button
             onClick={() => setOpen(false)}
             aria-label="Close menu"
-            className="rounded-full p-2.5 text-bark hover:bg-linen"
+            className="focus-ring tap-44 rounded-full p-2.5 text-bark hover:bg-linen"
           >
             <X className="h-6 w-6" />
           </button>
         </div>
+        {/* Same menu as the desktop bar, flattened one level: a dropdown with
+            headed columns becomes one collapsible section per column (so
+            "Volumes" and "Occasions" stay top-level here, as they always
+            have), while a single unheaded column collapses under the item's
+            own label. */}
         <nav className="flex-1 overflow-y-auto px-5 pb-8" aria-label="Mobile">
-          <Link
-            href="/products"
-            className="block border-b border-line py-4 text-[0.95rem] font-medium text-ink"
-          >
-            Shop All Products
-          </Link>
-          <Section label="Volumes" links={nav.volumes} />
-          <Section label="Occasions" links={nav.occasions} />
-          <Section label="Shop by Piece" links={nav.pieces} />
-          <Section label="Fabrics" links={nav.fabrics} />
-          <Link
-            href="/collections"
-            className="block border-b border-line py-4 text-[0.95rem] font-medium text-ink"
-          >
-            All Collections
-          </Link>
-          <Link
-            href="/size-guide"
-            className="block border-b border-line py-4 text-[0.95rem] font-medium text-ink"
-          >
-            Size Guide
-          </Link>
-          <Section label="About" links={ABOUT_LINKS} />
+          {nav.map((item) => {
+            if (!isDropdown(item)) {
+              return (
+                <Link
+                  key={item.id}
+                  href={(item.href ?? "/") as never}
+                  className="block border-b border-line py-4 text-[0.95rem] font-medium text-ink"
+                >
+                  {item.label}
+                </Link>
+              );
+            }
+            const columns = item.columns ?? [];
+            const headed = columns.filter((c) => c.heading);
+            if (headed.length) {
+              return columns.map((c) => (
+                <Section key={c.id} label={c.heading || item.label} links={c.links} />
+              ));
+            }
+            return (
+              <Section
+                key={item.id}
+                label={item.label}
+                links={columns.flatMap((c) => c.links)}
+              />
+            );
+          })}
         </nav>
       </div>
     </div>
