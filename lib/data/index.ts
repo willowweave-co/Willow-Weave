@@ -3,6 +3,7 @@ import type {
   Collection,
   DiscountCode,
   HeroSlide,
+  NavConfig,
   Order,
   OrderStatus,
   PlacedOrder,
@@ -45,6 +46,8 @@ export interface Repo {
   getHeroIntervalMs(): Promise<number>;
   /** Curated homepage "The Collections" slots (ordered ids); null = automatic picks. */
   getHomepageCollections(): Promise<string[] | null>;
+  /** The owner's header menu; null = follow the published collections automatically. */
+  getNavConfig(): Promise<NavConfig | null>;
   /** Saved overrides for editable site pages, keyed by handle (missing = use built-in copy). */
   getSitePages(): Promise<Record<string, { title: string; bodyHtml: string }>>;
 
@@ -80,9 +83,18 @@ export interface Repo {
   saveDiscount(d: DiscountCode): Promise<void>;
   deleteDiscount(id: string): Promise<void>;
   saveSettings(s: StoreSettings): Promise<void>;
-  /** `intervalMs` omitted leaves the stored slide timing untouched. */
-  saveHeroSlides(slides: HeroSlide[], intervalMs?: number): Promise<void>;
+  /**
+   * `intervalMs` omitted leaves the stored slide timing untouched.
+   * `intervalSaved: false` means the slides were written but the timing
+   * column doesn't exist yet (migration 0014 outstanding).
+   */
+  saveHeroSlides(
+    slides: HeroSlide[],
+    intervalMs?: number
+  ): Promise<{ intervalSaved: boolean }>;
   saveHomepageCollections(ids: string[] | null): Promise<void>;
+  /** null restores the automatic, collection-driven menu. */
+  saveNavConfig(config: NavConfig | null): Promise<void>;
   saveSitePage(page: { handle: string; title: string; bodyHtml: string }): Promise<void>;
   /** Update only a collection's tile focal point (homepage/collection-list crops). */
   setCollectionTileFocus(id: string, x: number | null, y: number | null): Promise<void>;
@@ -141,6 +153,7 @@ const publicHeroInterval = cachedRead("hero-interval", () => baseRepo.getHeroInt
 const publicHomepageCollections = cachedRead("homepage-collections", () =>
   baseRepo.getHomepageCollections()
 );
+const publicNavConfig = cachedRead("nav-config", () => baseRepo.getNavConfig());
 const publicSitePages = cachedRead("site-pages", () => baseRepo.getSitePages());
 
 /**
@@ -165,5 +178,6 @@ export const repo: Repo = {
   getHeroSlides: () => publicHeroSlides(),
   getHeroIntervalMs: () => publicHeroInterval(),
   getHomepageCollections: () => publicHomepageCollections(),
+  getNavConfig: () => publicNavConfig(),
   getSitePages: () => publicSitePages(),
 };

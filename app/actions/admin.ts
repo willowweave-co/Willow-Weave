@@ -8,6 +8,7 @@ import type {
   Collection,
   DiscountCode,
   HeroSlide,
+  NavConfig,
   OrderStatus,
   Product,
   SizeChart,
@@ -24,6 +25,8 @@ export interface ActionResult {
   ok: boolean;
   error?: string;
   id?: string;
+  /** Succeeded, but something the owner should know about (e.g. a pending migration). */
+  warning?: string;
 }
 
 function fail(e: unknown): ActionResult {
@@ -64,7 +67,7 @@ function missingColumns(e: unknown): ActionResult | null {
   return {
     ok: false,
     error:
-      "The database needs a one-time update: run the newest files in supabase/migrations/ (0005–0009) in the Supabase SQL editor, then save again.",
+      "The database needs a one-time update: run any supabase/migrations/ files you haven't applied yet in the Supabase SQL editor, then save again.",
   };
 }
 
@@ -391,15 +394,22 @@ export async function saveHeroSlidesAction(
         enabled: !!s.enabled,
       });
     }
-    await repo.saveHeroSlides(clean, interval);
+    const { intervalSaved } = await repo.saveHeroSlides(clean, interval);
     refresh();
+    if (interval != null && !intervalSaved) {
+      return {
+        ok: true,
+        warning:
+          "Slides saved — but the slide timing needs a one-time database update. Run supabase/migrations/0014_hero_interval.sql in the Supabase SQL editor, then set the timing again.",
+      };
+    }
     return { ok: true };
   } catch (e) {
     if ((e as { code?: string })?.code === "42703") {
       return {
         ok: false,
         error:
-          "The database needs a one-time update: run supabase/migrations/0003_hero_slides.sql (and 0014_hero_interval.sql, if you were changing the slide timing) in the Supabase SQL editor, then save again.",
+          "The database needs a one-time update: run supabase/migrations/0003_hero_slides.sql in the Supabase SQL editor, then save again.",
       };
     }
     return fail(e);
@@ -449,6 +459,89 @@ export async function saveSitePageAction(
 const MAX_HOMEPAGE_COLLECTIONS = 6;
 
 /** Curated homepage "The Collections" slots; pass [] to return to automatic picks. */
+const MAX_NAV_ITEMS = 10;
+const MAX_NAV_LINKS = 40;
+
+/**
+ * `null` restores the automatic, collection-driven menu. Anything else is
+ * normalised here rather than trusted: labels trimmed, empty entries dropped,
+ * and hrefs held to the same site-relative-or-absolute rule the hero slides
+ * use, so a malformed menu can't take the header down on every page.
+ */
+export async function saveNavConfigAction(config: NavConfig | null): Promise<ActionResult> {
+  try {
+    await requireStaff();
+    if (config === null) {
+      await repo.saveNavConfig(null);
+      refresh();
+      return { ok: true };
+    }
+    if (!Array.isArray(config)) return { ok: false, error: "Invalid menu payload." };
+    if (config.length > MAX_NAV_ITEMS) {
+      return { ok: false, error: `Keep it to ${MAX_NAV_ITEMS} menu items or fewer.` };
+    }
+
+    const okHref = (h: string) => /^(\/|https?:\/\/)/.test(h);
+    const clean: NavConfig = [];
+    let linkCount = 0;
+
+    for (const [i, item] of config.entries()) {
+      const label = item.label?.trim() ?? "";
+      if (!label) return { ok: false, error: `Menu item ${i + 1} needs a name.` };
+
+      const href = item.href?.trim() ?? "";
+      if (href) {
+        if (!okHref(href)) {
+          return { ok: false, error: `“${label}” needs a link starting with / or https://.` };
+        }
+        clean.push({ id: item.id || `n:${i}`, label, href, hidden: !!item.hidden });
+        continue;
+      }
+
+      const columns = (item.columns ?? [])
+        .map((col, ci) => ({
+          id: col.id || `c:${i}-${ci}`,
+          heading: col.heading?.trim() ?? "",
+          links: (col.links ?? [])
+            .map((l, li) => ({
+              id: l.id || `l:${i}-${ci}-${li}`,
+              label: l.label?.trim() ?? "",
+              href: l.href?.trim() ?? "",
+              hidden: !!l.hidden,
+            }))
+            .filter((l) => l.label && l.href && okHref(l.href)),
+        }))
+        .filter((col) => col.links.length > 0);
+
+      linkCount += columns.reduce((n, c) => n + c.links.length, 0);
+      if (linkCount > MAX_NAV_LINKS) {
+        return { ok: false, error: `That's more than ${MAX_NAV_LINKS} menu links in total.` };
+      }
+
+      // A dropdown with nothing left in it would render as an unopenable
+      // button, so it's dropped rather than saved as a dead end.
+      if (!columns.length) continue;
+      clean.push({
+        id: item.id || `n:${i}`,
+        label,
+        hidden: !!item.hidden,
+        columns,
+        layout: item.layout === "grid" || item.layout === "list" ? item.layout : "columns",
+      });
+    }
+
+    if (!clean.some((i) => !i.hidden)) {
+      return { ok: false, error: "At least one menu item has to stay visible." };
+    }
+
+    await repo.saveNavConfig(clean);
+    refresh();
+    return { ok: true };
+  } catch (e) {
+    return missingColumns(e) ?? fail(e);
+  }
+}
+
 export async function saveHomepageCollectionsAction(ids: string[]): Promise<ActionResult> {
   try {
     await requireStaff();

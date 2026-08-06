@@ -177,9 +177,14 @@
   /* The mark carries a willow tree whose lighter leaves all but vanish
      against the cream page. A soft shadow lifts it off the background
      without putting a plate or border behind it. */
+  /* Reads as height rather than as an outline: a longer drop and a wider,
+     softer spread put more apparent distance between the mark and the page.
+     The tight contact shadow stays — without it the mark floats free of any
+     surface and the whole thing reads as a sticker. */
   .logo-shadow {
-    filter: drop-shadow(0 1px 1px rgba(41, 33, 26, 0.16))
-      drop-shadow(0 3px 8px rgba(41, 33, 26, 0.12));
+    filter: drop-shadow(0 1px 1px rgba(41, 33, 26, 0.14))
+      drop-shadow(0 4px 6px rgba(41, 33, 26, 0.16))
+      drop-shadow(0 10px 20px rgba(41, 33, 26, 0.14));
   }
 
   /* Text sitting directly on photography. A wide soft shadow alone washes

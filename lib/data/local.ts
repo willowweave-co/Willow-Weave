@@ -6,6 +6,7 @@ import type {
   Collection,
   DiscountCode,
   HeroSlide,
+  NavConfig,
   Order,
   OrderStatus,
   PlacedOrder,
@@ -73,6 +74,8 @@ interface Overlay {
   heroIntervalMs?: number | null;
   /** curated homepage collection slots; null/absent = automatic picks */
   homepageCollections?: string[] | null;
+  /** custom header menu; null/absent = follow the collections automatically */
+  navConfig?: NavConfig | null;
   /** overrides for editable site pages (about/policies/…), keyed by handle */
   sitePages?: Record<string, { title: string; bodyHtml: string }>;
 }
@@ -330,6 +333,10 @@ export const localRepo: Repo = {
     return overlay.heroIntervalMs ?? DEFAULT_HERO_INTERVAL_MS;
   },
 
+  async getNavConfig() {
+    const overlay = await loadOverlay();
+    return overlay.navConfig ?? null;
+  },
   async getHomepageCollections() {
     const overlay = await loadOverlay();
     const ids = overlay.homepageCollections;
@@ -694,8 +701,17 @@ export const localRepo: Repo = {
       if (typeof intervalMs === "number") overlay.heroIntervalMs = intervalMs;
       await saveOverlay(overlay);
     });
+    // a JSON file has no columns to be missing
+    return { intervalSaved: true };
   },
 
+  async saveNavConfig(config: NavConfig | null) {
+    await withLock(async () => {
+      const overlay = await loadOverlay();
+      overlay.navConfig = config;
+      await saveOverlay(overlay);
+    });
+  },
   async saveHomepageCollections(ids: string[] | null) {
     await withLock(async () => {
       const overlay = await loadOverlay();

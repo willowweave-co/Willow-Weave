@@ -3,9 +3,9 @@ import { ArrowLeft } from "lucide-react";
 import { repo } from "@/lib/data";
 import { HomepageCollectionsManager } from "@/components/admin/homepage-collections-manager";
 
-export const metadata = { title: "Homepage · Collections" };
+export const metadata = { title: "Store front · Collections" };
 
-export default async function AdminHomepageCollectionsPage() {
+export default async function AdminStorefrontCollectionsPage() {
   const [collections, homepageCollections] = await Promise.all([
     repo.getCollections(),
     repo.getHomepageCollections(),
@@ -15,10 +15,10 @@ export default async function AdminHomepageCollectionsPage() {
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
         <Link
-          href="/admin/homepage"
+          href="/admin/storefront"
           className="mb-4 inline-flex items-center gap-1.5 text-sm text-umber hover:text-walnut"
         >
-          <ArrowLeft className="h-4 w-4" /> Homepage sections
+          <ArrowLeft className="h-4 w-4" /> Store front
         </Link>
         <h1 className="heading-display text-2xl font-semibold text-ink">
           &ldquo;The Collections&rdquo; grid

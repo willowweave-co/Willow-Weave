@@ -134,7 +134,9 @@ export function HeroSlidesManager({
     startTransition(async () => {
       const res = await saveHeroSlidesAction(slides, Number(clampSeconds(seconds)) * 1000);
       if (res.ok) {
-        toast("Homepage hero saved.");
+        // a warning means it saved but something needs the owner's attention,
+        // so it gets the louder tone rather than a green "all done"
+        toast(res.warning ?? "Hero saved.", res.warning ? "error" : "success");
         router.refresh();
       } else {
         toast(res.error ?? "Couldn't save the slides.", "error");
@@ -327,7 +329,7 @@ export function HeroSlidesManager({
           </p>
         </div>
         <Button onClick={save} loading={pending}>
-          Save homepage
+          Save hero
         </Button>
       </div>
 
