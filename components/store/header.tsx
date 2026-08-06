@@ -11,7 +11,7 @@ function LinkColumn({ heading, links }: { heading: string; links: NavLink[] }) {
   if (!links.length) return null;
   return (
     <div className="min-w-36">
-      <p className="mb-2.5 text-[0.72rem] font-semibold tracking-[0.14em] text-umber uppercase">
+      <p className="mb-2.5 text-[0.78rem] font-semibold tracking-[0.14em] text-umber uppercase">
         {heading}
       </p>
       <ul className="space-y-1.5">
@@ -19,7 +19,7 @@ function LinkColumn({ heading, links }: { heading: string; links: NavLink[] }) {
           <li key={l.href}>
             <Link
               href={l.href}
-              className="block text-[0.9375rem] whitespace-nowrap text-bark transition-colors hover:text-walnut hover:underline hover:underline-offset-4"
+              className="block text-base whitespace-nowrap text-bark transition-colors hover:text-walnut hover:underline hover:underline-offset-4"
             >
               {l.title}
             </Link>
@@ -85,7 +85,7 @@ export function Header({ nav }: { nav: NavData }) {
                 <Link
                   key={l.href}
                   href={l.href}
-                  className="text-[0.9375rem] whitespace-nowrap text-bark transition-colors hover:text-walnut hover:underline hover:underline-offset-4"
+                  className="text-base whitespace-nowrap text-bark transition-colors hover:text-walnut hover:underline hover:underline-offset-4"
                 >
                   {l.title}
                 </Link>
@@ -94,13 +94,13 @@ export function Header({ nav }: { nav: NavData }) {
           </DesktopDropdown>
           <Link
             href="/products"
-            className="heading-display px-3.5 py-2 text-[1.0625rem] font-medium text-bark transition-colors hover:text-walnut"
+            className="heading-display px-3.5 py-2 text-[1.125rem] font-medium text-bark transition-colors hover:text-walnut"
           >
             Shop All
           </Link>
           <Link
             href="/size-guide"
-            className="heading-display px-3.5 py-2 text-[1.0625rem] font-medium text-bark transition-colors hover:text-walnut"
+            className="heading-display px-3.5 py-2 text-[1.125rem] font-medium text-bark transition-colors hover:text-walnut"
           >
             Size Guide
           </Link>
@@ -110,7 +110,7 @@ export function Header({ nav }: { nav: NavData }) {
                 <li key={l.href}>
                   <Link
                     href={l.href}
-                    className="block text-[0.9375rem] whitespace-nowrap text-bark transition-colors hover:text-walnut hover:underline hover:underline-offset-4"
+                    className="block text-base whitespace-nowrap text-bark transition-colors hover:text-walnut hover:underline hover:underline-offset-4"
                   >
                     {l.title}
                   </Link>

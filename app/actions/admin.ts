@@ -14,6 +14,7 @@ import type {
   StoreSettings,
 } from "@/lib/types";
 import { requireStaff, requireOwner } from "@/lib/admin-auth";
+import { MIN_HERO_INTERVAL_MS, MAX_HERO_INTERVAL_MS } from "@/lib/data/hero-defaults";
 import { sanitizeRichText } from "@/lib/sanitize";
 import { sendStatusEmail } from "@/lib/email";
 import { createSupabaseAdmin } from "@/lib/supabase/admin";
@@ -340,10 +341,26 @@ export async function saveSettingsAction(settings: StoreSettings): Promise<Actio
 
 const MAX_HERO_SLIDES = 8;
 
-export async function saveHeroSlidesAction(slides: HeroSlide[]): Promise<ActionResult> {
+export async function saveHeroSlidesAction(
+  slides: HeroSlide[],
+  intervalMs?: number
+): Promise<ActionResult> {
   try {
     await requireStaff();
     if (!Array.isArray(slides)) return { ok: false, error: "Invalid slides payload." };
+    // Clamped rather than rejected: the control can only produce values in
+    // range, so anything outside it is a stale client or a hand-rolled
+    // request, and neither is worth failing the owner's whole save over.
+    let interval: number | undefined;
+    if (intervalMs != null) {
+      if (!Number.isFinite(intervalMs)) {
+        return { ok: false, error: "Slide timing must be a number." };
+      }
+      interval = Math.min(
+        MAX_HERO_INTERVAL_MS,
+        Math.max(MIN_HERO_INTERVAL_MS, Math.round(intervalMs))
+      );
+    }
     if (slides.length > MAX_HERO_SLIDES) {
       return { ok: false, error: `Keep it to ${MAX_HERO_SLIDES} slides or fewer.` };
     }
@@ -374,7 +391,7 @@ export async function saveHeroSlidesAction(slides: HeroSlide[]): Promise<ActionR
         enabled: !!s.enabled,
       });
     }
-    await repo.saveHeroSlides(clean);
+    await repo.saveHeroSlides(clean, interval);
     refresh();
     return { ok: true };
   } catch (e) {
@@ -382,7 +399,7 @@ export async function saveHeroSlidesAction(slides: HeroSlide[]): Promise<ActionR
       return {
         ok: false,
         error:
-          "The database needs a one-time update: run supabase/migrations/0003_hero_slides.sql in the Supabase SQL editor, then save again.",
+          "The database needs a one-time update: run supabase/migrations/0003_hero_slides.sql (and 0014_hero_interval.sql, if you were changing the slide timing) in the Supabase SQL editor, then save again.",
       };
     }
     return fail(e);

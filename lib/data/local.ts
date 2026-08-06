@@ -17,7 +17,7 @@ import type {
 } from "@/lib/types";
 import { computeStats } from "@/lib/stats";
 import { validateDiscount, MAX_ITEM_QTY } from "@/lib/discounts";
-import { DEFAULT_HERO_SLIDES } from "./hero-defaults";
+import { DEFAULT_HERO_SLIDES, DEFAULT_HERO_INTERVAL_MS } from "./hero-defaults";
 import {
   DEFAULT_BANK_TRANSFER,
   DEFAULT_CONTACT,
@@ -69,6 +69,8 @@ interface Overlay {
   settings: StoreSettings | null;
   /** null/absent = seed defaults (older store.json files predate the key) */
   heroSlides?: HeroSlide[] | null;
+  /** ms between hero slides; null/absent = DEFAULT_HERO_INTERVAL_MS */
+  heroIntervalMs?: number | null;
   /** curated homepage collection slots; null/absent = automatic picks */
   homepageCollections?: string[] | null;
   /** overrides for editable site pages (about/policies/…), keyed by handle */
@@ -322,6 +324,10 @@ export const localRepo: Repo = {
   async getHeroSlides() {
     const overlay = await loadOverlay();
     return overlay.heroSlides ?? DEFAULT_HERO_SLIDES;
+  },
+  async getHeroIntervalMs() {
+    const overlay = await loadOverlay();
+    return overlay.heroIntervalMs ?? DEFAULT_HERO_INTERVAL_MS;
   },
 
   async getHomepageCollections() {
@@ -681,10 +687,11 @@ export const localRepo: Repo = {
     });
   },
 
-  async saveHeroSlides(slides: HeroSlide[]) {
+  async saveHeroSlides(slides: HeroSlide[], intervalMs?: number) {
     await withLock(async () => {
       const overlay = await loadOverlay();
       overlay.heroSlides = slides;
+      if (typeof intervalMs === "number") overlay.heroIntervalMs = intervalMs;
       await saveOverlay(overlay);
     });
   },

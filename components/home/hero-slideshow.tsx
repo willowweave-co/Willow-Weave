@@ -5,10 +5,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { HeroSlide } from "@/lib/types";
+import { DEFAULT_HERO_INTERVAL_MS } from "@/lib/data/hero-defaults";
 import { BottomMelt } from "@/components/store/bottom-melt";
 import { cn, focalCrop } from "@/lib/utils";
 
-const AUTOPLAY_MS = 6500;
 const SWIPE_PX = 45;
 
 /**
@@ -16,7 +16,14 @@ const SWIPE_PX = 45;
  * Crossfades between slides; the edges melt into the ivory page background
  * with a blur + colour-matched gradient instead of a hard border.
  */
-export function HeroSlideshow({ slides }: { slides: HeroSlide[] }) {
+export function HeroSlideshow({
+  slides,
+  intervalMs = DEFAULT_HERO_INTERVAL_MS,
+}: {
+  slides: HeroSlide[];
+  /** Set in Admin → Homepage → Hero. */
+  intervalMs?: number;
+}) {
   const [index, setIndex] = useState(0);
   // `paused` is transient (hover, touch, focus). `stopped` is the visitor's
   // explicit decision via the pause button and outlives any of those — WCAG
@@ -40,9 +47,9 @@ export function HeroSlideshow({ slides }: { slides: HeroSlide[] }) {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const t = setInterval(() => {
       if (!document.hidden) setIndex((i) => (i + 1) % count);
-    }, AUTOPLAY_MS);
+    }, intervalMs);
     return () => clearInterval(t);
-  }, [count, paused, stopped, index]);
+  }, [count, paused, stopped, index, intervalMs]);
 
   // Only the visible slide's video should play.
   useEffect(() => {

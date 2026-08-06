@@ -38,6 +38,11 @@ export interface Repo {
    */
   getNotifyEmail(): Promise<string>;
   getHeroSlides(): Promise<HeroSlide[]>;
+  /**
+   * Milliseconds each hero slide holds before the next. Falls back to
+   * DEFAULT_HERO_INTERVAL_MS when migration 0014 hasn't been applied.
+   */
+  getHeroIntervalMs(): Promise<number>;
   /** Curated homepage "The Collections" slots (ordered ids); null = automatic picks. */
   getHomepageCollections(): Promise<string[] | null>;
   /** Saved overrides for editable site pages, keyed by handle (missing = use built-in copy). */
@@ -75,7 +80,8 @@ export interface Repo {
   saveDiscount(d: DiscountCode): Promise<void>;
   deleteDiscount(id: string): Promise<void>;
   saveSettings(s: StoreSettings): Promise<void>;
-  saveHeroSlides(slides: HeroSlide[]): Promise<void>;
+  /** `intervalMs` omitted leaves the stored slide timing untouched. */
+  saveHeroSlides(slides: HeroSlide[], intervalMs?: number): Promise<void>;
   saveHomepageCollections(ids: string[] | null): Promise<void>;
   saveSitePage(page: { handle: string; title: string; bodyHtml: string }): Promise<void>;
   /** Update only a collection's tile focal point (homepage/collection-list crops). */
@@ -131,6 +137,7 @@ const publicCollectionByHandle = cachedRead("collection-by-handle", (handle: str
 const publicSizeCharts = cachedRead("size-charts", () => baseRepo.getSizeCharts());
 const publicSettings = cachedRead("settings", () => baseRepo.getSettings());
 const publicHeroSlides = cachedRead("hero-slides", () => baseRepo.getHeroSlides());
+const publicHeroInterval = cachedRead("hero-interval", () => baseRepo.getHeroIntervalMs());
 const publicHomepageCollections = cachedRead("homepage-collections", () =>
   baseRepo.getHomepageCollections()
 );
@@ -156,6 +163,7 @@ export const repo: Repo = {
   getSizeCharts: () => publicSizeCharts(),
   getSettings: () => publicSettings(),
   getHeroSlides: () => publicHeroSlides(),
+  getHeroIntervalMs: () => publicHeroInterval(),
   getHomepageCollections: () => publicHomepageCollections(),
   getSitePages: () => publicSitePages(),
 };

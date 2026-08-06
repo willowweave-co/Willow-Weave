@@ -11,15 +11,23 @@ import { CollectionsShowcase } from "@/components/home/collections-showcase";
 export const revalidate = 600;
 
 export default async function HomePage() {
-  const [products, collections, content, heroSlides, sizeCharts, homepageCollections] =
-    await Promise.all([
-      repo.getProducts(),
-      repo.getCollections(),
-      getContent(),
-      repo.getHeroSlides(),
-      repo.getSizeCharts(),
-      repo.getHomepageCollections(),
-    ]);
+  const [
+    products,
+    collections,
+    content,
+    heroSlides,
+    heroIntervalMs,
+    sizeCharts,
+    homepageCollections,
+  ] = await Promise.all([
+    repo.getProducts(),
+    repo.getCollections(),
+    getContent(),
+    repo.getHeroSlides(),
+    repo.getHeroIntervalMs(),
+    repo.getSizeCharts(),
+    repo.getHomepageCollections(),
+  ]);
   const byHandle = new Map(products.map((p) => [p.handle, p]));
 
   const slides = heroSlides.filter((s) => s.enabled);
@@ -32,7 +40,7 @@ export default async function HomePage() {
     <div>
       {/* ── Hero slideshow (managed in Admin → Homepage) ─────────────────── */}
       {slides.length > 0 ? (
-        <HeroSlideshow slides={slides} />
+        <HeroSlideshow slides={slides} intervalMs={heroIntervalMs} />
       ) : (
         // keep an h1 for SEO even if every slide is switched off
         <h1 className="sr-only">Willow Weave</h1>

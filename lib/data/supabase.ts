@@ -20,7 +20,7 @@ import type { BankTransferSettings } from "@/lib/types";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { createSupabaseServer } from "@/lib/supabase/server";
 import { computeStats } from "@/lib/stats";
-import { DEFAULT_HERO_SLIDES } from "./hero-defaults";
+import { DEFAULT_HERO_SLIDES, DEFAULT_HERO_INTERVAL_MS } from "./hero-defaults";
 
 /**
  * Supabase adapter (production). Reads/writes run under the caller's session:
@@ -362,6 +362,20 @@ export const supabaseRepo: Repo = {
       // column doesn't exist yet (migration 0003 not applied) — the storefront
       // must still render, so fall back to the seed slides.
       if (isMissingRelation(e as { code?: string })) return DEFAULT_HERO_SLIDES;
+      throw e;
+    }
+  },
+
+  async getHeroIntervalMs(): Promise<number> {
+    try {
+      // fallback column set: the view's whitelist is frozen at creation, so
+      // before 0014 runs it still answers for "id, hero_slides" alone
+      const data = await publicSettingsRow("id, hero_interval_ms", "id, hero_slides");
+      const ms = data.hero_interval_ms as number | null | undefined;
+      return typeof ms === "number" ? ms : DEFAULT_HERO_INTERVAL_MS;
+    } catch (e) {
+      // migration 0014 not applied — the slideshow keeps its old cadence
+      if (isMissingRelation(e as { code?: string })) return DEFAULT_HERO_INTERVAL_MS;
       throw e;
     }
   },
@@ -750,12 +764,13 @@ export const supabaseRepo: Repo = {
     if (error) throw error;
   },
 
-  async saveHeroSlides(slides: HeroSlide[]) {
+  async saveHeroSlides(slides: HeroSlide[], intervalMs?: number) {
     const client = await db();
-    const { error } = await client
-      .from("store_settings")
-      .update({ hero_slides: slides })
-      .eq("id", 1);
+    const patch: Record<string, unknown> = { hero_slides: slides };
+    // omitted rather than defaulted, so a pre-0014 database still saves the
+    // slides instead of failing the whole write on an unknown column
+    if (typeof intervalMs === "number") patch.hero_interval_ms = intervalMs;
+    const { error } = await client.from("store_settings").update(patch).eq("id", 1);
     if (error) throw error;
   },
 

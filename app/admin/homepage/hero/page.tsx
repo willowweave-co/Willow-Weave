@@ -7,8 +7,9 @@ import { HeroSlidesManager } from "@/components/admin/hero-slides-manager";
 export const metadata = { title: "Homepage · Hero" };
 
 export default async function AdminHomepageHeroPage() {
-  const [slides, collections] = await Promise.all([
+  const [slides, intervalMs, collections] = await Promise.all([
     repo.getHeroSlides(),
+    repo.getHeroIntervalMs(),
     repo.getCollections(),
   ]);
 
@@ -40,7 +41,11 @@ export default async function AdminHomepageHeroPage() {
         </p>
       </div>
 
-      <HeroSlidesManager initial={slides} linkOptions={linkOptions} />
+      <HeroSlidesManager
+        initial={slides}
+        initialIntervalMs={intervalMs}
+        linkOptions={linkOptions}
+      />
     </div>
   );
 }
